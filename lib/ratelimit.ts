@@ -3,10 +3,10 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { env } from "@/lib/env";
 
-const redis =
-  env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN
-    ? new Redis({ url: env.UPSTASH_REDIS_REST_URL, token: env.UPSTASH_REDIS_REST_TOKEN })
-    : null;
+// Upstash env names differ between a direct Upstash setup and the Vercel integration.
+const redisUrl = env.UPSTASH_REDIS_REST_URL ?? env.KV_REST_API_URL;
+const redisToken = env.UPSTASH_REDIS_REST_TOKEN ?? env.KV_REST_API_TOKEN;
+const redis = redisUrl && redisToken ? new Redis({ url: redisUrl, token: redisToken }) : null;
 
 function limiter(prefix: string, requests: number) {
   if (!redis) return null;

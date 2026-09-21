@@ -7,6 +7,9 @@ export const env = createEnv({
     // Upstash is optional in development; rate limiting is skipped without it.
     UPSTASH_REDIS_REST_URL: z.url().optional(),
     UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
+    // Names injected by the Vercel Marketplace Upstash integration.
+    KV_REST_API_URL: z.url().optional(),
+    KV_REST_API_TOKEN: z.string().min(1).optional(),
     ADMIN_USER: z.string().min(1),
     ADMIN_PASS: z.string().min(12, "Use a long admin password"),
     CRON_SECRET: z.string().min(16),
