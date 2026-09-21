@@ -93,7 +93,8 @@ async function JobsTable({ q, status, saved }: { q: string; status: "ACTIVE" | "
                   </div>
                 </td>
                 <td className="px-3 py-2.5 text-muted tabular-nums">
-                  {formatSalaryBand(job.salaryMin, job.salaryMax, job.currency)}
+                  {formatSalaryBand(job.salaryMin, job.salaryMax, job.currency) ?? <span className="text-subtle">not disclosed</span>}
+                  {job.source !== "MANUAL" && <div className="text-[11px] text-subtle">{job.source.toLowerCase()} feed</div>}
                 </td>
                 <td className="px-3 py-2.5">
                   <span className={job.status === "ACTIVE" ? "text-ok" : "text-subtle"}>{job.status.toLowerCase()}</span>

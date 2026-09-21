@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: PageProps<"/companies/[slug]"
   if (!company) notFound();
   return {
     title: `${company.name} jobs & salaries`,
-    description: `${company.jobs.length} open roles at ${company.name}, all with published salary bands.`,
+    description: `${company.jobs.length} open roles at ${company.name} in India.`,
     alternates: { canonical: `/companies/${company.slug}` },
   };
 }
@@ -58,12 +58,16 @@ async function CompanyDetail({ slug }: { slug: string }) {
         <div>
           <h1 className="metal-text text-2xl font-semibold tracking-tight">{company.name}</h1>
           <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
-            <li className="flex items-center gap-1.5">
-              <MapPin className="size-3.5" aria-hidden /> {company.hq}
-            </li>
-            <li className="flex items-center gap-1.5">
-              <Users className="size-3.5" aria-hidden /> {company.size} people
-            </li>
+            {company.hq && (
+              <li className="flex items-center gap-1.5">
+                <MapPin className="size-3.5" aria-hidden /> {company.hq}
+              </li>
+            )}
+            {company.size && (
+              <li className="flex items-center gap-1.5">
+                <Users className="size-3.5" aria-hidden /> {company.size} people
+              </li>
+            )}
             {company.medianResponseDays != null && (
               <li className="flex items-center gap-1.5">
                 <Clock className="size-3.5" aria-hidden /> Median reply in {company.medianResponseDays} days
@@ -78,7 +82,9 @@ async function CompanyDetail({ slug }: { slug: string }) {
           </ul>
         </div>
       </header>
-      <p className="mt-6 max-w-2xl text-[15px] leading-relaxed text-muted">{company.description}</p>
+      {company.description && (
+        <p className="mt-6 max-w-2xl text-[15px] leading-relaxed text-muted">{company.description}</p>
+      )}
 
       <section className="mt-12" aria-labelledby="open-roles">
         <h2 id="open-roles" className="mb-4 text-lg font-semibold">

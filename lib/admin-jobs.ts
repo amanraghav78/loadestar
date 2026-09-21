@@ -14,6 +14,17 @@ async function companyName(companyId: string) {
   return company.name;
 }
 
+/** Band columns for the DB check constraint: all set, or all null. */
+export function salaryFields(input: Pick<JobInput, "salaryMin" | "salaryMax" | "currency">) {
+  const disclosed = input.salaryMin != null && input.salaryMax != null;
+  return {
+    salaryMin: disclosed ? input.salaryMin! : null,
+    salaryMax: disclosed ? input.salaryMax! : null,
+    currency: disclosed ? input.currency : null,
+    salaryDisclosed: disclosed,
+  };
+}
+
 function jobData(input: JobInput, name: string) {
   return {
     title: input.title,
@@ -25,9 +36,7 @@ function jobData(input: JobInput, name: string) {
     location: input.location,
     remote: input.remote,
     remoteRegion: input.remoteRegion ?? null,
-    salaryMin: input.salaryMin,
-    salaryMax: input.salaryMax,
-    currency: input.currency,
+    ...salaryFields(input),
     applyUrl: input.applyUrl,
     featured: input.featured,
     searchText: buildSearchText({ ...input, companyName: name }),

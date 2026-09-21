@@ -24,17 +24,17 @@ export function DisciplineGrid({ counts }: { counts: Partial<Record<Discipline, 
           <li key={d}>
             <Link
               href={`/jobs?discipline=${d}`}
-              className="metal-card group flex items-center gap-3 rounded-xl px-4 py-3.5"
+              className="metal-card group flex items-center gap-3 rounded-xl px-4 py-4"
             >
-              <Icon className="size-4 shrink-0 text-accent-fg" aria-hidden />
+              <Icon className="text-accent-fg size-4 shrink-0" aria-hidden />
               <span className="min-w-0 flex-1">
-                <span className="block text-sm font-medium text-fg">{DISCIPLINE_LABEL[d]}</span>
-                <span className="block text-xs text-subtle tabular-nums">
+                <span className="text-fg block text-sm font-medium">{DISCIPLINE_LABEL[d]}</span>
+                <span className="text-subtle block text-xs tabular-nums">
                   {numberFormat.format(count)} {count === 1 ? "role" : "roles"}
                 </span>
               </span>
               <ArrowUpRight
-                className="size-3.5 shrink-0 text-subtle transition-colors group-hover:text-fg"
+                className="text-subtle group-hover:text-fg size-3.5 shrink-0 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
                 aria-hidden
               />
             </Link>

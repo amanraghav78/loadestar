@@ -28,12 +28,13 @@ export async function generateMetadata({ params }: PageProps<"/jobs/[slug]">): P
   if (!job) notFound();
 
   const band = formatSalaryBand(job.salaryMin, job.salaryMax, job.currency);
+  const lead = [band, formatJobLocation(job)].filter(Boolean).join(" · ");
   return {
     title: `${job.title} at ${job.company.name}`,
-    description: `${band} · ${formatJobLocation(job)}. ${descriptionToPlainText(job.description, 120)}`,
+    description: `${lead}. ${descriptionToPlainText(job.description, 120)}`,
     alternates: { canonical: `/jobs/${job.slug}` },
     robots: job.status === "ACTIVE" ? undefined : { index: false },
-    openGraph: { title: `${job.title} at ${job.company.name} — ${band}`, url: `/jobs/${job.slug}` },
+    openGraph: { title: `${job.title} at ${job.company.name}${band ? ` — ${band}` : ""}`, url: `/jobs/${job.slug}` },
   };
 }
 
@@ -73,8 +74,8 @@ async function JobDetail({ slug }: { slug: string }) {
 
       {!active && (
         <p role="status" className="mt-6 rounded-lg border border-line-strong bg-card px-4 py-3 text-sm text-muted">
-          This role is no longer accepting applications. It was taken down because the employer did not
-          re-confirm it within {site.expiryDays} days.
+          This role is no longer open. It was taken down because it disappeared from {job.company.name}&rsquo;s
+          careers page.
         </p>
       )}
 
@@ -95,7 +96,7 @@ async function JobDetail({ slug }: { slug: string }) {
 
           <dl className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-4">
             {[
-              ["Salary", formatSalaryBand(job.salaryMin, job.salaryMax, job.currency)],
+              ["Salary", formatSalaryBand(job.salaryMin, job.salaryMax, job.currency) ?? "Not disclosed"],
               ["Level", LEVEL_LABEL[job.level]],
               ["Setup", REMOTE_LABEL[job.remote]],
               ["Posted", formatPostedAgo(job.postedAt)],
@@ -142,14 +143,20 @@ async function JobDetail({ slug }: { slug: string }) {
             <h2 id="about-company" className="text-sm font-semibold text-fg">
               About {job.company.name}
             </h2>
-            <p className="mt-2 text-sm leading-relaxed text-muted">{job.company.description}</p>
+            {job.company.description && (
+              <p className="mt-2 text-sm leading-relaxed text-muted">{job.company.description}</p>
+            )}
             <ul className="mt-4 space-y-2 text-sm text-muted">
-              <li className="flex items-center gap-2">
-                <MapPin className="size-3.5" aria-hidden /> {job.company.hq}
-              </li>
-              <li className="flex items-center gap-2">
-                <Users className="size-3.5" aria-hidden /> {job.company.size} people
-              </li>
+              {job.company.hq && (
+                <li className="flex items-center gap-2">
+                  <MapPin className="size-3.5" aria-hidden /> {job.company.hq}
+                </li>
+              )}
+              {job.company.size && (
+                <li className="flex items-center gap-2">
+                  <Users className="size-3.5" aria-hidden /> {job.company.size} people
+                </li>
+              )}
               {job.company.medianResponseDays != null && (
                 <li className="flex items-center gap-2">
                   <Clock className="size-3.5" aria-hidden /> Replies in ~{job.company.medianResponseDays} days
@@ -170,8 +177,10 @@ async function JobDetail({ slug }: { slug: string }) {
             </Link>
           </section>
           <p className="px-1 text-xs leading-relaxed text-subtle">
-            Last confirmed by the employer {formatPostedAgo(job.lastVerifiedAt).toLowerCase()}. Applications go
-            directly to {job.company.name}; Lodestar never sees your details.
+            {job.source === "MANUAL"
+              ? `Last confirmed by the employer ${formatPostedAgo(job.lastVerifiedAt).toLowerCase()}.`
+              : `Taken from ${job.company.name}’s careers page, last checked ${formatPostedAgo(job.lastVerifiedAt).toLowerCase()}.`}{" "}
+            Applications go directly to {job.company.name}; Lodestar never sees your details.
           </p>
         </aside>
       </div>
@@ -211,24 +220,29 @@ function jobPostingJsonLd(job: JobForLd) {
     ...(job.remote === "REMOTE"
       ? {
           jobLocationType: "TELECOMMUTE",
-          applicantLocationRequirements: { "@type": "Country", name: job.remoteRegion ?? job.location },
+          applicantLocationRequirements: { "@type": "Country", name: "India" },
         }
       : {
           jobLocation: {
             "@type": "Place",
-            address: { "@type": "PostalAddress", addressLocality: job.location },
+            address: { "@type": "PostalAddress", addressLocality: job.location.split(" · ")[0], addressCountry: "IN" },
           },
         }),
-    baseSalary: {
-      "@type": "MonetaryAmount",
-      currency: job.currency,
-      value: {
-        "@type": "QuantitativeValue",
-        minValue: job.salaryMin,
-        maxValue: job.salaryMax,
-        unitText: "YEAR",
-      },
-    },
+    // Only when the employer published pay; Google treats a guessed salary as spam.
+    ...(job.salaryDisclosed && job.currency
+      ? {
+          baseSalary: {
+            "@type": "MonetaryAmount",
+            currency: job.currency,
+            value: {
+              "@type": "QuantitativeValue",
+              minValue: job.salaryMin,
+              maxValue: job.salaryMax,
+              unitText: "YEAR",
+            },
+          },
+        }
+      : {}),
   };
 }
 

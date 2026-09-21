@@ -2,7 +2,17 @@ import type { Currency, Discipline, Level, RemotePolicy } from "@/lib/generated/
 
 const moneyFormatters = new Map<Currency, Intl.NumberFormat>();
 
+const LAKH = 100_000;
+const CRORE = 10_000_000;
+const oneDecimal = (n: number) => (Math.round(n * 10) / 10).toString();
+
+/** 1850000 → "18.5 L", 12000000 → "1.2 Cr" (the way Indian salaries are quoted). */
+export function formatInrShort(amount: number) {
+  return amount >= CRORE ? `${oneDecimal(amount / CRORE)} Cr` : `${oneDecimal(amount / LAKH)} L`;
+}
+
 export function formatMoney(amount: number, currency: Currency) {
+  if (currency === "INR") return `₹${formatInrShort(amount)}`;
   let fmt = moneyFormatters.get(currency);
   if (!fmt) {
     fmt = new Intl.NumberFormat("en-GB", {
@@ -15,8 +25,21 @@ export function formatMoney(amount: number, currency: Currency) {
   return fmt.format(amount);
 }
 
-export function formatSalaryBand(min: number, max: number, currency: Currency) {
-  return `${formatMoney(min, currency)} – ${formatMoney(max, currency)}`;
+/**
+ * "₹18–25 LPA", "₹80 L – ₹1.2 Cr", "€95,000 – €125,000".
+ * Returns null when the employer hasn't published a band.
+ */
+export function formatSalaryBand(min: number | null, max: number | null, currency: Currency | null) {
+  if (min == null || max == null || currency == null) return null;
+  if (currency === "INR") {
+    if (max < CRORE) {
+      const lo = oneDecimal(min / LAKH);
+      const hi = oneDecimal(max / LAKH);
+      return lo === hi ? `₹${lo} LPA` : `₹${lo}–${hi} LPA`;
+    }
+    return min === max ? `₹${formatInrShort(min)}` : `₹${formatInrShort(min)} – ₹${formatInrShort(max)}`;
+  }
+  return min === max ? formatMoney(min, currency) : `${formatMoney(min, currency)} – ${formatMoney(max, currency)}`;
 }
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -45,6 +68,7 @@ export const DISCIPLINE_LABEL: Record<Discipline, string> = {
 };
 
 export const LEVEL_LABEL: Record<Level, string> = {
+  INTERN: "Intern",
   JUNIOR: "Junior",
   MID: "Mid-level",
   SENIOR: "Senior",
@@ -60,13 +84,17 @@ export const REMOTE_LABEL: Record<RemotePolicy, string> = {
   REMOTE: "Remote",
 };
 
-/** "Berlin", "Remote (Europe)", "Hybrid · London" */
+/** "Bengaluru · Pune", "Remote (India)", "Hybrid · Gurugram" */
 export function formatJobLocation(job: {
   location: string;
   remote: RemotePolicy;
   remoteRegion: string | null;
 }) {
-  if (job.remote === "REMOTE") return job.remoteRegion ? `Remote (${job.remoteRegion})` : "Remote";
+  if (job.remote === "REMOTE") {
+    const region = job.remoteRegion ? `Remote (${job.remoteRegion})` : "Remote";
+    const hasCities = job.location && job.location !== "India" && job.location !== job.remoteRegion;
+    return hasCities ? `${region} · ${job.location}` : region;
+  }
   if (job.remote === "HYBRID") return `Hybrid · ${job.location}`;
   return job.location;
 }

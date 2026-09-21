@@ -1,7 +1,6 @@
-import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/lib/db";
-import { env } from "@/lib/env";
+import { isCronAuthorized } from "@/lib/cron-auth";
 import { revalidateJobs } from "@/lib/revalidate";
 import { site } from "@/lib/site";
 
@@ -11,7 +10,7 @@ import { site } from "@/lib/site";
  * `Authorization: Bearer $CRON_SECRET`.
  */
 export async function GET(request: NextRequest) {
-  if (!authorized(request.headers.get("authorization"))) {
+  if (!isCronAuthorized(request.headers.get("authorization"))) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
@@ -31,10 +30,4 @@ export async function GET(request: NextRequest) {
 
   console.info(`expire cron: ${stale.length} listings expired`);
   return NextResponse.json({ expired: stale.length });
-}
-
-function authorized(header: string | null) {
-  const expected = Buffer.from(`Bearer ${env.CRON_SECRET}`);
-  const actual = Buffer.from(header ?? "");
-  return actual.length === expected.length && timingSafeEqual(actual, expected);
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { cacheLife, cacheTag } from "next/cache";
 import { ArrowRight, CircleDollarSign, Clock, Route } from "lucide-react";
+import { CompanyMarquee } from "@/components/company-marquee";
 import { DisciplineGrid } from "@/components/discipline-grid";
 import { JobGrid } from "@/components/job-card";
 import { SearchBar } from "@/components/search-bar";
@@ -11,28 +12,28 @@ import { getHomeData, TAGS } from "@/lib/queries";
 import { site } from "@/lib/site";
 
 const POPULAR = [
+  { label: "With salary", href: "/jobs?salary=1" },
+  { label: "Bengaluru", href: "/jobs?city=Bengaluru" },
   { label: "Remote", href: "/jobs?remote=REMOTE" },
-  { label: "Go", href: "/jobs?tag=Go" },
-  { label: "Design systems", href: "/jobs?q=design+systems" },
-  { label: "Staff engineer", href: "/jobs?q=staff+engineer" },
-  { label: "Fintech", href: "/jobs?tag=Fintech" },
+  { label: "Backend", href: "/jobs?q=backend" },
+  { label: "Data science", href: "/jobs?discipline=DATA" },
 ];
 
 const PROMISES = [
   {
     icon: CircleDollarSign,
-    title: "Every band published",
-    body: "A listing without a salary range does not go live. You know what the role pays before you spend an evening on the application.",
+    title: "Pay first",
+    body: "Roles that publish a salary are marked and shown first, in ₹ LPA. One click filters to only those. Where a company doesn't disclose pay, we say so.",
   },
   {
     icon: Clock,
-    title: "Expired roles come down",
-    body: `Employers confirm each posting weekly. Anything unconfirmed after ${site.expiryDays} days is removed automatically.`,
+    title: "No ghost listings",
+    body: "Every role comes from the company's own careers page and is re-checked daily. When it disappears there, it comes down here.",
   },
   {
     icon: Route,
-    title: "Applications go straight to the source",
-    body: "Apply on the company's own careers page or form. No middlemen, no recruiter inbox, and the company's median response time shown up front.",
+    title: "Apply at the source",
+    body: "Apply on the company's own careers page. No middlemen, no recruiter inbox, no sign-up needed.",
   },
 ];
 
@@ -45,85 +46,86 @@ export default async function HomePage() {
   cacheLife("hours");
   cacheTag(TAGS.jobs, TAGS.companies);
 
-  const { recommended, totalActive, disciplineCounts, hiringCompanies } = await getHomeData();
+  const { recommended, totalActive, withSalary, disciplineCounts, hiringCompanies } = await getHomeData();
   const total = numberFormat.format(totalActive);
 
   return (
     <>
-      <Container className="pt-16 pb-12 sm:pt-20">
-        <p className="text-[11px] font-medium tracking-[0.14em] text-accent-fg uppercase">
-          {total} open roles in product &amp; engineering
-        </p>
-        <h1 className="mt-4 max-w-xl text-4xl leading-[1.08] font-semibold tracking-tight metal-text sm:text-5xl">
-          Find the room where the work is real.
-        </h1>
-        <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-muted">{site.description}</p>
+      <section className="relative isolate overflow-hidden">
+        <div className="hero-backdrop" aria-hidden />
+        <Container className="flex flex-col items-center pt-20 pb-16 text-center sm:pt-28">
+          <p className="animate-fade-up border-line-strong bg-card/60 text-muted inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium backdrop-blur">
+            <span className="relative flex size-1.5" aria-hidden>
+              <span className="animate-ping-slow bg-ok absolute inline-flex size-full rounded-full opacity-75" />
+              <span className="bg-ok relative inline-flex size-1.5 rounded-full" />
+            </span>
+            {total} open tech roles in India
+            {withSalary > 0 && <> · {numberFormat.format(withSalary)} with salary</>}
+          </p>
+          <h1 className="animate-fade-up gradient-text mt-6 max-w-3xl text-4xl leading-[1.05] font-bold tracking-tight [animation-delay:80ms] sm:text-6xl">
+            Find the room where the work is real.
+          </h1>
+          <p className="animate-fade-up text-muted mt-5 max-w-xl text-base leading-relaxed [animation-delay:160ms]">
+            {site.description}
+          </p>
 
-        <div className="mt-8">
-          <SearchBar />
-        </div>
+          <div className="animate-fade-up mt-10 w-full max-w-2xl text-left [animation-delay:240ms]">
+            <SearchBar />
+          </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <span className="text-xs text-subtle">Popular:</span>
-          {POPULAR.map((p) => (
-            <TagLink key={p.label} href={p.href}>
-              {p.label}
-            </TagLink>
-          ))}
-        </div>
-      </Container>
+          <div className="animate-fade-up mt-5 flex flex-wrap items-center justify-center gap-2 [animation-delay:320ms]">
+            <span className="text-subtle text-xs">Popular:</span>
+            {POPULAR.map((p) => (
+              <TagLink key={p.label} href={p.href}>
+                {p.label}
+              </TagLink>
+            ))}
+          </div>
+        </Container>
+      </section>
 
-      <Container className="pb-14">
+      <Container className="reveal pb-16">
         <div className="mb-4 flex items-baseline justify-between gap-4">
-          <h2 className="text-lg font-semibold text-fg">Recommended for you</h2>
-          <Link href="/jobs" className="inline-flex items-center gap-1 text-xs text-accent-fg hover:text-fg">
+          <h2 className="text-fg text-lg font-semibold">Recommended for you</h2>
+          <Link href="/jobs" className="group text-accent-fg hover:text-fg inline-flex items-center gap-1 text-xs">
             View all {total}
-            <ArrowRight className="size-3" aria-hidden />
+            <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" aria-hidden />
           </Link>
         </div>
         {recommended.length > 0 ? (
           <JobGrid jobs={recommended} />
         ) : (
-          <p className="rounded-xl border border-dashed border-line p-8 text-center text-sm text-muted">
-            New roles are being verified. Check back shortly.
+          <p className="border-line text-muted rounded-xl border border-dashed p-8 text-center text-sm">
+            Roles are syncing from company careers pages. Check back shortly.
           </p>
         )}
       </Container>
 
-      <Container className="pb-16">
-        <h2 className="mb-4 text-lg font-semibold text-fg">Browse by discipline</h2>
+      <Container className="reveal pb-20">
+        <h2 className="text-fg mb-4 text-lg font-semibold">Browse by discipline</h2>
         <DisciplineGrid counts={disciplineCounts} />
       </Container>
 
       {hiringCompanies.length > 0 && (
-        <section aria-labelledby="hiring" className="border-y border-line bg-surface">
-          <Container className="flex flex-col gap-4 py-8 sm:flex-row sm:items-center sm:gap-8">
-            <h2 id="hiring" className="shrink-0 text-[11px] font-medium tracking-[0.12em] text-subtle uppercase">
-              Hiring on Lodestar
-            </h2>
-            <ul className="flex flex-1 flex-wrap items-center gap-x-8 gap-y-3 sm:justify-between">
-              {hiringCompanies.map((c) => (
-                <li key={c.slug}>
-                  <Link
-                    href={`/companies/${c.slug}`}
-                    className="text-base font-semibold tracking-tight text-muted transition-colors hover:text-fg"
-                  >
-                    {c.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </Container>
+        <section aria-labelledby="hiring" className="reveal border-line bg-surface border-y py-10">
+          <h2 id="hiring" className="text-subtle mb-6 text-center text-[11px] font-medium tracking-[0.12em] uppercase">
+            Hiring on Lodestar
+          </h2>
+          <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+            <CompanyMarquee companies={hiringCompanies} />
+          </div>
         </section>
       )}
 
-      <Container className="py-16">
-        <ul className="grid gap-10 sm:grid-cols-3 sm:gap-8">
+      <Container className="reveal py-20">
+        <ul className="grid gap-3 sm:grid-cols-3">
           {PROMISES.map(({ icon: Icon, title, body }) => (
-            <li key={title}>
-              <Icon className="size-5 text-accent-fg" aria-hidden />
-              <h3 className="mt-3 text-sm font-semibold text-fg">{title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted">{body}</p>
+            <li key={title} className="metal-card group rounded-xl p-5">
+              <span className="border-accent/30 bg-accent/10 flex size-9 items-center justify-center rounded-lg border transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6">
+                <Icon className="text-accent-fg size-4" aria-hidden />
+              </span>
+              <h3 className="text-fg mt-4 text-sm font-semibold">{title}</h3>
+              <p className="text-muted mt-2 text-sm leading-relaxed">{body}</p>
             </li>
           ))}
         </ul>

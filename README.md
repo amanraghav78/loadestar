@@ -1,6 +1,17 @@
 # Lodestar
 
-Salary-transparent job board for product, design and engineering roles. There are no candidate accounts: people browse, save roles in their browser, and **Apply** sends them to the employer's own careers page or Google Form.
+Tech job board for India: engineering, design, product and data roles pulled daily from companies' own careers pages, with published salaries shown first (in ₹ LPA). There are no candidate accounts: people browse, save roles in their browser, and **Apply** sends them to the employer's own careers page.
+
+## Where the listings come from
+
+`lib/ingest` reads each company's **public job-board feed** (Greenhouse, Lever or Ashby: the same data behind their careers page). No scraping of other job sites.
+
+1. **Fetch** every posting (`lib/ingest/sources.ts`).
+2. **Filter** to roles located in India or explicitly "Remote – India" (`classify.ts`), in scope disciplines only (no sales/HR/finance).
+3. **Salary**: kept only when stated in INR per year (structured pay field, or parsed from text like "CTC ₹25–35 LPA"). A US/EU band on a multi-country posting is never shown on the Indian role. Otherwise the listing says "Salary not disclosed".
+4. **Sync** (`sync.ts`): upsert by feed ID, rewrite only changed rows, and take down roles that vanished from the feed. A failing feed never wipes existing listings.
+
+Runs daily at 08:00 IST via Vercel Cron (`/api/cron/sync`), or on demand from **/admin/companies → Sync all feeds now**. Add companies from `/admin/companies/new` (choose the feed type and board token). Starting list: `lib/ingest/companies.ts`.
 
 ## Stack
 
@@ -44,7 +55,7 @@ Requires **Node 22+**. No Docker needed: `db:local` runs Postgres (PGlite) in-pr
 npm install
 cp .env.example .env     # then set DATABASE_URL to the local one below
 npm run db:local         # terminal 1: postgresql://postgres:postgres@127.0.0.1:5433/postgres?sslmode=disable
-npm run db:migrate && npm run db:seed
+npm run db:migrate && npm run db:sync   # pulls real listings into your local DB
 npm run dev              # http://localhost:3000, admin at /admin
 ```
 
@@ -55,6 +66,9 @@ You can point `DATABASE_URL` at a Neon branch instead of running `db:local`.
 | `npm run lint` / `typecheck` / `test` | ESLint, `tsc`, Vitest |
 | `npm run test:e2e` | Playwright against `next start` on :3100 (needs `npm run build` + seeded DB) |
 | `npm run db:migrate:dev` | Create a new migration after editing `prisma/schema.prisma` |
+| `npm run db:sync [-- slug]` | Sync job-board feeds into `DATABASE_URL` (all companies, or one) |
+| `npm run ingest:preview` | Dry run: fetch + parse every feed, print what would be listed. No DB |
+| `npm run db:seed:test` | Fictional **test fixtures** for e2e/CI only; never run against production |
 
 ## Deploying to Vercel
 
@@ -62,7 +76,7 @@ You can point `DATABASE_URL` at a Neon branch instead of running `db:local`.
 2. Create an Upstash Redis database and set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`.
 3. Set `ADMIN_USER`, `ADMIN_PASS` (long and random), `CRON_SECRET` (`openssl rand -hex 32`), `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_POST_ROLE_FORM_URL` and `NEXT_PUBLIC_CONTACT_EMAIL`. Optionally set the Sentry variables.
 4. Import the repo in Vercel. The `vercel-build` script runs `prisma migrate deploy` before `next build`, and `vercel.json` registers the daily cron.
-5. Add companies and roles at `/admin` (or bulk-import a CSV at `/admin/import`).
+5. After the first deploy, trigger the first sync: `curl -H "Authorization: Bearer $CRON_SECRET" https://<site>/api/cron/sync` (then it runs daily).
 
 ## Adding listings
 

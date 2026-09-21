@@ -9,7 +9,7 @@ import { getSalaryStats, TAGS, type SalaryRow } from "@/lib/queries";
 export const metadata: Metadata = {
   title: "Salary data",
   description:
-    "Salary ranges for engineering, design and product roles, calculated from the published bands of live listings.",
+    "INR salary ranges for tech roles in India, calculated from pay that companies publish on live listings.",
   alternates: { canonical: "/salaries" },
 };
 
@@ -30,12 +30,16 @@ export default async function SalariesPage() {
     <Container wide className="py-10">
       <h1 className="metal-text text-2xl font-semibold tracking-tight">Salary data</h1>
       <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">
-        Calculated from the midpoint of every published band on live listings, refreshed hourly. Groups with
-        fewer than three roles are hidden so no single listing can be singled out.
+        Calculated from the midpoint of every INR salary published on a live listing, refreshed hourly. Most
+        Indian employers don&rsquo;t publish pay yet, so this only covers roles that do; groups with a single
+        role are hidden.
       </p>
 
       {rows.length === 0 ? (
-        <p className="mt-10 text-sm text-muted">Not enough live listings yet to publish salary data.</p>
+        <p className="mt-10 text-sm text-muted">
+          Not enough live listings publish pay yet to show salary data. It fills in as more companies disclose
+          salaries.
+        </p>
       ) : (
         <div className="mt-10 space-y-12">
           {[...byDiscipline].map(([discipline, list]) => (

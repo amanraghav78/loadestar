@@ -9,6 +9,18 @@ describe("formatSalaryBand", () => {
   });
 });
 
+describe("formatSalaryBand (INR)", () => {
+  it("quotes Indian salaries in LPA / crore", () => {
+    expect(formatSalaryBand(2_500_000, 3_500_000, "INR")).toBe("₹25–35 LPA");
+    expect(formatSalaryBand(4_408_400, 4_408_400, "INR")).toBe("₹44.1 LPA");
+    expect(formatSalaryBand(8_000_000, 12_000_000, "INR")).toBe("₹80 L – ₹1.2 Cr");
+  });
+
+  it("returns null when pay isn't disclosed", () => {
+    expect(formatSalaryBand(null, null, null)).toBeNull();
+  });
+});
+
 describe("formatPostedAgo", () => {
   const now = new Date("2026-09-21T12:00:00Z");
   const ago = (days: number) => new Date(now.getTime() - days * 86_400_000);
@@ -32,7 +44,8 @@ describe("formatPostedAgo", () => {
 
 describe("formatJobLocation", () => {
   it("describes remote, hybrid and on-site roles", () => {
-    expect(formatJobLocation({ location: "Berlin", remote: "REMOTE", remoteRegion: "Europe" })).toBe("Remote (Europe)");
+    expect(formatJobLocation({ location: "India", remote: "REMOTE", remoteRegion: "India" })).toBe("Remote (India)");
+    expect(formatJobLocation({ location: "Pune", remote: "REMOTE", remoteRegion: "India" })).toBe("Remote (India) · Pune");
     expect(formatJobLocation({ location: "London", remote: "HYBRID", remoteRegion: null })).toBe("Hybrid · London");
     expect(formatJobLocation({ location: "Utrecht", remote: "ONSITE", remoteRegion: null })).toBe("Utrecht");
   });

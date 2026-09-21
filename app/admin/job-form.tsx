@@ -17,9 +17,9 @@ export type JobFormValues = {
   location?: string;
   remote?: string;
   remoteRegion?: string | null;
-  salaryMin?: number;
-  salaryMax?: number;
-  currency?: string;
+  salaryMin?: number | null;
+  salaryMax?: number | null;
+  currency?: string | null;
   applyUrl?: string;
   featured?: boolean;
 };
@@ -82,14 +82,15 @@ export function JobForm({
       </div>
 
       <div className="grid gap-5 sm:grid-cols-3">
-        <Field label="Salary min (annual)" name="salaryMin" error={err("salaryMin")}>
-          <Input id="salaryMin" name="salaryMin" type="number" min={1} step={1000} defaultValue={job.salaryMin} required />
+        <Field label="Salary min (annual, optional)" name="salaryMin" error={err("salaryMin")} hint="In rupees, e.g. 2500000 for ₹25 LPA">
+          <Input id="salaryMin" name="salaryMin" type="number" min={1} step={10000} defaultValue={job.salaryMin ?? ""} />
         </Field>
-        <Field label="Salary max (annual)" name="salaryMax" error={err("salaryMax")}>
-          <Input id="salaryMax" name="salaryMax" type="number" min={1} step={1000} defaultValue={job.salaryMax} required />
+        <Field label="Salary max (annual, optional)" name="salaryMax" error={err("salaryMax")} hint="Leave both empty if not disclosed">
+          <Input id="salaryMax" name="salaryMax" type="number" min={1} step={10000} defaultValue={job.salaryMax ?? ""} />
         </Field>
         <Field label="Currency" name="currency" error={err("currency")}>
-          <Select id="currency" name="currency" defaultValue={job.currency ?? "EUR"}>
+          <Select id="currency" name="currency" defaultValue={job.currency ?? "INR"}>
+            <option value="INR">INR</option>
             <option value="EUR">EUR</option>
             <option value="GBP">GBP</option>
             <option value="USD">USD</option>
@@ -98,7 +99,7 @@ export function JobForm({
       </div>
 
       <div className="grid gap-5 sm:grid-cols-3">
-        <Field label="Location" name="location" error={err("location")} hint="City, or “Remote”">
+        <Field label="Location" name="location" error={err("location")} hint="Indian city, e.g. Bengaluru">
           <Input id="location" name="location" defaultValue={job.location} required />
         </Field>
         <Field label="Work setup" name="remote" error={err("remote")}>
@@ -111,7 +112,7 @@ export function JobForm({
           </Select>
         </Field>
         <Field label="Remote region" name="remoteRegion" error={err("remoteRegion")} hint="e.g. Europe, EMEA">
-          <Input id="remoteRegion" name="remoteRegion" defaultValue={job.remoteRegion ?? ""} />
+          <Input id="remoteRegion" name="remoteRegion" defaultValue={job.remoteRegion ?? ""} placeholder="India" />
         </Field>
       </div>
 

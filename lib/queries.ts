@@ -29,6 +29,7 @@ const jobCardSelect = {
   salaryMin: true,
   salaryMax: true,
   currency: true,
+  salaryDisclosed: true,
   postedAt: true,
   company: { select: { name: true, slug: true, logoUrl: true } },
 } satisfies Prisma.JobSelect;
@@ -44,20 +45,23 @@ export async function getHomeData() {
   cacheLife("hours");
   cacheTag(TAGS.jobs, TAGS.companies);
 
-  const [recommended, totalActive, byDiscipline, hiringCompanies] = await Promise.all([
+  const [recommended, totalActive, withSalary, byDiscipline, hiringCompanies] = await Promise.all([
     db.job.findMany({
       where: ACTIVE,
       select: jobCardSelect,
-      orderBy: [{ featured: "desc" }, { postedAt: "desc" }, { id: "desc" }],
+      // Salary-first: roles that publish pay lead, then featured, then newest.
+      orderBy: [{ salaryDisclosed: "desc" }, { featured: "desc" }, { postedAt: "desc" }, { id: "desc" }],
       take: 6,
     }),
     db.job.count({ where: ACTIVE }),
+    db.job.count({ where: { ...ACTIVE, salaryDisclosed: true } }),
     db.job.groupBy({ by: ["discipline"], where: ACTIVE, _count: { _all: true } }),
+    // The companies with the most open roles right now.
     db.company.findMany({
-      where: { featured: true },
+      where: { jobs: { some: ACTIVE } },
       select: { name: true, slug: true },
-      orderBy: { name: "asc" },
-      take: 6,
+      orderBy: { jobs: { _count: "desc" } },
+      take: 8,
     }),
   ]);
 
@@ -65,7 +69,7 @@ export async function getHomeData() {
     byDiscipline.map((d) => [d.discipline, d._count._all]),
   ) as Partial<Record<Discipline, number>>;
 
-  return { recommended, totalActive, disciplineCounts, hiringCompanies };
+  return { recommended, totalActive, withSalary, disciplineCounts, hiringCompanies };
 }
 
 // ---------------------------------------------------------------- search
@@ -95,8 +99,11 @@ function buildWhere(f: SearchFilters): Prisma.JobWhereInput {
   if (f.remote) and.push({ remote: f.remote });
   if (f.discipline) and.push({ discipline: f.discipline });
   if (f.level) and.push({ level: f.level });
+  if (f.city) and.push({ location: { contains: f.city } });
+  if (f.salary) and.push({ salaryDisclosed: true });
   if (f.currency) and.push({ currency: f.currency });
-  if (f.minSalary) and.push({ salaryMax: { gte: f.minSalary } });
+  // Minimum pay is in rupees; only roles that publish an INR band can match.
+  if (f.minSalary) and.push({ currency: "INR", salaryMax: { gte: f.minSalary } });
   if (f.tag) and.push({ tags: { has: f.tag } });
 
   return { AND: and };
@@ -114,7 +121,7 @@ export async function searchJobs(params: JobSearchParams) {
     db.job.findMany({
       where,
       select: jobCardSelect,
-      orderBy: [{ postedAt: "desc" }, { id: "desc" }],
+      orderBy: [{ salaryDisclosed: "desc" }, { postedAt: "desc" }, { id: "desc" }],
       take: PAGE_SIZE + 1,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     }),
@@ -158,6 +165,7 @@ export async function getJobBySlug(slug: string) {
           hq: true,
           size: true,
           medianResponseDays: true,
+          atsSource: true,
         },
       },
     },
@@ -172,7 +180,7 @@ export async function getSimilarJobs(jobId: string, discipline: Discipline) {
   return db.job.findMany({
     where: { ...ACTIVE, discipline, id: { not: jobId } },
     select: jobCardSelect,
-    orderBy: { postedAt: "desc" },
+    orderBy: [{ salaryDisclosed: "desc" }, { postedAt: "desc" }],
     take: 4,
   });
 }
@@ -196,7 +204,9 @@ export async function getCompanies() {
     },
     orderBy: { name: "asc" },
   });
-  return companies.map(({ _count, ...c }) => ({ ...c, openRoles: _count.jobs }));
+  return companies
+    .map(({ _count, ...c }) => ({ ...c, openRoles: _count.jobs }))
+    .sort((a, b) => b.openRoles - a.openRoles || a.name.localeCompare(b.name));
 }
 
 export async function getCompanyBySlug(slug: string) {
@@ -210,8 +220,8 @@ export async function getCompanyBySlug(slug: string) {
       jobs: {
         where: ACTIVE,
         select: jobCardSelect,
-        orderBy: { postedAt: "desc" },
-        take: 100,
+        orderBy: [{ salaryDisclosed: "desc" }, { postedAt: "desc" }],
+        take: 200,
       },
     },
   });
@@ -252,9 +262,9 @@ export async function getSalaryStats() {
            percentile_cont(0.5)  WITHIN GROUP (ORDER BY ("salaryMin" + "salaryMax") / 2.0) AS median,
            percentile_cont(0.75) WITHIN GROUP (ORDER BY ("salaryMin" + "salaryMax") / 2.0) AS p75
     FROM "Job"
-    WHERE "status" = 'ACTIVE'
+    WHERE "status" = 'ACTIVE' AND "salaryDisclosed" AND "currency" = 'INR'
     GROUP BY "discipline", "level", "currency"
-    HAVING COUNT(*) >= 3
+    HAVING COUNT(*) >= 2
     ORDER BY "discipline", "level", "currency"
   `;
 

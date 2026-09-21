@@ -10,7 +10,10 @@ export function Tag({ children, className }: { children: React.ReactNode; classN
 
 export function TagLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
-    <Link href={href} className={cn(tagClass, "px-2.5 py-1 hover:border-line-strong hover:text-fg")}>
+    <Link
+      href={href}
+      className={cn(tagClass, "hover:border-accent/50 hover:bg-accent/10 hover:text-fg px-2.5 py-1 transition-colors")}
+    >
       {children}
     </Link>
   );

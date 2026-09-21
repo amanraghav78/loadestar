@@ -68,9 +68,9 @@ test.describe("admin", () => {
     await page.goto("/admin/jobs/new");
     await page.getByLabel("Title").fill(title);
     await page.getByRole("combobox", { name: "Company" }).selectOption({ label: "Vellum" });
-    await page.getByLabel("Salary min (annual)").fill("70000");
-    await page.getByLabel("Salary max (annual)").fill("90000");
-    await page.getByLabel("Location", { exact: true }).fill("Utrecht");
+    await page.getByLabel("Salary min").fill("2500000");
+    await page.getByLabel("Salary max").fill("3500000");
+    await page.getByLabel("Location", { exact: true }).fill("Bengaluru");
     await page.getByLabel("Apply URL").fill("https://forms.gle/e2e-test");
     await page.getByLabel("Tags").fill("Rust, E2E");
     await page.getByLabel("Description").fill("An end-to-end test listing that is long enough to pass validation.");

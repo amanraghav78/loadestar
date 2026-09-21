@@ -1,9 +1,9 @@
 /**
- * Demo data matching the design mockup, plus enough generated roles to
- * exercise search, filters, pagination and salary stats.
+ * TEST FIXTURES ONLY: fictional companies and roles used by the Playwright
+ * suite and CI. Never run this against production; real listings come from
+ * `npm run db:sync`.
  *
- *   npm run db:seed            # refuses to run against production
- *   npm run db:seed -- --force # wipe and reseed anyway
+ *   npm run db:seed:test            # refuses to run in production
  */
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -227,6 +227,7 @@ async function main() {
         featured: job.featured ?? false,
         searchText: buildSearchText({ ...job, companyName: company.name }),
         postedAt: daysAgo(job.postedDaysAgo),
+        salaryDisclosed: true,
         lastVerifiedAt: daysAgo(Math.min(job.postedDaysAgo, 6)),
       };
     }),

@@ -17,6 +17,7 @@ enum Discipline {
 }
 
 enum Level {
+  INTERN
   JUNIOR
   MID
   SENIOR
@@ -33,9 +34,18 @@ enum RemotePolicy {
 }
 
 enum Currency {
+  INR
   EUR
   GBP
   USD
+}
+
+/// Where a listing came from. Synced sources are refreshed daily by lib/ingest.
+enum JobSource {
+  MANUAL
+  GREENHOUSE
+  LEVER
+  ASHBY
 }
 
 enum JobStatus {
@@ -44,54 +54,70 @@ enum JobStatus {
 }
 
 model Company {
-  id                 String   @id @default(cuid())
-  slug               String   @unique
+  id                 String     @id @default(cuid())
+  slug               String     @unique
   name               String
   logoUrl            String?
   website            String
-  description        String
-  hq                 String
-  size               String
+  description        String?
+  hq                 String?
+  size               String?
   /// Median days from application to first response, shown on company pages.
   medianResponseDays Int?
-  featured           Boolean  @default(false)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  featured           Boolean    @default(false)
+  /// Public job-board feed this company publishes (null = listings added by hand).
+  atsSource          JobSource?
+  /// Board token/slug in that system, e.g. "stripe" for boards-api.greenhouse.io/v1/boards/stripe.
+  atsToken           String?
+  lastSyncedAt       DateTime?
+  lastSyncError      String?
+  lastSyncJobCount   Int?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
   jobs               Job[]
 }
 
 model Job {
-  id             String       @id @default(cuid())
-  slug           String       @unique
-  title          String
-  description    String
-  companyId      String
-  company        Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  discipline     Discipline
-  level          Level
-  tags           String[]
-  location       String
-  remote         RemotePolicy
+  id              String       @id @default(cuid())
+  slug            String       @unique
+  title           String
+  description     String
+  companyId       String
+  company         Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  discipline      Discipline
+  level           Level
+  tags            String[]
+  location        String
+  remote          RemotePolicy
   /// Region a remote role is open to, e.g. "EMEA" or "Europe".
-  remoteRegion   String?
-  /// Annual salary band. Required: a listing without a band cannot go live.
-  salaryMin      Int
-  salaryMax      Int
-  currency       Currency
+  remoteRegion    String?
+  /// Annual salary band, only when the employer publishes one (INR for India roles).
+  salaryMin       Int?
+  salaryMax       Int?
+  currency        Currency?
+  /// Denormalised "salaryMin is not null" so salary-first sorting stays indexed.
+  salaryDisclosed Boolean      @default(false)
+  source          JobSource    @default(MANUAL)
+  /// ID of the posting in the source system; unique per source.
+  externalId      String?
+  /// Hash of the normalised posting, so the sync only rewrites rows that changed.
+  contentHash     String?
   /// Where "Apply" sends the candidate: company careers page or a Google Form.
-  applyUrl       String
-  status         JobStatus    @default(ACTIVE)
-  featured       Boolean      @default(false)
+  applyUrl        String
+  status          JobStatus    @default(ACTIVE)
+  featured        Boolean      @default(false)
   /// Lowercased title + company + location + tags, kept in sync by lib/jobs.ts.
   /// Trigram-indexed so ILIKE search stays fast.
-  searchText     String
-  postedAt       DateTime     @default(now())
-  lastVerifiedAt DateTime     @default(now())
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  applyClicks    ApplyClick[]
+  searchText      String
+  postedAt        DateTime     @default(now())
+  lastVerifiedAt  DateTime     @default(now())
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  applyClicks     ApplyClick[]
 
+  @@unique([source, externalId])
   @@index([status, postedAt(sort: Desc), id(sort: Desc)])
+  @@index([status, salaryDisclosed, postedAt(sort: Desc), id(sort: Desc)])
   @@index([status, discipline])
   @@index([companyId, status])
   @@index([status, lastVerifiedAt])

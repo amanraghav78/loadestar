@@ -10,9 +10,11 @@ export type CompanyFormValues = {
   name?: string;
   website?: string;
   logoUrl?: string | null;
-  description?: string;
-  hq?: string;
-  size?: string;
+  description?: string | null;
+  hq?: string | null;
+  size?: string | null;
+  atsSource?: string | null;
+  atsToken?: string | null;
   medianResponseDays?: number | null;
   featured?: boolean;
 };
@@ -51,9 +53,33 @@ export function CompanyForm({ company = {} }: { company?: CompanyFormValues }) {
           "Optional, square image. Falls back to a letter tile.",
         )}
       </div>
+      <div className="grid gap-5 sm:grid-cols-2">
+        {field(
+          "atsSource",
+          "Job-board feed",
+          <select
+            id="atsSource"
+            name="atsSource"
+            defaultValue={company.atsSource ?? ""}
+            className="h-10 w-full rounded-lg border border-line bg-surface px-3 text-sm text-fg"
+          >
+            <option value="">None (add roles by hand)</option>
+            <option value="GREENHOUSE">Greenhouse</option>
+            <option value="LEVER">Lever</option>
+            <option value="ASHBY">Ashby</option>
+          </select>,
+          "Roles are synced daily from this public feed.",
+        )}
+        {field(
+          "atsToken",
+          "Board token",
+          <Input id="atsToken" name="atsToken" defaultValue={company.atsToken ?? ""} placeholder="stripe" />,
+          "The slug in the careers URL, e.g. jobs.lever.co/<token>",
+        )}
+      </div>
       <div className="grid gap-5 sm:grid-cols-3">
-        {field("hq", "Headquarters", <Input id="hq" name="hq" defaultValue={company.hq} required />)}
-        {field("size", "Team size", <Input id="size" name="size" defaultValue={company.size} placeholder="51–200" required />)}
+        {field("hq", "Headquarters", <Input id="hq" name="hq" defaultValue={company.hq ?? ""} />)}
+        {field("size", "Team size", <Input id="size" name="size" defaultValue={company.size ?? ""} placeholder="51–200" />)}
         {field(
           "medianResponseDays",
           "Median reply (days)",
@@ -70,7 +96,7 @@ export function CompanyForm({ company = {} }: { company?: CompanyFormValues }) {
       {field(
         "description",
         "Description",
-        <Textarea id="description" name="description" rows={5} defaultValue={company.description} required />,
+        <Textarea id="description" name="description" rows={5} defaultValue={company.description ?? ""} />,
       )}
       <label className="flex items-center gap-2 text-sm text-muted">
         <input type="checkbox" name="featured" defaultChecked={company.featured} className="size-4 accent-[#7c6cf0]" />

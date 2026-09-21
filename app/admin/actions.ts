@@ -4,10 +4,11 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { isAdminAuthorization } from "@/lib/admin-auth";
-import { createCompany, createJob, jobSlug, updateCompany, updateJob } from "@/lib/admin-jobs";
+import { createCompany, createJob, jobSlug, salaryFields, updateCompany, updateJob } from "@/lib/admin-jobs";
 import { csvToRecords } from "@/lib/csv";
 import { db } from "@/lib/db";
 import { buildSearchText } from "@/lib/format";
+import { syncAll } from "@/lib/ingest/sync";
 import { revalidateCompanies, revalidateJobs } from "@/lib/revalidate";
 import type { Prisma } from "@/lib/generated/prisma/client";
 import { companyInputSchema, jobInputSchema } from "@/lib/validators";
@@ -150,7 +151,7 @@ export async function importJobs(_prev: FormState, formData: FormData): Promise<
       remoteRegion: r.remote_region,
       salaryMin: r.salary_min,
       salaryMax: r.salary_max,
-      currency: r.currency?.toUpperCase(),
+      currency: r.currency ? r.currency.toUpperCase() : undefined,
       applyUrl: r.apply_url,
       featured: r.featured,
     });
@@ -162,6 +163,7 @@ export async function importJobs(_prev: FormState, formData: FormData): Promise<
     const d = parsed.data;
     rows.push({
       ...d,
+      ...salaryFields(d),
       remoteRegion: d.remoteRegion ?? null,
       slug: jobSlug(d.title, company.name),
       searchText: buildSearchText({ ...d, companyName: company.name }),
@@ -177,4 +179,24 @@ export async function importJobs(_prev: FormState, formData: FormData): Promise<
   revalidateJobs();
   revalidateCompanies();
   return { message: `Imported ${count} role(s).` };
+}
+
+// ---------------------------------------------------------------- job-board sync
+
+export type SyncState = { message?: string; failed?: string[] };
+
+/** Same as the daily cron, on demand from /admin/companies. */
+export async function syncNow(_prev: SyncState, formData: FormData): Promise<SyncState> {
+  await requireAdmin();
+  const only = formData.get("company");
+  const results = await syncAll(typeof only === "string" && only ? only : undefined);
+  revalidateJobs();
+  revalidateCompanies();
+  const listed = results.reduce((n, r) => n + r.listed, 0);
+  const created = results.reduce((n, r) => n + r.created, 0);
+  const expired = results.reduce((n, r) => n + r.expired, 0);
+  return {
+    message: `Synced ${results.length} companies: ${listed} live roles (${created} new, ${expired} taken down).`,
+    failed: results.filter((r) => !r.ok).map((r) => `${r.name}: ${r.error}`),
+  };
 }

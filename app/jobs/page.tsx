@@ -12,7 +12,7 @@ import { parseSearchParams, toQueryString, type JobSearchParams } from "@/lib/va
 
 export const metadata: Metadata = {
   title: "Find jobs",
-  description: "Search salary-transparent engineering, design and product roles.",
+  description: "Engineering, design, product and data roles at companies hiring in India, straight from their careers pages.",
   alternates: { canonical: "/jobs" },
 };
 
@@ -35,6 +35,8 @@ function describe(params: JobSearchParams) {
   if (params.discipline) parts.push(DISCIPLINE_LABEL[params.discipline]);
   if (params.tag) parts.push(params.tag);
   if (params.location) parts.push(`in ${params.location}`);
+  if (params.city) parts.push(`in ${params.city}`);
+  if (params.salary) parts.push("with salary");
   return parts.join(" · ");
 }
 
