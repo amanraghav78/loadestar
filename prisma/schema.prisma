@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Discipline {
+  ENGINEERING
+  DESIGN
+  PRODUCT
+  DATA
+  SECURITY
+  INFRASTRUCTURE
+}
+
+enum Level {
+  JUNIOR
+  MID
+  SENIOR
+  STAFF
+  PRINCIPAL
+  MANAGER
+  DIRECTOR
+}
+
+enum RemotePolicy {
+  ONSITE
+  HYBRID
+  REMOTE
+}
+
+enum Currency {
+  EUR
+  GBP
+  USD
+}
+
+enum JobStatus {
+  ACTIVE
+  EXPIRED
+}
+
+model Company {
+  id                 String   @id @default(cuid())
+  slug               String   @unique
+  name               String
+  logoUrl            String?
+  website            String
+  description        String
+  hq                 String
+  size               String
+  /// Median days from application to first response, shown on company pages.
+  medianResponseDays Int?
+  featured           Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  jobs               Job[]
+}
+
+model Job {
+  id             String       @id @default(cuid())
+  slug           String       @unique
+  title          String
+  description    String
+  companyId      String
+  company        Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  discipline     Discipline
+  level          Level
+  tags           String[]
+  location       String
+  remote         RemotePolicy
+  /// Region a remote role is open to, e.g. "EMEA" or "Europe".
+  remoteRegion   String?
+  /// Annual salary band. Required: a listing without a band cannot go live.
+  salaryMin      Int
+  salaryMax      Int
+  currency       Currency
+  /// Where "Apply" sends the candidate: company careers page or a Google Form.
+  applyUrl       String
+  status         JobStatus    @default(ACTIVE)
+  featured       Boolean      @default(false)
+  /// Lowercased title + company + location + tags, kept in sync by lib/jobs.ts.
+  /// Trigram-indexed so ILIKE search stays fast.
+  searchText     String
+  postedAt       DateTime     @default(now())
+  lastVerifiedAt DateTime     @default(now())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  applyClicks    ApplyClick[]
+
+  @@index([status, postedAt(sort: Desc), id(sort: Desc)])
+  @@index([status, discipline])
+  @@index([companyId, status])
+  @@index([status, lastVerifiedAt])
+  @@index([tags], type: Gin)
+  @@index([searchText(ops: raw("gin_trgm_ops"))], type: Gin)
+}
+
+/// Anonymous outbound-click log. No personal data is stored.
+model ApplyClick {
+  id          String   @id @default(cuid())
+  jobId       String
+  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  referrer    String?
+  countryCode String?
+  createdAt   DateTime @default(now())
+
+  @@index([jobId, createdAt])
+}
