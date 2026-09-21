@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Textarea } from "@/components/ui/field";
+import { TOKEN_HINT } from "@/lib/ingest/tokens";
 import { saveCompany, type FormState } from "./actions";
 
 export type CompanyFormValues = {
@@ -64,17 +65,22 @@ export function CompanyForm({ company = {} }: { company?: CompanyFormValues }) {
             className="h-10 w-full rounded-lg border border-line bg-surface px-3 text-sm text-fg"
           >
             <option value="">None (add roles by hand)</option>
-            <option value="GREENHOUSE">Greenhouse</option>
-            <option value="LEVER">Lever</option>
-            <option value="ASHBY">Ashby</option>
+            {Object.entries(TOKEN_HINT).map(([value, hint]) => (
+              <option key={value} value={value}>
+                {hint.label}
+              </option>
+            ))}
           </select>,
-          "Roles are synced daily from this public feed.",
+          "Roles are synced daily from this public careers-site API.",
         )}
         {field(
           "atsToken",
           "Board token",
           <Input id="atsToken" name="atsToken" defaultValue={company.atsToken ?? ""} placeholder="stripe" />,
-          "The slug in the careers URL, e.g. jobs.lever.co/<token>",
+          `e.g. ${Object.values(TOKEN_HINT)
+            .filter((h) => h.label === "Greenhouse" || h.label === "Workday")
+            .map((h) => h.example)
+            .join("  or  ")}. Separate several career sites with spaces.`,
         )}
       </div>
       <div className="grid gap-5 sm:grid-cols-3">

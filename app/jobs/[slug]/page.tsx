@@ -20,7 +20,8 @@ import {
   REMOTE_LABEL,
 } from "@/lib/format";
 import { getJobBySlug, getSimilarJobs, TAGS } from "@/lib/queries";
-import { absoluteUrl, site } from "@/lib/site";
+import { listingExpiresAt } from "@/lib/listing-age";
+import { absoluteUrl } from "@/lib/site";
 
 export async function generateMetadata({ params }: PageProps<"/jobs/[slug]">): Promise<Metadata> {
   const { slug } = await params;
@@ -200,7 +201,7 @@ async function JobDetail({ slug }: { slug: string }) {
 type JobForLd = NonNullable<Awaited<ReturnType<typeof getJobBySlug>>>;
 
 function jobPostingJsonLd(job: JobForLd) {
-  const validThrough = new Date(job.lastVerifiedAt.getTime() + site.expiryDays * 24 * 60 * 60 * 1000);
+  const validThrough = listingExpiresAt(job.postedAt);
   return {
     "@context": "https://schema.org",
     "@type": "JobPosting",

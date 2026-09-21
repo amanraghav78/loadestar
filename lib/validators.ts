@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { Currency, Discipline, JobSource, Level, RemotePolicy } from "@/lib/generated/prisma/enums";
 import { INDIA_CITIES } from "@/lib/ingest/classify";
+import { splitTokens, TOKEN_HINT } from "@/lib/ingest/tokens";
 
 const optionalTrimmed = (max: number) =>
   z
@@ -110,14 +111,21 @@ export const companyInputSchema = z.object({
   size: optionalTrimmed(40),
   atsSource: z.preprocess((v) => (v === "" ? undefined : v), z.enum(JobSource).exclude(["MANUAL"]).optional()),
   atsToken: z.preprocess(
-    (v) => (v === "" ? undefined : v),
-    z.string().trim().regex(/^[a-z0-9_-]{1,80}$/i, "Letters, numbers, - and _ only").optional(),
+    (v) => (typeof v === "string" ? v.trim().replace(/\s+/g, " ") || undefined : v),
+    z.string().max(600).optional(),
   ),
   medianResponseDays: z.preprocess(
     (v) => (v === "" || v == null ? undefined : v),
     z.coerce.number().int().min(0).max(120).optional(),
   ),
   featured: z.preprocess((v) => v === "on" || v === "true" || v === true, z.boolean()),
+}).superRefine((c, ctx) => {
+  if (!c.atsSource) return;
+  const hint = TOKEN_HINT[c.atsSource];
+  // Several career sites of one company are separated by spaces.
+  if (!c.atsToken || !splitTokens(c.atsToken).every((t) => hint.pattern.test(t))) {
+    ctx.addIssue({ code: "custom", path: ["atsToken"], message: `${hint.label} token looks like ${hint.example}` });
+  }
 });
 
 export type CompanyInput = z.infer<typeof companyInputSchema>;

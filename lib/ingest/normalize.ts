@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import type { Discipline, Level, RemotePolicy } from "@/lib/generated/prisma/enums";
 import { classifyDiscipline, classifyLevel, extractTags, indiaLocation } from "@/lib/ingest/classify";
+import { listingCutoff } from "@/lib/listing-age";
 import { parseInrSalary } from "@/lib/ingest/salary";
 import type { RawPosting } from "@/lib/ingest/sources";
 
@@ -21,15 +22,17 @@ export type NormalizedJob = {
   contentHash: string;
 };
 
-export type SkipReason = "not_india" | "not_in_scope" | "bad_url";
+export type SkipReason = "too_old" | "not_india" | "not_in_scope" | "bad_url";
 
 /**
  * Turns a raw posting into a listing, or explains why it was skipped.
- * Only India-based product/design/engineering/data roles pass. Salary is kept
- * only when stated in INR, so a US band on a multi-country posting never shows
- * up on an Indian role.
+ * Only India-based product/design/engineering/data roles posted within the
+ * last 30 days pass. Salary is kept only when stated in INR, so a US band on a
+ * multi-country posting never shows up on an Indian role.
  */
-export function normalizePosting(p: RawPosting): { job: NormalizedJob } | { skip: SkipReason } {
+export function normalizePosting(p: RawPosting, since = listingCutoff()): { job: NormalizedJob } | { skip: SkipReason } {
+  if (p.postedAt < since) return { skip: "too_old" };
+
   const india = indiaLocation(p.locations, p.workplace);
   if (!india) return { skip: "not_india" };
 
@@ -98,9 +101,19 @@ export function dedupe(jobs: NormalizedJob[]) {
       byKey.set(key, job);
       continue;
     }
-    const cities = new Set([...existing.location.split(" · "), ...job.location.split(" · ")].filter((c) => c !== "India"));
-    if (cities.size > 0) existing.location = [...cities].slice(0, 3).join(" · ");
+    existing.location = mergeLocations(existing.location, job.location);
     if (job.postedAt < existing.postedAt) existing.postedAt = job.postedAt;
   }
   return [...byKey.values()].map((job) => ({ ...job, contentHash: hashJob(job) }));
+}
+
+/** "Pune" + "Bengaluru · Pune" → "Pune · Bengaluru" (at most 3 cities; "India" only when none is known). */
+export function mergeLocations(a: string, b: string) {
+  const cities = new Set([...a.split(" · "), ...b.split(" · ")].filter((c) => c && c !== "India"));
+  return cities.size > 0 ? [...cities].slice(0, 3).join(" · ") : "India";
+}
+
+/** Re-fingerprints a listing after a field was changed outside normalizePosting. */
+export function rehash(job: NormalizedJob): NormalizedJob {
+  return { ...job, contentHash: hashJob(job) };
 }

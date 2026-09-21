@@ -15,9 +15,10 @@ export default function VerificationPage() {
     >
       <h3>From your careers page</h3>
       <p>
-        If your company publishes roles on Greenhouse, Lever or Ashby, we read your public job board directly.
-        There&rsquo;s nothing to post or re-confirm: new roles appear after our next daily check, and roles you
-        close disappear from Lodestar on the same schedule.
+        If your careers site runs on Workday, SmartRecruiters, Greenhouse, Lever, Ashby, Oracle Recruiting or
+        Eightfold, we read its public listings directly. There&rsquo;s nothing to post or re-confirm: new roles
+        appear after our next check (several times a day), and roles you close disappear from Lodestar on the same
+        schedule. Roles are removed once they are 30 days old.
       </p>
       <h3>Publish your salary range</h3>
       <p>

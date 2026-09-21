@@ -12,7 +12,7 @@ const jakarta = Plus_Jakarta_Sans({ variable: "--font-jakarta", subsets: ["latin
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {
-    default: "Lodestar — tech jobs in India, pay first",
+    default: "Lodestar — Your Next Job Awaits",
     template: "%s · Lodestar",
   },
   description: site.description,
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: site.name,
-    title: "Lodestar — tech jobs in India, straight from company careers pages",
+    title: "Lodestar — Your Next Job Awaits",
     description: site.description,
     url: "/",
   },

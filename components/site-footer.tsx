@@ -61,7 +61,7 @@ export async function SiteFooter() {
       </div>
       <div className="border-t border-line">
         <p className="mx-auto w-full max-w-6xl px-4 py-5 text-xs text-subtle sm:px-6">
-          © {new Date().getFullYear()} Lodestar Labs. All listings verified weekly.
+          © {new Date().getFullYear()} Lodestar Labs. Every listing posted in the last 30 days.
         </p>
       </div>
     </footer>

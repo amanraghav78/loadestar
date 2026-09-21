@@ -31,8 +31,8 @@ export default function EditorialStandardsPage() {
       </ul>
       <h3>When a listing comes down</h3>
       <p>
-        We re-read every company&rsquo;s careers page daily. A role that is no longer there is taken down on the
-        next check. If you find a listing that&rsquo;s wrong, such as a filled role, a misread salary or a
+        We re-read every company&rsquo;s careers page several times a day. A role that is no longer there is
+        taken down on the next check, and every role is deleted once it is 30 days old. If you find a listing that&rsquo;s wrong, such as a filled role, a misread salary or a
         broken link, tell us through the contact page and we&rsquo;ll fix it.
       </p>
     </ContentPage>

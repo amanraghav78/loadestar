@@ -204,8 +204,10 @@ export async function getCompanies() {
     },
     orderBy: { name: "asc" },
   });
+  // Only companies hiring right now; the others keep their pages but aren't listed.
   return companies
     .map(({ _count, ...c }) => ({ ...c, openRoles: _count.jobs }))
+    .filter((c) => c.openRoles > 0)
     .sort((a, b) => b.openRoles - a.openRoles || a.name.localeCompare(b.name));
 }
 

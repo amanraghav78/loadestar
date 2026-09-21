@@ -20,6 +20,14 @@ const CITIES: Array<[RegExp, string]> = [
   [/\bindore\b/i, "Indore"],
   [/\bchandigarh\b/i, "Chandigarh"],
   [/\b(thiruvananthapuram|trivandrum)\b/i, "Thiruvananthapuram"],
+  [/\b(vadodara|baroda)\b/i, "Vadodara"],
+  [/\b(mysuru|mysore)\b/i, "Mysuru"],
+  [/\bbhubaneswar\b/i, "Bhubaneswar"],
+  [/\bnagpur\b/i, "Nagpur"],
+  [/\b(visakhapatnam|vizag)\b/i, "Visakhapatnam"],
+  [/\bmohali\b/i, "Mohali"],
+  [/\blucknow\b/i, "Lucknow"],
+  [/\bhosur\b/i, "Hosur"],
 ];
 
 export const INDIA_CITIES = CITIES.map(([, name]) => name);
@@ -91,8 +99,15 @@ const RULES: Array<[RegExp, Discipline]> = [
   [/\b(engineer|engineering|developer|software|sde|swe|programmer|architect|qa|sdet|tester|test automation|mobile|android|ios|frontend|front-end|backend|back-end|full[- ]?stack)\b/i, "ENGINEERING"],
 ];
 
+// Non-software engineering that MNC feeds are full of ("Mechanical Design Engineer",
+// "Plant Maintenance Engineer"). Kept only when the title is clearly about software.
+const NON_SOFTWARE =
+  /\b(mechanical|civil|structural|chemical|piping|hvac|process engineer|manufacturing|production|plant|maintenance|welding|tooling|instrumentation|electrical|power systems|field service|installation|commissioning|technician|quality (inspector|control|assurance engineer - mech)|supplier quality|procurement|sourcing|logistics|warehouse|clinical|medical|pharmacovigilance|regulatory|biostatistic|actuar|underwrit|audit|tax|treasury|fund (accounting|controller)|claims)\b/i;
+const SOFTWARE_HINT = /\b(software|firmware|embedded|data|cloud|devops|ai|ml|digital|automation engineer|sde|developer|full[- ]?stack|backend|frontend|platform)\b/i;
+
 export function classifyDiscipline(title: string, department?: string | null): Discipline | null {
   if (EXCLUDE.test(title)) return null;
+  if (NON_SOFTWARE.test(title) && !SOFTWARE_HINT.test(title)) return null;
   for (const [re, d] of RULES) if (re.test(title)) return d;
   // Fall back to the department only for generic titles like "Member of Technical Staff".
   if (department && /engineering|technology|r&d/i.test(department) && /technical|staff|scientist/i.test(title)) {

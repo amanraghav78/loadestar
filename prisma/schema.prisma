@@ -46,6 +46,11 @@ enum JobSource {
   GREENHOUSE
   LEVER
   ASHBY
+  WORKDAY
+  SMARTRECRUITERS
+  EIGHTFOLD
+  ORACLE
+  AMAZON
 }
 
 enum JobStatus {
@@ -70,6 +75,8 @@ model Company {
   /// Board token/slug in that system, e.g. "stripe" for boards-api.greenhouse.io/v1/boards/stripe.
   atsToken           String?
   lastSyncedAt       DateTime?
+  /// When a sync last started for this company; the sync works through the least recent first.
+  lastSyncAttemptAt  DateTime?
   lastSyncError      String?
   lastSyncJobCount   Int?
   createdAt          DateTime   @default(now())

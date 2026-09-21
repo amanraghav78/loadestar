@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test("landing page matches the design's sections", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Find the room where the work is real.");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Your Next Job Awaits.");
   await expect(page.getByText(/open tech roles in India/i)).toBeVisible();
   await expect(page.getByRole("heading", { name: "Recommended for you" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Browse by discipline" })).toBeVisible();

@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { classifyDiscipline, classifyLevel, extractTags, indiaLocation } from "@/lib/ingest/classify";
 import { htmlToText } from "@/lib/ingest/html";
-import { dedupe, normalizePosting } from "@/lib/ingest/normalize";
+import { dedupe, mergeLocations, normalizePosting } from "@/lib/ingest/normalize";
 import { parseInrSalary } from "@/lib/ingest/salary";
-import type { RawPosting } from "@/lib/ingest/sources";
+import { workdayAgeDays, workdayIndiaFacet, type RawPosting } from "@/lib/ingest/sources";
+import { companyInputSchema } from "@/lib/validators";
 
 describe("parseInrSalary", () => {
   it.each([
@@ -127,7 +128,7 @@ describe("normalizePosting", () => {
     department: "Engineering",
     description: "Pay Range: $180,000 — $220,000 USD. Build Kafka pipelines.",
     applyUrl: "https://example.com/jobs/1",
-    postedAt: new Date("2026-09-01"),
+    postedAt: new Date(Date.now() - 2 * 86_400_000),
     pay: null,
   };
 
@@ -159,5 +160,106 @@ describe("normalizePosting", () => {
     ]);
     expect(merged).toHaveLength(1);
     expect(merged[0]!.location).toBe("Pune · Hyderabad");
+  });
+});
+
+describe("30-day window", () => {
+  const recent: RawPosting = {
+    externalId: "w1",
+    title: "Software Engineer",
+    locations: ["Pune, India"],
+    workplace: null,
+    department: null,
+    description: "",
+    applyUrl: "https://example.com/jobs/w1",
+    postedAt: new Date(),
+    pay: null,
+  };
+
+  it("skips postings 30 or more days old", () => {
+    expect(normalizePosting({ ...recent, postedAt: new Date(Date.now() - 31 * 86_400_000) })).toEqual({ skip: "too_old" });
+    expect("job" in normalizePosting({ ...recent, postedAt: new Date(Date.now() - 29 * 86_400_000) })).toBe(true);
+  });
+
+  it.each([
+    ["Posted Today", 0],
+    ["Posted Yesterday", 1],
+    ["Posted 12 Days Ago", 12],
+    ["Posted 30+ Days Ago", null],
+    [undefined, null],
+  ])("reads Workday's %s as %s days", (text, days) => {
+    expect(workdayAgeDays(text)).toBe(days);
+  });
+});
+
+describe("workdayIndiaFacet", () => {
+  it("prefers a country-level India value, however deeply it is nested", () => {
+    const facets = [
+      { facetParameter: "jobFamilyGroup", values: [{ descriptor: "Engineering", id: "e1" }] },
+      {
+        facetParameter: "locationMainGroup",
+        values: [
+          { facetParameter: "locationHierarchy1", id: "", values: [{ descriptor: "India", id: "in1" }, { descriptor: "Canada", id: "ca1" }] },
+          { facetParameter: "locations", id: "", values: [{ descriptor: "India, Pune", id: "p1" }] },
+        ],
+      },
+    ];
+    expect(workdayIndiaFacet(facets)).toEqual({ locationHierarchy1: ["in1"] });
+  });
+
+  it("falls back to every Indian location when there is no country facet", () => {
+    const facets = [
+      {
+        facetParameter: "locations",
+        values: [
+          { descriptor: "Bangalore - Bagmane Tridib", id: "b1" },
+          { descriptor: "IND - Hyderabad", id: "h1" },
+          { descriptor: "Chicago", id: "c1" },
+        ],
+      },
+    ];
+    expect(workdayIndiaFacet(facets)).toEqual({ locations: ["b1", "h1"] });
+    expect(workdayIndiaFacet([{ facetParameter: "locations", values: [{ descriptor: "London", id: "l1" }] }])).toBeNull();
+  });
+});
+
+describe("MNC titles", () => {
+  it.each([
+    ["Custom Software Engineer", "ENGINEERING"],
+    ["Firmware Engineer - Embedded", "ENGINEERING"],
+    ["Software Engineer - Manufacturing Systems", "ENGINEERING"],
+    ["Senior Data Engineer", "DATA"],
+  ])("keeps %s", (title, expected) => {
+    expect(classifyDiscipline(title)).toBe(expected);
+  });
+
+  it.each(["Mechanical Design Engineer", "Plant Maintenance Engineer", "Electrical Engineer - Power Systems", "Process Engineer II", "Field Service Engineer"])(
+    "excludes %s",
+    (title) => {
+      expect(classifyDiscipline(title)).toBeNull();
+    },
+  );
+});
+
+describe("mergeLocations", () => {
+  it("unions cities and keeps India only as a fallback", () => {
+    expect(mergeLocations("Pune", "Bengaluru · Pune")).toBe("Pune · Bengaluru");
+    expect(mergeLocations("India", "Hyderabad")).toBe("Hyderabad");
+    expect(mergeLocations("India", "India")).toBe("India");
+  });
+});
+
+describe("company feed tokens", () => {
+  const company = { name: "NVIDIA", website: "https://www.nvidia.com", featured: "" };
+
+  it("accepts each source's token format, including several career sites", () => {
+    const ok = (atsSource: string, atsToken: string) => companyInputSchema.safeParse({ ...company, atsSource, atsToken }).success;
+    expect(ok("WORKDAY", "nvidia.wd5.myworkdayjobs.com|nvidia|NVIDIAExternalCareerSite")).toBe(true);
+    expect(ok("WORKDAY", "hpe.wd5.myworkdayjobs.com|hpe|Jobsathpe  hpe.wd5.myworkdayjobs.com|hpe|ACJobSite")).toBe(true);
+    expect(ok("ORACLE", "jpmc.fa.oraclecloud.com|CX_1001|300000000289360")).toBe(true);
+    expect(ok("GREENHOUSE", "stripe")).toBe(true);
+    expect(ok("WORKDAY", "nvidia")).toBe(false);
+    expect(ok("GREENHOUSE", "")).toBe(false);
+    expect(ok("GREENHOUSE", "https://evil.example")).toBe(false);
   });
 });

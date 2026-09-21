@@ -18,10 +18,15 @@ export default function AboutPage() {
       <h3>Where the listings come from</h3>
       <ul>
         <li>
-          Every role is read from the company&rsquo;s own public job board (the same feed behind their careers
-          page), not scraped from other job sites or reposted by agencies.
+          Every role is read from the company&rsquo;s own careers site (the same listings you&rsquo;d see there),
+          from MNCs like Microsoft, Amazon, NVIDIA and JPMorgan to startups like CRED and Razorpay. Nothing is
+          scraped from other job sites or reposted by agencies.
         </li>
-        <li>We check every company daily. When a role disappears from their careers page, it comes down here.</li>
+        <li>
+          We check every company several times a day. When a role disappears from their careers page, it comes
+          down here.
+        </li>
+        <li>Only roles posted in the last 30 days are listed. Anything older is deleted.</li>
         <li>We only list roles based in India, or explicitly open to remote work from India.</li>
       </ul>
       <h3>Pay first</h3>

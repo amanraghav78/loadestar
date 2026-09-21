@@ -189,14 +189,20 @@ export type SyncState = { message?: string; failed?: string[] };
 export async function syncNow(_prev: SyncState, formData: FormData): Promise<SyncState> {
   await requireAdmin();
   const only = formData.get("company");
-  const results = await syncAll(typeof only === "string" && only ? only : undefined);
+  // Time-boxed like the cron: the least recently synced companies go first; click again to continue.
+  const { results, remaining, purged } = await syncAll({
+    onlySlug: typeof only === "string" && only ? only : undefined,
+    budgetMs: 200_000,
+  });
   revalidateJobs();
   revalidateCompanies();
   const listed = results.reduce((n, r) => n + r.listed, 0);
   const created = results.reduce((n, r) => n + r.created, 0);
   const expired = results.reduce((n, r) => n + r.expired, 0);
   return {
-    message: `Synced ${results.length} companies: ${listed} live roles (${created} new, ${expired} taken down).`,
+    message:
+      `Synced ${results.length} companies: ${listed} live roles (${created} new, ${expired} taken down, ${purged} over 30 days deleted).` +
+      (remaining > 0 ? ` ${remaining} companies left for the next run — click again to continue.` : ""),
     failed: results.filter((r) => !r.ok).map((r) => `${r.name}: ${r.error}`),
   };
 }

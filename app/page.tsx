@@ -28,7 +28,7 @@ const PROMISES = [
   {
     icon: Clock,
     title: "No ghost listings",
-    body: "Every role comes from the company's own careers page and is re-checked daily. When it disappears there, it comes down here.",
+    body: "Every role comes from the company's own careers page, re-checked several times a day, and is never more than 30 days old. When it disappears there, it comes down here.",
   },
   {
     icon: Route,
@@ -63,7 +63,7 @@ export default async function HomePage() {
             {withSalary > 0 && <> · {numberFormat.format(withSalary)} with salary</>}
           </p>
           <h1 className="animate-fade-up gradient-text mt-6 max-w-3xl text-4xl leading-[1.05] font-bold tracking-tight [animation-delay:80ms] sm:text-6xl">
-            Find the room where the work is real.
+            {site.tagline}
           </h1>
           <p className="animate-fade-up text-muted mt-5 max-w-xl text-base leading-relaxed [animation-delay:160ms]">
             {site.description}

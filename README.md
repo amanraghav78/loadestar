@@ -1,17 +1,28 @@
 # Lodestar
 
-Tech job board for India: engineering, design, product and data roles pulled daily from companies' own careers pages, with published salaries shown first (in ₹ LPA). There are no candidate accounts: people browse, save roles in their browser, and **Apply** sends them to the employer's own careers page.
+Tech job board for India (“Your Next Job Awaits.”): thousands of engineering, design, product and data roles at MNCs and startups, pulled from companies' own careers pages, with published salaries shown first (in ₹ LPA). There are no candidate accounts: people browse, save roles in their browser, and **Apply** sends them to the employer's own careers page.
 
 ## Where the listings come from
 
-`lib/ingest` reads each company's **public job-board feed** (Greenhouse, Lever or Ashby: the same data behind their careers page). No scraping of other job sites.
+`lib/ingest` reads each company's **public careers-site API**: the same listings you see on their careers page. No scraping of other job sites (LinkedIn, Naukri, …), and no aggregator reposts.
 
-1. **Fetch** every posting (`lib/ingest/sources.ts`).
-2. **Filter** to roles located in India or explicitly "Remote – India" (`classify.ts`), in scope disciplines only (no sales/HR/finance).
+| Source | Used by (examples) | Token (`Company.atsToken`) |
+|---|---|---|
+| Workday | NVIDIA, Walmart, Citi, Cisco, Adobe, Mastercard, Genpact (~130 companies) | `host\|tenant\|site` |
+| Amazon Jobs | Amazon | `IND` |
+| Eightfold | Microsoft, Qualcomm, Vodafone, BMS | `host\|domain` |
+| Oracle Recruiting | Oracle, JPMorgan Chase | `host\|siteNumber\|indiaLocationId` |
+| SmartRecruiters | Bosch, Swiggy, LinkedIn, ServiceNow, Freshworks | company identifier |
+| Greenhouse / Lever / Ashby | Stripe, Razorpay, CRED, Meesho, Snowflake, Sarvam | board slug |
+
+A company with several career sites lists all its tokens separated by spaces. The starting list (~230 companies) is `lib/ingest/companies.ts`; add more from `/admin/companies/new`. `npm run ingest:preview -- <slug>` dry-runs a feed without touching the database.
+
+1. **Fetch** recent postings (`sources.ts`). Search-style APIs are filtered to India server-side and paged newest first.
+2. **Filter** to roles posted in the **last 30 days**, located in India or explicitly "Remote – India", in scope disciplines only (no sales/HR/finance or non-software engineering) (`normalize.ts`, `classify.ts`).
 3. **Salary**: kept only when stated in INR per year (structured pay field, or parsed from text like "CTC ₹25–35 LPA"). A US/EU band on a multi-country posting is never shown on the Indian role. Otherwise the listing says "Salary not disclosed".
-4. **Sync** (`sync.ts`): upsert by feed ID, rewrite only changed rows, and take down roles that vanished from the feed. A failing feed never wipes existing listings.
+4. **Sync** (`sync.ts`): upsert by source ID, fetch descriptions only for new roles, take down roles that vanished from the careers site, and **delete every role 30+ days old**. A failing feed never wipes existing listings.
 
-Runs daily at 08:00 IST via Vercel Cron (`/api/cron/sync`), or on demand from **/admin/companies → Sync all feeds now**. Add companies from `/admin/companies/new` (choose the feed type and board token). Starting list: `lib/ingest/companies.ts`.
+Each sync run handles the least recently synced companies that fit in ~200 s (a serverless function has 300 s). Vercel Cron calls `/api/cron/sync` eight times a day so every company is refreshed daily; **/admin/companies → Sync all feeds now** runs one batch on demand.
 
 ## Stack
 
@@ -23,7 +34,7 @@ Runs daily at 08:00 IST via Vercel Cron (`/api/cron/sync`), or on demand from **
 | Search | `pg_trgm` GIN index on a denormalised `searchText` column |
 | Rate limiting | Upstash Redis (optional locally; fails open if Redis is down) |
 | Caching | `'use cache'` + `cacheTag` on every read; admin writes and the cron call `revalidateTag` |
-| Jobs | Vercel Cron → `/api/cron/expire` daily |
+| Jobs | Vercel Cron → `/api/cron/sync` (8× a day) and `/api/cron/expire` (daily) |
 | Observability | Sentry (enabled when a DSN is set), Vercel Analytics + Speed Insights |
 | Tests | Vitest (unit), Playwright (e2e), GitHub Actions CI |
 
@@ -36,14 +47,14 @@ Browser ──► Vercel edge cache ──► Next.js (static shells + streamed 
                               Prisma ─► Neon Postgres (pooled)
 /apply/:id ─► rate limit (Upstash) ─► log ApplyClick (after response) ─► 302 to employer
 /admin/*   ─► proxy.ts Basic Auth ─► server actions (re-check auth) ─► revalidateTag
-Vercel Cron ─► /api/cron/expire (Bearer CRON_SECRET) ─► mark stale roles EXPIRED ─► revalidateTag
+Vercel Cron ─► /api/cron/sync + /api/cron/expire (Bearer CRON_SECRET) ─► upsert / delete 30+ day roles ─► revalidateTag
 ```
 
 - **Home, companies, salaries** are prerendered and refreshed hourly, or immediately after an admin edit.
 - **Job and company pages** serve a static shell instantly. Content is cached per slug after the first visit.
 - **Search** (`/jobs?…`) renders per query. Results are indexed and cached briefly.
 - **Saved roles** live in `localStorage` (`lib/saved-jobs.ts`); `/api/jobs?ids=` hydrates them.
-- **Expiry:** a role not re-confirmed within 30 days is marked `EXPIRED`. Its page stays up with a notice and no Apply button.
+- **Expiry:** a role that disappears from the careers site (or isn't confirmed for 7 days) is marked `EXPIRED`: its page stays up with a notice and no Apply button. Every role is **deleted** once it is 30 days old (`lib/listing-age.ts`).
 
 Sized for 10k+ users: nearly all traffic hits cached output, the few uncached queries are indexed, and each serverless instance holds a small pool (5) against Neon's pooler.
 
