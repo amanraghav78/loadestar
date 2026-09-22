@@ -1,7 +1,7 @@
 import "server-only";
 import { env } from "@/lib/env";
-import { r2Store } from "@/lib/storage/r2";
 import { memoryStore } from "@/lib/storage/memory";
+import { vercelBlobStore } from "@/lib/storage/vercel-blob";
 import { testModeEnabled } from "@/lib/test-mode";
 
 export type StoredObject = { body: ReadableStream<Uint8Array>; size: number | null; contentType: string | null };
@@ -15,23 +15,19 @@ export type ObjectStore = {
   delete(key: string): Promise<void>;
 };
 
-const configured =
-  env.R2_ACCOUNT_ID && env.R2_ACCESS_KEY_ID && env.R2_SECRET_ACCESS_KEY && env.R2_BUCKET
-    ? {
-        accountId: env.R2_ACCOUNT_ID,
-        accessKeyId: env.R2_ACCESS_KEY_ID,
-        secretAccessKey: env.R2_SECRET_ACCESS_KEY,
-        bucket: env.R2_BUCKET,
-      }
-    : null;
+// Vercel adds BLOB_STORE_ID when a Blob store is connected to the project, and
+// authenticates through OIDC from then on; BLOB_READ_WRITE_TOKEN covers
+// everywhere else, such as a local machine.
+const blobConfigured = Boolean(env.BLOB_STORE_ID ?? env.BLOB_READ_WRITE_TOKEN);
 
 /**
- * R2 when it is configured; otherwise an in-process store, so development and
- * the test suite work with no Cloudflare account. A live deployment with no
- * bucket turns resume upload off rather than pretending to keep files.
+ * The private Blob store when it is configured; otherwise an in-process store,
+ * so development and the test suite work with no storage account at all. A live
+ * deployment with no store turns resume upload off rather than pretending to
+ * keep files.
  */
-export const resumeStore: ObjectStore | null = configured
-  ? r2Store(configured)
+export const resumeStore: ObjectStore | null = blobConfigured
+  ? vercelBlobStore()
   : process.env.NODE_ENV !== "production" || testModeEnabled
     ? memoryStore()
     : null;

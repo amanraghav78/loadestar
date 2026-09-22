@@ -1,6 +1,6 @@
 # Lodestar
 
-Tech job board for India (“Your Next Job Awaits.”): thousands of engineering, design, product and data roles at MNCs and startups, pulled from companies' own careers pages, with published salaries shown first (in ₹ LPA). There are no candidate accounts: people browse, save roles in their browser, and **Apply** sends them to the employer's own careers page.
+Tech job board for India (“Your Next Job Awaits.”): thousands of engineering, design, product and data roles at MNCs and startups, pulled from companies' own careers pages, with published salaries shown first (in ₹ LPA). **Apply** sends people to the employer's own careers page. An account is optional — browsing and saving roles work without one — and adds a profile, a resume and saved roles that follow you between devices (see [Candidate accounts](#candidate-accounts)).
 
 ## Where the listings come from
 
@@ -95,12 +95,12 @@ Lodestar never submits an application: listings come from employers' own careers
 
 1. Google Cloud Console → **Credentials** → **OAuth client ID** → *Web application*. Authorised redirect URIs: `http://localhost:3000/api/auth/callback/google` and `https://<site>/api/auth/callback/google`. Copy the id and secret into `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`.
 2. `BETTER_AUTH_SECRET` — `openssl rand -base64 32`.
-3. Cloudflare R2 → create a **private** bucket → an API token with object read/write. Set `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`. Without them, upload is off in production; locally and in tests an in-process store stands in.
+3. Vercel project → **Storage** → **Create Database** → **Blob**, with access set to **Private** — public would put every resume behind a guessable URL. Connect it to the project and Vercel supplies the credentials itself. Without a store, upload is off in production; locally and in tests an in-process store stands in.
 
 **How it holds together**
 
 - `lib/queries.ts` (the shared, cached job data) knows nothing about users, and `tests/unit/cache-isolation.test.ts` fails if that ever changes. Session reads live in `lib/session.ts` behind `use cache: private`, which never reaches a server cache; per-user reads in `lib/account-queries.ts` are uncached and resolve the user themselves.
-- Resumes: PDF only, 4 MB, checked by magic bytes rather than the file's name or declared type. Stored under an unguessable key, downloaded only through `/api/resume`, which takes no id and serves the caller their own file.
+- Resumes: PDF only, 4 MB, checked by magic bytes rather than the file's name or declared type. Stored in a private Blob store under an unguessable key, and downloaded only through `/api/resume`, which takes no id and serves the caller their own file. Swapping storage means writing one driver against the `ObjectStore` interface in `lib/storage/index.ts`; an S3/R2 driver lives in commit 446a9b5 if you ever want it.
 - Deleting an account removes the file first, then the row; everything else cascades. What survives is the anonymous apply-click count.
 - Google's consent screen can't be automated, so the e2e suite signs in through `app/api/test/sign-in/route.ts`, which 404s unless `E2E_TEST_AUTH=1` **and** `VERCEL_ENV` isn't `production`. Never set that variable on the live site.
 

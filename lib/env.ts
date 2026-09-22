@@ -20,12 +20,11 @@ export const env = createEnv({
     BETTER_AUTH_URL: z.url().optional(),
     GOOGLE_CLIENT_ID: z.string().min(1).optional(),
     GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
-    // Resume storage (Cloudflare R2). Without them uploads are turned off, and
-    // tests use the in-memory driver in lib/storage/index.ts.
-    R2_ACCOUNT_ID: z.string().min(1).optional(),
-    R2_ACCESS_KEY_ID: z.string().min(1).optional(),
-    R2_SECRET_ACCESS_KEY: z.string().min(1).optional(),
-    R2_BUCKET: z.string().min(1).optional(),
+    // Resume storage (a private Vercel Blob store). Vercel sets these when the
+    // store is connected to the project; without them uploads are turned off,
+    // and tests use the in-memory driver in lib/storage/index.ts.
+    BLOB_STORE_ID: z.string().min(1).optional(),
+    BLOB_READ_WRITE_TOKEN: z.string().min(1).optional(),
     /// Enables a password sign-in route for end-to-end tests. Never set in production.
     E2E_TEST_AUTH: z.literal("1").optional(),
   },

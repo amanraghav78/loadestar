@@ -1,60 +1,80 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { r2Store } from "@/lib/storage/r2";
 import { memoryStore } from "@/lib/storage/memory";
 
-const config = {
-  accountId: "acct123",
-  accessKeyId: "key",
-  secretAccessKey: "secret",
-  bucket: "lodestar-resumes",
-};
+const blob = vi.hoisted(() => ({
+  put: vi.fn(),
+  get: vi.fn(),
+  del: vi.fn(),
+}));
 
-const read = async (stream: ReadableStream<Uint8Array>) => {
+class FakeBlobNotFoundError extends Error {}
+
+vi.mock("@vercel/blob", () => ({
+  put: blob.put,
+  get: blob.get,
+  del: blob.del,
+  BlobNotFoundError: FakeBlobNotFoundError,
+}));
+
+const { vercelBlobStore } = await import("@/lib/storage/vercel-blob");
+
+const stream = (bytes: Uint8Array) =>
+  new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(bytes);
+      controller.close();
+    },
+  });
+
+const read = async (body: ReadableStream<Uint8Array>) => {
   const chunks: Uint8Array[] = [];
-  for await (const chunk of stream as unknown as AsyncIterable<Uint8Array>) chunks.push(chunk);
+  for await (const chunk of body as unknown as AsyncIterable<Uint8Array>) chunks.push(chunk);
   return Buffer.concat(chunks);
 };
 
-function stubFetch(response: Response) {
-  const calls: Request[] = [];
-  vi.stubGlobal("fetch", async (input: Request | string, init?: RequestInit) => {
-    calls.push(input instanceof Request ? input : new Request(input, init));
-    return response;
-  });
-  return calls;
-}
+afterEach(() => vi.clearAllMocks());
 
-afterEach(() => vi.unstubAllGlobals());
+describe("vercelBlobStore", () => {
+  it("writes privately, under our own key", async () => {
+    await vercelBlobStore().put("resumes/u1/file.pdf", new Uint8Array([1, 2, 3]), "application/pdf");
 
-describe("r2Store", () => {
-  it("writes to the bucket path and signs the request", async () => {
-    const calls = stubFetch(new Response(null, { status: 200 }));
-    await r2Store(config).put("resumes/u1/file.pdf", new Uint8Array([1, 2, 3]), "application/pdf");
-
-    const [request] = calls;
-    expect(request!.method).toBe("PUT");
-    expect(request!.url).toBe("https://acct123.r2.cloudflarestorage.com/lodestar-resumes/resumes/u1/file.pdf");
-    expect(request!.headers.get("authorization")).toMatch(/^AWS4-HMAC-SHA256 /);
+    expect(blob.put).toHaveBeenCalledWith("resumes/u1/file.pdf", Buffer.from([1, 2, 3]), {
+      access: "private",
+      contentType: "application/pdf",
+      // A random suffix would lose the key we recorded against the candidate.
+      addRandomSuffix: false,
+    });
   });
 
-  it("reads a missing object as null rather than throwing", async () => {
-    stubFetch(new Response(null, { status: 404 }));
-    await expect(r2Store(config).get("resumes/u1/gone.pdf")).resolves.toBeNull();
+  it("reads a stored file back", async () => {
+    blob.get.mockResolvedValue({
+      statusCode: 200,
+      stream: stream(new Uint8Array([37, 80, 68, 70])),
+      blob: { size: 4, contentType: "application/pdf" },
+    });
+
+    const found = await vercelBlobStore().get("resumes/u1/file.pdf");
+    expect(blob.get).toHaveBeenCalledWith("resumes/u1/file.pdf", { access: "private" });
+    expect(found?.size).toBe(4);
+    expect(await read(found!.body)).toEqual(Buffer.from([37, 80, 68, 70]));
   });
 
-  it("treats a delete of something already gone as success", async () => {
-    stubFetch(new Response(null, { status: 404 }));
-    await expect(r2Store(config).delete("resumes/u1/gone.pdf")).resolves.toBeUndefined();
+  it.each([
+    ["the blob is missing", null],
+    ["the store answers 304", { statusCode: 304, stream: null, blob: {} }],
+  ])("reads null when %s", async (_label, result) => {
+    blob.get.mockResolvedValue(result);
+    await expect(vercelBlobStore().get("resumes/u1/gone.pdf")).resolves.toBeNull();
   });
 
-  it("throws when the bucket refuses, so account deletion can abort", async () => {
-    stubFetch(new Response("denied", { status: 403 }));
-    await expect(r2Store(config).delete("resumes/u1/file.pdf")).rejects.toThrow(/403/);
+  it("treats deleting something already gone as success", async () => {
+    blob.del.mockRejectedValue(new FakeBlobNotFoundError("gone"));
+    await expect(vercelBlobStore().delete("resumes/u1/gone.pdf")).resolves.toBeUndefined();
   });
 
-  it("throws on a failed upload instead of reporting success", async () => {
-    stubFetch(new Response("nope", { status: 500 }));
-    await expect(r2Store(config).put("k", new Uint8Array([1]), "application/pdf")).rejects.toThrow(/500/);
+  it("reports any other delete failure, so account deletion can abort", async () => {
+    blob.del.mockRejectedValue(new Error("service unavailable"));
+    await expect(vercelBlobStore().delete("resumes/u1/file.pdf")).rejects.toThrow(/service unavailable/);
   });
 });
 
