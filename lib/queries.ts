@@ -45,7 +45,7 @@ export async function getHomeData() {
   cacheLife("hours");
   cacheTag(TAGS.jobs, TAGS.companies);
 
-  const [recommended, totalActive, withSalary, byDiscipline, hiringCompanies] = await Promise.all([
+  const [recommended, totalActive, withSalary, byDiscipline, companies, cityCounts, remoteCount] = await Promise.all([
     db.job.findMany({
       where: ACTIVE,
       select: jobCardSelect,
@@ -59,18 +59,27 @@ export async function getHomeData() {
     // The companies with the most open roles right now.
     db.company.findMany({
       where: { jobs: { some: ACTIVE } },
-      select: { name: true, slug: true },
+      select: { name: true, slug: true, logoUrl: true, _count: { select: { jobs: { where: ACTIVE } } } },
       orderBy: { jobs: { _count: "desc" } },
-      take: 8,
+      take: 12,
     }),
+    Promise.all(
+      HOME_CITIES.map(async (city) => ({ city, count: await db.job.count({ where: { ...ACTIVE, location: { contains: city } } }) })),
+    ),
+    db.job.count({ where: { ...ACTIVE, remote: "REMOTE" } }),
   ]);
 
   const disciplineCounts = Object.fromEntries(
     byDiscipline.map((d) => [d.discipline, d._count._all]),
   ) as Partial<Record<Discipline, number>>;
+  const hiringCompanies = companies.map(({ _count, ...c }) => ({ ...c, openRoles: _count.jobs }));
+  const cities = cityCounts.filter((c) => c.count > 0).sort((a, b) => b.count - a.count);
 
-  return { recommended, totalActive, withSalary, disciplineCounts, hiringCompanies };
+  return { recommended, totalActive, withSalary, disciplineCounts, hiringCompanies, cities, remoteCount };
 }
+
+/** Cities offered as shortcuts on the home page. */
+const HOME_CITIES = ["Bengaluru", "Hyderabad", "Pune", "Gurugram", "Chennai", "Mumbai", "Noida", "Delhi"] as const;
 
 // ---------------------------------------------------------------- search
 

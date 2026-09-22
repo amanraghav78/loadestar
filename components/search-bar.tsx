@@ -1,43 +1,50 @@
 import Form from "next/form";
 import { MapPin, Search } from "lucide-react";
+import { cn } from "@/lib/cn";
 
 /**
  * Plain GET form (progressively enhanced by next/form) so search works
  * without JavaScript and every result page is a shareable URL.
+ *
+ * `lg` is the home-page hero. The compact `md` bar is a single row on phones
+ * (keyword + button); the city field appears from `sm` up, and the results
+ * page has city filters for small screens.
  */
-export function SearchBar({ q, location }: { q?: string; location?: string }) {
+export function SearchBar({ q, location, size = "md" }: { q?: string; location?: string; size?: "md" | "lg" }) {
+  const lg = size === "lg";
+  const field = cn(
+    "w-full min-w-0 bg-transparent text-fg placeholder:text-subtle focus:outline-none",
+    lg ? "h-11 text-[15px]" : "h-10 text-sm",
+  );
+
   return (
     <Form
       action="/jobs"
       role="search"
-      className="flex flex-col gap-2 metal-panel rounded-xl p-2 sm:flex-row sm:items-center sm:gap-0"
+      className={cn(
+        "metal-panel flex p-1.5 sm:items-center",
+        lg ? "flex-col gap-1 rounded-3xl sm:flex-row sm:gap-0 sm:rounded-full" : "items-center rounded-full",
+      )}
     >
-      <label className="flex flex-1 items-center gap-2.5 px-3">
+      <label className="flex min-w-0 flex-[1.4] items-center gap-3 px-4">
         <Search className="size-4 shrink-0 text-subtle" aria-hidden />
         <span className="sr-only">Job title, skill or company</span>
-        <input
-          name="q"
-          defaultValue={q}
-          placeholder="Job title, skill or company"
-          maxLength={100}
-          className="h-10 w-full bg-transparent text-sm text-fg placeholder:text-subtle focus:outline-none"
-        />
+        <input name="q" defaultValue={q} placeholder="Job title, skill or company" maxLength={100} className={field} />
       </label>
-      <span className="hidden h-6 w-px bg-line sm:block" aria-hidden />
-      <label className="flex flex-1 items-center gap-2.5 border-t border-line px-3 sm:border-t-0">
+      <span className="hidden h-7 w-px bg-line-strong sm:block" aria-hidden />
+      <label
+        className={cn(
+          "min-w-0 flex-1 items-center gap-3 px-4",
+          lg ? "flex border-t border-line sm:border-t-0" : "hidden sm:flex",
+        )}
+      >
         <MapPin className="size-4 shrink-0 text-subtle" aria-hidden />
-        <span className="sr-only">Location or remote</span>
-        <input
-          name="location"
-          defaultValue={location}
-          placeholder="Location or remote"
-          maxLength={80}
-          className="h-10 w-full bg-transparent text-sm text-fg placeholder:text-subtle focus:outline-none"
-        />
+        <span className="sr-only">City or remote</span>
+        <input name="location" defaultValue={location} placeholder="City or remote" maxLength={80} className={field} />
       </label>
       <button
         type="submit"
-        className="h-10 rounded-lg metal-button px-6 text-sm font-medium transition-colors"
+        className={cn("btn-chrome shrink-0 rounded-full font-semibold", lg ? "h-11 px-7 text-sm" : "h-10 px-5 text-sm")}
       >
         Search
       </button>

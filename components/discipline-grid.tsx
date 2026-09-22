@@ -12,7 +12,7 @@ const ICONS: Record<Discipline, LucideIcon> = {
   INFRASTRUCTURE: Layers,
 };
 
-const ORDER: Discipline[] = ["ENGINEERING", "DESIGN", "PRODUCT", "DATA", "SECURITY", "INFRASTRUCTURE"];
+const ORDER: Discipline[] = ["ENGINEERING", "DATA", "INFRASTRUCTURE", "PRODUCT", "SECURITY", "DESIGN"];
 
 export function DisciplineGrid({ counts }: { counts: Partial<Record<Discipline, number>> }) {
   return (
@@ -21,20 +21,19 @@ export function DisciplineGrid({ counts }: { counts: Partial<Record<Discipline, 
         const Icon = ICONS[d];
         const count = counts[d] ?? 0;
         return (
-          <li key={d}>
-            <Link
-              href={`/jobs?discipline=${d}`}
-              className="metal-card group flex items-center gap-3 rounded-xl px-4 py-4"
-            >
-              <Icon className="text-accent-fg size-4 shrink-0" aria-hidden />
+          <li key={d} className="flex">
+            <Link href={`/jobs?discipline=${d}`} className="metal-card group flex flex-1 items-center gap-4 rounded-2xl p-4 sm:p-5">
+              <span className="metal flex size-11 shrink-0 items-center justify-center rounded-xl">
+                <Icon className="size-5 text-silver transition-transform duration-300 group-hover:scale-110" aria-hidden />
+              </span>
               <span className="min-w-0 flex-1">
-                <span className="text-fg block text-sm font-medium">{DISCIPLINE_LABEL[d]}</span>
-                <span className="text-subtle block text-xs tabular-nums">
-                  {numberFormat.format(count)} {count === 1 ? "role" : "roles"}
+                <span className="block text-sm font-semibold text-fg sm:text-[15px]">{DISCIPLINE_LABEL[d]}</span>
+                <span className="block text-xs text-subtle tabular-nums">
+                  {numberFormat.format(count)} {count === 1 ? "job" : "jobs"}
                 </span>
               </span>
               <ArrowUpRight
-                className="text-subtle group-hover:text-fg size-3.5 shrink-0 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                className="hidden size-4 shrink-0 text-subtle transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-fg sm:block"
                 aria-hidden
               />
             </Link>

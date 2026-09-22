@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { cn } from "@/lib/cn";
 
-/** Logo when we have one, otherwise the letter tile from the mockup. */
+/** Logo when we have one, otherwise a steel tile with the initial in chrome. */
 export function CompanyAvatar({
   name,
   logoUrl,
@@ -11,10 +11,10 @@ export function CompanyAvatar({
   logoUrl?: string | null;
   size?: "md" | "lg";
 }) {
-  const px = size === "lg" ? 48 : 32;
+  const px = size === "lg" ? 56 : 40;
   const box = cn(
-    "flex shrink-0 items-center justify-center overflow-hidden rounded-md metal-panel font-semibold text-fg",
-    size === "lg" ? "size-12 text-lg" : "size-8 text-xs",
+    "metal flex shrink-0 items-center justify-center overflow-hidden font-semibold",
+    size === "lg" ? "size-14 rounded-2xl text-xl" : "size-10 rounded-xl text-sm",
   );
   if (logoUrl) {
     return (
@@ -25,7 +25,7 @@ export function CompanyAvatar({
   }
   return (
     <span className={box} aria-hidden>
-      {name.charAt(0).toUpperCase()}
+      <span className="steel-text">{name.charAt(0).toUpperCase()}</span>
     </span>
   );
 }

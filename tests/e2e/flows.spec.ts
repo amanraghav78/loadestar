@@ -7,7 +7,7 @@ const CRON_SECRET = process.env.CRON_SECRET ?? "local-dev-cron-secret-0000";
 test("Apply redirects to the employer's own application page", async ({ page, request }) => {
   await page.goto("/jobs?q=ingest");
   await page.getByRole("article").first().getByRole("link").first().click();
-  const href = await page.getByRole("link", { name: /^Apply on/ }).getAttribute("href");
+  const href = await page.getByRole("link", { name: /^Apply now/ }).getAttribute("href");
 
   const res = await request.get(href!, { maxRedirects: 0 });
   expect(res.status()).toBe(302);

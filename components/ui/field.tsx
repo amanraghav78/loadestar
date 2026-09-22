@@ -2,7 +2,7 @@ import type { ComponentProps } from "react";
 import { cn } from "@/lib/cn";
 
 export const inputClass =
-  "h-10 w-full rounded-lg border border-line bg-surface px-3 text-sm text-fg placeholder:text-subtle hover:border-line-strong focus:border-subtle focus:outline-none";
+  "h-10 w-full rounded-lg border border-line bg-surface px-3 text-sm text-fg shadow-[inset_0_1px_0_rgb(255_255_255/0.04)] placeholder:text-subtle hover:border-line-strong focus:border-accent-fg/60 focus:outline-none";
 
 export function Label({ className, ...props }: ComponentProps<"label">) {
   return <label className={cn("mb-1.5 block text-xs font-medium text-muted", className)} {...props} />;

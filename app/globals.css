@@ -1,36 +1,39 @@
 @import "tailwindcss";
 
 /*
- * Lodestar is dark-only: near-black neutral surfaces with a violet accent used
- * sparingly. `accent` is the violet used for borders, icons and fills;
- * `accent-fg` is the lighter lavender used for accent text (AA on bg and card).
+ * Lodestar is dark-only: a graphite canvas, flat steel surfaces with a lit top
+ * edge, and polished chrome for the few things that should shine (headline,
+ * primary actions). Colour gradients are avoided; the only gradients are the
+ * metal itself. Violet is a small accent (focus, logo, selected states).
  */
 @theme {
-  --color-bg: #0a0a0b;
-  --color-surface: #111113;
-  --color-card: #151518;
-  --color-card-hover: #1b1b1f;
-  --color-line: #ffffff14;
-  --color-line-strong: #ffffff24;
-  --color-fg: #f4f4f5;
+  --color-bg: #060608;
+  --color-surface: #0c0c0f;
+  --color-card: #101014;
+  --color-card-hover: #15151a;
+  --color-line: #ffffff12;
+  --color-line-strong: #ffffff22;
+  --color-fg: #f5f5f7;
   --color-muted: #a1a1aa;
   --color-subtle: #8a8a94;
-  --color-accent: #7c6cf0;
-  --color-accent-fg: #b9b0ff;
+  --color-silver: #d4d4d8;
+  --color-accent: #8b7cf6;
+  --color-accent-fg: #c4bcff;
   --color-danger: #f87171;
   --color-ok: #4ade80;
 
-  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
-  --animate-fade-up: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
-  --animate-marquee: marquee var(--marquee-duration, 40s) linear infinite;
+  --animate-fade-up: fade-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-glint: glint 7s ease-in-out infinite;
   --animate-ping-slow: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
 
   @keyframes fade-up {
     from {
       opacity: 0;
-      transform: translateY(14px);
-      filter: blur(4px);
+      transform: translateY(16px);
+      filter: blur(6px);
     }
     to {
       opacity: 1;
@@ -39,9 +42,18 @@
     }
   }
 
-  @keyframes marquee {
-    to {
-      transform: translateX(calc(-100% - var(--marquee-gap, 3rem)));
+  /* A highlight that travels across chrome text every few seconds. */
+  @keyframes glint {
+    0%,
+    55% {
+      background-position:
+        160% 0,
+        0 0;
+    }
+    100% {
+      background-position:
+        -60% 0,
+        0 0;
     }
   }
 }
@@ -58,128 +70,246 @@ body {
   background: var(--color-bg);
   color: var(--color-fg);
   font-family: var(--font-sans);
+  font-feature-settings: "ss01", "cv11";
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* ------------------------------------------------------------------ surfaces
- * Depth comes from a lighter top edge (inset shadow), a soft drop shadow, and
- * a lift + faint violet glow on hover. Gradients are kept to the hero backdrop
- * and headline so the rest of the UI stays quiet.
- */
-
-@utility metal-text {
-  color: #f4f5fa;
+::selection {
+  background: rgb(196 188 255 / 0.3);
+  color: #fff;
 }
 
-/* Headline text that fades from white to muted grey. */
-@utility gradient-text {
-  background: linear-gradient(180deg, #ffffff 30%, #a1a1aa 100%);
+:focus-visible {
+  outline: 2px solid var(--color-accent-fg);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------ metal */
+
+/* Polished chrome lettering with a travelling glint. */
+@utility chrome-text {
+  background-image:
+    linear-gradient(105deg, transparent 42%, rgb(255 255 255 / 0.95) 50%, transparent 58%),
+    linear-gradient(180deg, #ffffff 0%, #ececf0 38%, #a9a9b3 72%, #d9d9df 100%);
+  background-size:
+    250% 100%,
+    100% 100%;
+  background-repeat: no-repeat;
+  background-position:
+    160% 0,
+    0 0;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
-@utility metal-card {
+/* Brushed steel for smaller headings: static, no glint. */
+@utility steel-text {
+  background-image: linear-gradient(180deg, #ffffff 10%, #b8b8c1 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Dark steel surface: flat fill, lit top edge, crisp hairline border. */
+@utility metal {
   position: relative;
-  background: var(--color-card);
+  background-color: var(--color-card);
   border: 1px solid var(--color-line);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.04),
-    0 1px 2px rgb(0 0 0 / 0.4);
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    0 1px 2px rgb(0 0 0 / 0.5);
+}
+
+/* Interactive steel: the border catches the light and a sheen passes over it on hover. */
+@utility metal-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background-color: var(--color-card);
+  border: 1px solid var(--color-line);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    0 1px 2px rgb(0 0 0 / 0.5);
   transition:
-    background-color 0.25s ease,
-    border-color 0.25s ease,
-    box-shadow 0.25s ease,
-    transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease,
+    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.07) 50%, transparent 65%);
+    transform: translateX(-100%);
+    transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  }
 
   &:hover {
     transform: translateY(-2px);
-    background: var(--color-card-hover);
-    border-color: rgb(124 108 240 / 0.45);
+    background-color: var(--color-card-hover);
+    border-color: rgb(255 255 255 / 0.2);
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.07),
-      0 0 0 4px rgb(124 108 240 / 0.06),
-      0 16px 36px -16px rgb(124 108 240 / 0.35);
+      inset 0 1px 0 rgb(255 255 255 / 0.1),
+      0 18px 40px -20px rgb(0 0 0 / 0.9),
+      0 0 0 1px rgb(255 255 255 / 0.03);
+  }
+
+  &:hover::before {
+    transform: translateX(100%);
   }
 }
 
+/* Input shell (search): steel with a violet ring when focused. */
 @utility metal-panel {
-  background: var(--color-card);
+  background-color: var(--color-card);
   border: 1px solid var(--color-line-strong);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.05),
-    0 20px 50px -24px rgb(0 0 0 / 0.8);
+    inset 0 1px 0 rgb(255 255 255 / 0.07),
+    0 24px 60px -30px rgb(0 0 0 / 0.9);
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease;
 
   &:focus-within {
-    border-color: rgb(124 108 240 / 0.5);
+    border-color: rgb(196 188 255 / 0.55);
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.05),
-      0 0 0 4px rgb(124 108 240 / 0.12),
-      0 20px 50px -24px rgb(124 108 240 / 0.35);
+      inset 0 1px 0 rgb(255 255 255 / 0.07),
+      0 0 0 4px rgb(139 124 246 / 0.14),
+      0 24px 60px -30px rgb(0 0 0 / 0.9);
   }
 }
 
-/* Primary button with a light sheen that sweeps across on hover. */
-@utility metal-button {
+/* Primary action: polished silver with dark text and a sheen on hover. */
+@utility btn-chrome {
   position: relative;
-  overflow: hidden;
   isolation: isolate;
-  color: #fff;
-  background: #6a5ae0;
-  border: 1px solid #9689f5;
+  overflow: hidden;
+  color: #0b0b0e;
+  background-image: linear-gradient(180deg, #ffffff 0%, #e6e6ea 52%, #c3c3cb 100%);
+  border: 1px solid rgb(255 255 255 / 0.9);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.25),
-    0 2px 8px -2px rgb(0 0 0 / 0.5);
+    inset 0 1px 0 #ffffff,
+    inset 0 -1px 0 rgb(0 0 0 / 0.18),
+    0 1px 2px rgb(0 0 0 / 0.6),
+    0 10px 28px -12px rgb(255 255 255 / 0.28);
   transition:
-    background-color 0.2s ease,
-    box-shadow 0.2s ease,
-    transform 0.15s ease;
+    box-shadow 0.25s ease,
+    transform 0.15s ease,
+    filter 0.25s ease;
 
   &::after {
     content: "";
     position: absolute;
     inset: 0;
     z-index: -1;
-    background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 0.28) 50%, transparent 70%);
-    transform: translateX(-120%);
-    transition: transform 0.6s ease;
+    background: linear-gradient(105deg, transparent 30%, rgb(255 255 255 / 0.95) 50%, transparent 70%);
+    transform: translateX(-130%);
+    transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   &:hover {
-    background: #7464e8;
+    filter: brightness(1.04);
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.25),
-      0 6px 20px -6px rgb(124 108 240 / 0.7);
+      inset 0 1px 0 #ffffff,
+      inset 0 -1px 0 rgb(0 0 0 / 0.18),
+      0 1px 2px rgb(0 0 0 / 0.6),
+      0 14px 36px -12px rgb(255 255 255 / 0.4);
   }
 
   &:hover::after {
-    transform: translateX(120%);
+    transform: translateX(130%);
   }
 
   &:active {
-    background: #5f4fd4;
     transform: scale(0.98);
   }
 }
 
-/* Hero backdrop: a violet glow over a dot grid that fades out at the edges. */
-@utility hero-backdrop {
+/* Secondary action: dark steel. */
+@utility btn-steel {
+  color: var(--color-fg);
+  background-color: #16161b;
+  border: 1px solid var(--color-line-strong);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.08),
+    0 1px 2px rgb(0 0 0 / 0.5);
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+
+  &:hover {
+    background-color: #1c1c22;
+    border-color: rgb(255 255 255 / 0.24);
+  }
+}
+
+/* Chips: quiet by default, polished silver when selected. A component class, so size utilities override it. */
+@layer components {
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    height: 2rem;
+    padding: 0 0.875rem;
+    border-radius: 9999px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    white-space: nowrap;
+    color: var(--color-muted);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-line);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+    transition:
+      color 0.2s ease,
+      border-color 0.2s ease,
+      background-color 0.2s ease;
+
+    &:hover {
+      color: var(--color-fg);
+      border-color: var(--color-line-strong);
+      background-color: var(--color-card);
+    }
+
+    &[aria-current="true"],
+    &[aria-pressed="true"] {
+      color: #0b0b0e;
+      background-image: linear-gradient(180deg, #ffffff 0%, #dcdce1 100%);
+      border-color: rgb(255 255 255 / 0.9);
+      box-shadow: inset 0 1px 0 #ffffff;
+    }
+  }
+}
+
+/* Fine engraved grid behind the hero, fading out at the edges. */
+@utility hero-grid {
   position: absolute;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background:
-    radial-gradient(ellipse 60% 50% at 50% 0%, rgb(124 108 240 / 0.22), transparent 70%),
-    radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.09) 1px, transparent 0) 0 0 / 24px 24px;
-  mask-image: radial-gradient(ellipse 80% 70% at 50% 20%, #000 40%, transparent 100%);
+  background-image:
+    linear-gradient(rgb(255 255 255 / 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.045) 1px, transparent 1px);
+  background-size: 64px 64px;
+  background-position: center top;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 30%, transparent 100%);
 }
 
-/* Fades the ends of a horizontally scrolling strip. */
-@utility fade-x {
-  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+/* A hairline that catches the light in the middle. */
+@utility hairline {
+  height: 1px;
+  background-image: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.22), transparent);
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* Sections fade up as they scroll into view, where scroll timelines exist. */
@@ -187,11 +317,14 @@ body {
   .reveal {
     animation: fade-up linear both;
     animation-timeline: view();
-    animation-range: entry 0% cover 25%;
+    animation-range: entry 0% cover 22%;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .reveal {
+    animation: none !important;
+  }
   *,
   *::before,
   *::after {
@@ -204,11 +337,11 @@ body {
 /* Rendered job descriptions (plain paragraphs + bullet lists). */
 .prose-job p {
   margin: 0 0 1rem;
-  line-height: 1.7;
+  line-height: 1.75;
   color: var(--color-muted);
 }
 .prose-job h3 {
-  margin: 1.75rem 0 0.75rem;
+  margin: 2rem 0 0.75rem;
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--color-fg);
@@ -220,6 +353,9 @@ body {
   color: var(--color-muted);
 }
 .prose-job li {
-  margin: 0.35rem 0;
-  line-height: 1.6;
+  margin: 0.4rem 0;
+  line-height: 1.65;
+}
+.prose-job li::marker {
+  color: var(--color-subtle);
 }

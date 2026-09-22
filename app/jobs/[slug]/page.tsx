@@ -3,10 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cacheLife, cacheTag } from "next/cache";
 import { Suspense } from "react";
-import { ArrowLeft, ArrowUpRight, Building2, Clock, Globe, MapPin, Users } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, BriefcaseBusiness, CalendarDays, Globe, MapPin, type LucideIcon } from "lucide-react";
 import { CompanyAvatar } from "@/components/company-avatar";
 import { descriptionToPlainText, JobDescription } from "@/components/job-description";
-import { JobGrid } from "@/components/job-card";
+import { JobGrid, SalaryPill } from "@/components/job-card";
 import { SaveButton } from "@/components/save-button";
 import { buttonClass } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
@@ -41,9 +41,9 @@ export async function generateMetadata({ params }: PageProps<"/jobs/[slug]">): P
 
 export default function JobPage({ params }: PageProps<"/jobs/[slug]">) {
   return (
-    <Container className="py-8">
-      <Link href="/jobs" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-fg">
-        <ArrowLeft className="size-3.5" aria-hidden /> All roles
+    <Container wide className="py-8">
+      <Link href="/jobs" className="inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-fg">
+        <ArrowLeft className="size-3.5" aria-hidden /> All jobs
       </Link>
       <Suspense fallback={<JobSkeleton />}>
         {params.then(({ slug }) => (
@@ -64,6 +64,8 @@ async function JobDetail({ slug }: { slug: string }) {
 
   const active = job.status === "ACTIVE";
   const similar = await getSimilarJobs(job.id, job.discipline);
+  const band = formatSalaryBand(job.salaryMin, job.salaryMax, job.currency);
+  const applyProps = { href: `/apply/${job.id}`, target: "_blank", rel: "noopener nofollow" } as const;
 
   return (
     <>
@@ -74,127 +76,131 @@ async function JobDetail({ slug }: { slug: string }) {
       />
 
       {!active && (
-        <p role="status" className="mt-6 rounded-lg border border-line-strong bg-card px-4 py-3 text-sm text-muted">
-          This role is no longer open. It was taken down because it disappeared from {job.company.name}&rsquo;s
-          careers page.
+        <p role="status" className="metal mt-6 rounded-2xl px-5 py-4 text-sm text-muted">
+          This job is no longer accepting applications.
         </p>
       )}
 
-      <div className="mt-6 grid gap-10 md:grid-cols-[1fr_16rem]">
+      <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_20rem]">
         <article className="min-w-0">
-          <header className="flex items-start gap-4">
-            <CompanyAvatar name={job.company.name} logoUrl={job.company.logoUrl} size="lg" />
-            <div className="min-w-0">
-              <h1 className="text-2xl font-semibold tracking-tight metal-text">{job.title}</h1>
-              <p className="mt-1 text-sm text-muted">
-                <Link href={`/companies/${job.company.slug}`} className="text-fg hover:underline">
-                  {job.company.name}
-                </Link>{" "}
-                · {formatJobLocation(job)}
-              </p>
+          <header className="metal relative isolate overflow-hidden rounded-3xl p-6 sm:p-8">
+            <div className="hero-grid opacity-60" aria-hidden />
+            <div className="flex items-center gap-3">
+              <CompanyAvatar name={job.company.name} logoUrl={job.company.logoUrl} size="lg" />
+              <Link
+                href={`/companies/${job.company.slug}`}
+                className="text-sm font-medium text-muted transition-colors hover:text-fg"
+              >
+                {job.company.name}
+              </Link>
             </div>
+            <h1 className="steel-text mt-5 pb-1 text-3xl leading-tight font-semibold tracking-[-0.03em] sm:text-4xl">
+              {job.title}
+            </h1>
+
+            <ul className="mt-5 flex flex-wrap items-center gap-2 text-sm text-muted" aria-label="Details">
+              {band && (
+                <li>
+                  <SalaryPill band={band} large />
+                </li>
+              )}
+              <Fact icon={MapPin}>{job.location}</Fact>
+              {job.remote !== "ONSITE" && <Fact>{REMOTE_LABEL[job.remote]}</Fact>}
+              <Fact icon={BriefcaseBusiness}>{LEVEL_LABEL[job.level]}</Fact>
+              <Fact icon={CalendarDays}>{formatPostedAgo(job.postedAt)}</Fact>
+            </ul>
+
+            {active && (
+              <div className="mt-7 hidden flex-wrap gap-2 sm:flex">
+                <a {...applyProps} className={buttonClass("primary", "lg")}>
+                  Apply now <ArrowUpRight className="size-4" aria-hidden />
+                </a>
+                <SaveButton jobId={job.id} jobTitle={job.title} variant="full" />
+              </div>
+            )}
           </header>
 
-          <dl className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-4">
-            {[
-              ["Salary", formatSalaryBand(job.salaryMin, job.salaryMax, job.currency) ?? "Not disclosed"],
-              ["Level", LEVEL_LABEL[job.level]],
-              ["Setup", REMOTE_LABEL[job.remote]],
-              ["Posted", formatPostedAgo(job.postedAt)],
-            ].map(([k, v]) => (
-              <div key={k} className="bg-card px-4 py-3">
-                <dt className="text-[11px] tracking-wide text-subtle uppercase">{k}</dt>
-                <dd className="mt-1 text-sm font-medium text-fg tabular-nums">{v}</dd>
-              </div>
-            ))}
-          </dl>
-
-          <ul className="mt-4 flex flex-wrap gap-1.5" aria-label="Skills">
-            <li>
-              <Tag>{DISCIPLINE_LABEL[job.discipline]}</Tag>
-            </li>
-            {job.tags.map((t) => (
-              <li key={t}>
-                <Tag>{t}</Tag>
+          {job.tags.length > 0 && (
+            <ul className="mt-6 flex flex-wrap gap-1.5" aria-label="Skills">
+              <li>
+                <Tag>{DISCIPLINE_LABEL[job.discipline]}</Tag>
               </li>
-            ))}
-          </ul>
+              {job.tags.map((t) => (
+                <li key={t}>
+                  <Tag>{t}</Tag>
+                </li>
+              ))}
+            </ul>
+          )}
 
-          <div className="mt-6 flex flex-wrap gap-2">
-            {active && (
-              <a
-                href={`/apply/${job.id}`}
-                target="_blank"
-                rel="noopener nofollow"
-                className={buttonClass("primary", "md")}
-              >
-                Apply on {job.company.name}&rsquo;s site <ArrowUpRight className="size-4" aria-hidden />
-              </a>
-            )}
-            <SaveButton jobId={job.id} jobTitle={job.title} variant="full" />
-          </div>
-
-          <div className="mt-10 border-t border-line pt-8">
+          <section className="mt-8" aria-labelledby="about-role">
+            <h2 id="about-role" className="mb-4 text-lg font-semibold text-fg">
+              About the role
+            </h2>
             <JobDescription text={job.description} />
-          </div>
+          </section>
         </article>
 
-        <aside className="space-y-4 md:sticky md:top-20 md:self-start">
-          <section className="metal-panel rounded-xl p-4" aria-labelledby="about-company">
-            <h2 id="about-company" className="text-sm font-semibold text-fg">
-              About {job.company.name}
-            </h2>
+        <aside className="space-y-3 lg:sticky lg:top-24 lg:self-start">
+          <section className="metal rounded-3xl p-5" aria-labelledby="about-company">
+            <div className="flex items-center gap-3">
+              <CompanyAvatar name={job.company.name} logoUrl={job.company.logoUrl} />
+              <h2 id="about-company" className="min-w-0 truncate text-[15px] font-semibold text-fg">
+                {job.company.name}
+              </h2>
+            </div>
             {job.company.description && (
-              <p className="mt-2 text-sm leading-relaxed text-muted">{job.company.description}</p>
+              <p className="mt-3 line-clamp-4 text-sm leading-relaxed text-muted">{job.company.description}</p>
             )}
-            <ul className="mt-4 space-y-2 text-sm text-muted">
-              {job.company.hq && (
-                <li className="flex items-center gap-2">
-                  <MapPin className="size-3.5" aria-hidden /> {job.company.hq}
-                </li>
-              )}
-              {job.company.size && (
-                <li className="flex items-center gap-2">
-                  <Users className="size-3.5" aria-hidden /> {job.company.size} people
-                </li>
-              )}
-              {job.company.medianResponseDays != null && (
-                <li className="flex items-center gap-2">
-                  <Clock className="size-3.5" aria-hidden /> Replies in ~{job.company.medianResponseDays} days
-                </li>
-              )}
-              <li className="flex items-center gap-2">
-                <Globe className="size-3.5" aria-hidden />
-                <a href={job.company.website} target="_blank" rel="noopener" className="hover:text-fg">
-                  {new URL(job.company.website).hostname.replace(/^www\./, "")}
-                </a>
-              </li>
-            </ul>
-            <Link
-              href={`/companies/${job.company.slug}`}
-              className="mt-4 inline-flex items-center gap-1.5 text-xs text-muted hover:text-fg"
+            <a
+              href={job.company.website}
+              target="_blank"
+              rel="noopener"
+              className="mt-4 flex items-center gap-2 text-sm text-muted transition-colors hover:text-fg"
             >
-              <Building2 className="size-3.5" aria-hidden /> All roles at {job.company.name}
+              <Globe className="size-3.5" aria-hidden />
+              {new URL(job.company.website).hostname.replace(/^www\./, "")}
+            </a>
+            <Link href={`/companies/${job.company.slug}`} className={buttonClass("secondary", "md", "mt-5 w-full")}>
+              More jobs at {job.company.name}
             </Link>
           </section>
-          <p className="px-1 text-xs leading-relaxed text-subtle">
-            {job.source === "MANUAL"
-              ? `Last confirmed by the employer ${formatPostedAgo(job.lastVerifiedAt).toLowerCase()}.`
-              : `Taken from ${job.company.name}’s careers page, last checked ${formatPostedAgo(job.lastVerifiedAt).toLowerCase()}.`}{" "}
-            Applications go directly to {job.company.name}; Lodestar never sees your details.
-          </p>
         </aside>
       </div>
 
       {similar.length > 0 && (
         <section className="mt-16" aria-labelledby="similar">
-          <h2 id="similar" className="mb-4 text-lg font-semibold text-fg">
-            Similar {DISCIPLINE_LABEL[job.discipline].toLowerCase()} roles
+          <h2 id="similar" className="steel-text mb-5 text-xl font-semibold tracking-tight">
+            Similar jobs
           </h2>
-          <JobGrid jobs={similar} />
+          <JobGrid jobs={similar.slice(0, 3)} />
         </section>
       )}
+
+      {active && (
+        <>
+          {/* Phones get a sticky apply bar instead of the header buttons. */}
+          <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-bg/85 p-3 backdrop-blur-xl sm:hidden">
+            <div className="flex gap-2">
+              <a {...applyProps} className={buttonClass("primary", "lg", "flex-1")}>
+                Apply now <ArrowUpRight className="size-4" aria-hidden />
+              </a>
+              <SaveButton jobId={job.id} jobTitle={job.title} variant="full" />
+            </div>
+          </div>
+          <div className="h-20 sm:hidden" aria-hidden />
+        </>
+      )}
     </>
+  );
+}
+
+function Fact({ icon: Icon, children }: { icon?: LucideIcon; children: React.ReactNode }) {
+  return (
+    <li className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface/60 px-3 py-1">
+      {Icon && <Icon className="size-3.5 text-subtle" aria-hidden />}
+      {children}
+    </li>
   );
 }
 
@@ -249,16 +255,9 @@ function jobPostingJsonLd(job: JobForLd) {
 
 function JobSkeleton() {
   return (
-    <div className="mt-6 animate-pulse" aria-busy="true" aria-label="Loading role">
-      <div className="flex gap-4">
-        <div className="size-12 rounded-md bg-card" />
-        <div className="flex-1 space-y-2">
-          <div className="h-7 w-2/3 rounded bg-card" />
-          <div className="h-4 w-1/3 rounded bg-card" />
-        </div>
-      </div>
-      <div className="mt-6 h-16 rounded-xl bg-card" />
-      <div className="mt-10 space-y-3">
+    <div className="mt-6 animate-pulse" aria-busy="true" aria-label="Loading job">
+      <div className="h-64 rounded-3xl border border-line bg-card" />
+      <div className="mt-10 max-w-3xl space-y-3">
         {Array.from({ length: 6 }, (_, i) => (
           <div key={i} className="h-4 rounded bg-card" />
         ))}

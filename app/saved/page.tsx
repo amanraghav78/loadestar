@@ -9,11 +9,9 @@ export const metadata: Metadata = {
 
 export default function SavedPage() {
   return (
-    <Container className="py-10">
-      <h1 className="metal-text text-2xl font-semibold tracking-tight">Saved roles</h1>
-      <p className="mt-2 text-sm text-muted">
-        Saved on this device only. There&rsquo;s no account; clearing your browser data clears this list.
-      </p>
+    <Container wide className="py-12">
+      <h1 className="steel-text text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">Saved</h1>
+      <p className="mt-2 text-sm text-muted">Kept on this device. No account needed.</p>
       <div className="mt-8">
         <SavedJobsList />
       </div>

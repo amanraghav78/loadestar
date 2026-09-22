@@ -8,12 +8,20 @@ export function Tag({ children, className }: { children: React.ReactNode; classN
   return <span className={cn(tagClass, className)}>{children}</span>;
 }
 
-export function TagLink({ href, children }: { href: string; children: React.ReactNode }) {
+/** A rounded filter/shortcut chip; `active` renders it in polished silver. */
+export function Chip({
+  href,
+  active,
+  children,
+  className,
+}: {
+  href: string;
+  active?: boolean;
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
-    <Link
-      href={href}
-      className={cn(tagClass, "hover:border-accent/50 hover:bg-accent/10 hover:text-fg px-2.5 py-1 transition-colors")}
-    >
+    <Link href={href} aria-current={active ? "true" : undefined} className={cn("chip", className)}>
       {children}
     </Link>
   );

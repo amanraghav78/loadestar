@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { JobCardSkeleton, JobGrid } from "@/components/job-card";
+import { JobCardSkeleton, JobList } from "@/components/job-card";
+import { buttonClass } from "@/components/ui/button";
 import type { JobCardData } from "@/lib/queries";
 import { useSavedJobs } from "@/lib/saved-jobs";
 
@@ -33,11 +34,11 @@ export function SavedJobsList() {
 
   if (ids.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-line p-10 text-center">
-        <p className="text-sm text-fg">No saved roles yet.</p>
-        <p className="mt-1 text-sm text-muted">Tap the bookmark on any role to keep it here.</p>
-        <Link href="/jobs" className="mt-4 inline-block text-sm text-fg underline underline-offset-4">
-          Browse roles
+      <div className="metal rounded-3xl p-12 text-center">
+        <p className="text-base font-medium text-fg">No saved roles yet.</p>
+        <p className="mt-1 text-sm text-muted">Tap the bookmark on any job to keep it here.</p>
+        <Link href="/jobs" className={buttonClass("primary", "md", "mt-5")}>
+          Browse jobs
         </Link>
       </div>
     );
@@ -45,7 +46,7 @@ export function SavedJobsList() {
 
   if (!state || state.key !== key) {
     return (
-      <div className="grid gap-3 sm:grid-cols-2" aria-busy="true">
+      <div className="grid gap-3 md:grid-cols-2" aria-busy="true">
         {ids.slice(0, 4).map((id) => (
           <JobCardSkeleton key={id} />
         ))}
@@ -67,12 +68,12 @@ export function SavedJobsList() {
   return (
     <div className="space-y-10">
       {active.length > 0 ? (
-        <JobGrid jobs={active} />
+        <JobList jobs={active} />
       ) : (
-        <p className="text-sm text-muted">None of your saved roles are open any more.</p>
+        <p className="text-sm text-muted">None of your saved jobs are open any more.</p>
       )}
       {(expired.length > 0 || missing.length > 0) && (
-        <section className="rounded-xl border border-line p-4">
+        <section className="metal rounded-2xl p-5">
           <h2 className="text-sm font-medium text-fg">
             {expired.length + missing.length} saved {expired.length + missing.length === 1 ? "role has" : "roles have"}{" "}
             closed

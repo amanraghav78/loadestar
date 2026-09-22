@@ -56,6 +56,14 @@ export function formatPostedAgo(date: Date, now: Date = new Date()) {
   return months <= 1 ? "1 month ago" : `${months} months ago`;
 }
 
+/** Compact age for cards: "Today", "3d", "2w". */
+export function formatAge(date: Date, now: Date = new Date()) {
+  const days = Math.max(0, Math.floor((now.getTime() - date.getTime()) / DAY));
+  if (days === 0) return "Today";
+  if (days < 7) return `${days}d`;
+  return `${Math.floor(days / 7)}w`;
+}
+
 export const numberFormat = new Intl.NumberFormat("en-US");
 
 export const DISCIPLINE_LABEL: Record<Discipline, string> = {

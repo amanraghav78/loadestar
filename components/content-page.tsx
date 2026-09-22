@@ -13,12 +13,13 @@ export function ContentPage({
   children: React.ReactNode;
 }) {
   return (
-    <Container className="py-14">
+    <Container className="py-16">
       <div className="max-w-2xl">
-        {eyebrow && <p className="text-[11px] font-medium tracking-[0.14em] text-subtle uppercase">{eyebrow}</p>}
-        <h1 className="metal-text mt-3 text-3xl font-semibold tracking-tight">{title}</h1>
-        {intro && <p className="mt-4 text-[15px] leading-relaxed text-muted">{intro}</p>}
-        <div className="prose-job mt-10 text-[15px]">{children}</div>
+        {eyebrow && <p className="text-[11px] font-medium tracking-[0.16em] text-subtle uppercase">{eyebrow}</p>}
+        <h1 className="steel-text mt-3 pb-1 text-4xl font-semibold tracking-[-0.035em] sm:text-5xl">{title}</h1>
+        {intro && <p className="mt-5 text-base leading-relaxed text-muted">{intro}</p>}
+        <div className="hairline my-10" aria-hidden />
+        <div className="prose-job text-[15px]">{children}</div>
       </div>
     </Container>
   );

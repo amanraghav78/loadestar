@@ -8,29 +8,13 @@ export const metadata: Metadata = {
 
 export default function VerificationPage() {
   return (
-    <ContentPage
-      eyebrow="Employers"
-      title="Verification policy"
-      intro="How listings get onto Lodestar and how they stay accurate."
-    >
-      <h3>From your careers page</h3>
-      <p>
-        If your careers site runs on Workday, SmartRecruiters, Greenhouse, Lever, Ashby, Oracle Recruiting or
-        Eightfold, we read its public listings directly. There&rsquo;s nothing to post or re-confirm: new roles
-        appear after our next check (several times a day), and roles you close disappear from Lodestar on the same
-        schedule. Roles are removed once they are 30 days old.
-      </p>
-      <h3>Publish your salary range</h3>
-      <p>
-        Roles with a published INR salary range are ranked first and marked on Lodestar. Add the annual range to
-        the job description (for example &ldquo;CTC: ₹25&ndash;35 LPA&rdquo;), or use your applicant tracking
-        system&rsquo;s pay-range field, and we&rsquo;ll pick it up.
-      </p>
-      <h3>Not on a supported job board?</h3>
-      <p>
-        Submit roles through the &ldquo;Post a role&rdquo; form. We check that the posting comes from someone at
-        your company and that the application link goes to your own site or a form you control.
-      </p>
+    <ContentPage eyebrow="Employers" title="Verification policy" intro="How we keep every listing real.">
+      <ul>
+        <li>Every job must be a real, open position at the company that is hiring.</li>
+        <li>The apply link must go to your own site or a form you control.</li>
+        <li>Filled roles come down, and every listing is removed once it is 30 days old.</li>
+        <li>Publish an annual salary range in rupees and your job is ranked first.</li>
+      </ul>
       <h3>Corrections and removal</h3>
       <p>
         If something about your listing is wrong, or you&rsquo;d rather not appear on Lodestar, contact us and
