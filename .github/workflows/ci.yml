@@ -20,6 +20,14 @@ jobs:
       ADMIN_PASS: ci-admin-password
       CRON_SECRET: ci-cron-secret-00000000
       NEXT_PUBLIC_SITE_URL: http://localhost:3100
+      # Candidate accounts. Google is never called in CI: the suite signs in
+      # through the test-only hook that E2E_TEST_AUTH enables.
+      BETTER_AUTH_SECRET: ci-better-auth-secret-000000000000
+      GOOGLE_CLIENT_ID: ci-google-client-id
+      GOOGLE_CLIENT_SECRET: ci-google-client-secret
+      E2E_TEST_AUTH: "1"
+      # PGlite serves the suite from a single connection.
+      DB_POOL_MAX: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

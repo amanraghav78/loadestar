@@ -121,6 +121,8 @@ model Job {
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
   applyClicks     ApplyClick[]
+  savedBy         SavedJob[]
+  applications    JobApplication[]
 
   @@unique([source, externalId])
   @@index([status, postedAt(sort: Desc), id(sort: Desc)])
@@ -132,7 +134,9 @@ model Job {
   @@index([searchText(ops: raw("gin_trgm_ops"))], type: Gin)
 }
 
-/// Anonymous outbound-click log. No personal data is stored.
+/// Anonymous outbound-click log. No personal data is stored, and it stays
+/// separate from candidate accounts: see JobApplication for the signed-in
+/// candidate's own record of the roles they opened.
 model ApplyClick {
   id          String   @id @default(cuid())
   jobId       String
@@ -142,4 +146,132 @@ model ApplyClick {
   createdAt   DateTime @default(now())
 
   @@index([jobId, createdAt])
+}
+
+// ---------------------------------------------------------------- accounts
+//
+// Candidate accounts. The four tables below (user, session, account,
+// verification) are Better Auth's, and their columns must match what
+// `getAuthTables()` in better-auth/db expects; everything hanging off User
+// cascades, so deleting a user erases their data in one statement.
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  sessions     Session[]
+  accounts     Account[]
+  profile      CandidateProfile?
+  savedJobs    SavedJob[]
+  applications JobApplication[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("session")
+}
+
+/// A sign-in method linked to a user (providerId "google"; "credential" only in tests).
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+/// What the candidate tells us about themselves. Name and email come from
+/// Google and live on User; everything here is optional and theirs to delete.
+model CandidateProfile {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName        String
+  phone           String?
+  city            String?
+  yearsExperience Int?
+  currentTitle    String?
+  linkedinUrl     String?
+  githubUrl       String?
+  portfolioUrl    String?
+  /// Object key in the private resume bucket. Never sent to the browser.
+  resumeKey       String?
+  /// Sanitised original filename, used for the download's Content-Disposition.
+  resumeFilename  String?
+  resumeSize      Int?
+  resumeType      String?
+  resumeUpdatedAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+/// A saved role, synced to the account. Signed-out visitors keep theirs in the browser.
+model SavedJob {
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([userId, jobId])
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+/// "I applied to this", recorded when a signed-in candidate opens the employer's
+/// page through /apply. Lodestar never submits an application on their behalf.
+model JobApplication {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobId         String
+  job           Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  /// Bumped when they open the same role again, so the list shows the latest visit.
+  lastClickedAt DateTime @default(now())
+
+  @@unique([userId, jobId])
+  @@index([userId, lastClickedAt(sort: Desc)])
 }

@@ -195,6 +195,15 @@ async function main() {
     throw new Error("Refusing to seed in production. Pass --force if you really mean it.");
   }
 
+  // Children before parents. Cascades would cover most of this, but spelling it
+  // out keeps the order obvious when a table is added.
+  await db.jobApplication.deleteMany();
+  await db.savedJob.deleteMany();
+  await db.candidateProfile.deleteMany();
+  await db.session.deleteMany();
+  await db.account.deleteMany();
+  await db.verification.deleteMany();
+  await db.user.deleteMany();
   await db.applyClick.deleteMany();
   await db.job.deleteMany();
   await db.company.deleteMany();

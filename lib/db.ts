@@ -9,7 +9,9 @@ function createClient() {
   const adapter = new PrismaPg({
     connectionString: env.DATABASE_URL,
     // Serverless functions each hold a small pool; Neon's pooler fans in.
-    max: 5,
+    // The local PGlite database used by the test suite wants a single
+    // connection, hence the override.
+    max: Number(process.env.DB_POOL_MAX ?? 5),
     idleTimeoutMillis: 10_000,
     connectionTimeoutMillis: 5_000,
   });

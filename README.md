@@ -85,11 +85,32 @@ You can point `DATABASE_URL` at a Neon branch instead of running `db:local`.
 | `npm run ingest:preview` | Dry run: fetch + parse every feed, print what would be listed. No DB |
 | `npm run db:seed:test` | Fictional **test fixtures** for e2e/CI only; never run against production |
 
+## Candidate accounts
+
+Optional, and off until configured: with no `BETTER_AUTH_SECRET` / `GOOGLE_CLIENT_*`, sign-in is hidden and the site behaves exactly as it did before. Signed in, a candidate gets a profile, one resume, saved roles that follow them across devices, and a list of roles they opened.
+
+Lodestar never submits an application: listings come from employers' own careers sites, so "applied" means *you opened the employer's page*. The resume is the candidate's own copy, never sent anywhere.
+
+**Setup**
+
+1. Google Cloud Console → **Credentials** → **OAuth client ID** → *Web application*. Authorised redirect URIs: `http://localhost:3000/api/auth/callback/google` and `https://<site>/api/auth/callback/google`. Copy the id and secret into `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`.
+2. `BETTER_AUTH_SECRET` — `openssl rand -base64 32`.
+3. Cloudflare R2 → create a **private** bucket → an API token with object read/write. Set `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`. Without them, upload is off in production; locally and in tests an in-process store stands in.
+
+**How it holds together**
+
+- `lib/queries.ts` (the shared, cached job data) knows nothing about users, and `tests/unit/cache-isolation.test.ts` fails if that ever changes. Session reads live in `lib/session.ts` behind `use cache: private`, which never reaches a server cache; per-user reads in `lib/account-queries.ts` are uncached and resolve the user themselves.
+- Resumes: PDF only, 4 MB, checked by magic bytes rather than the file's name or declared type. Stored under an unguessable key, downloaded only through `/api/resume`, which takes no id and serves the caller their own file.
+- Deleting an account removes the file first, then the row; everything else cascades. What survives is the anonymous apply-click count.
+- Google's consent screen can't be automated, so the e2e suite signs in through `app/api/test/sign-in/route.ts`, which 404s unless `E2E_TEST_AUTH=1` **and** `VERCEL_ENV` isn't `production`. Never set that variable on the live site.
+
+Running the e2e suite locally needs `BETTER_AUTH_SECRET`, dummy `GOOGLE_CLIENT_*`, `E2E_TEST_AUTH=1` and `DB_POOL_MAX=1` (PGlite prefers a single connection), then `npm run db:seed:test && npm run build && npm run test:e2e`.
+
 ## Deploying to Vercel
 
 1. Create a Neon project. Copy the **pooled** URL to `DATABASE_URL` and the **direct** URL to `DIRECT_URL`.
 2. Create an Upstash Redis database and set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`.
-3. Set `ADMIN_USER`, `ADMIN_PASS` (long and random), `CRON_SECRET` (`openssl rand -hex 32`), `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_POST_ROLE_FORM_URL` and `NEXT_PUBLIC_CONTACT_EMAIL`. Optionally set the Sentry variables.
+3. Set `ADMIN_USER`, `ADMIN_PASS` (long and random), `CRON_SECRET` (`openssl rand -hex 32`), `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_POST_ROLE_FORM_URL` and `NEXT_PUBLIC_CONTACT_EMAIL`. Optionally set the Sentry variables, and the account variables above to switch sign-in on.
 4. Import the repo in Vercel. The `vercel-build` script runs `prisma migrate deploy` before `next build`, and `vercel.json` registers the daily cron.
 5. After the first deploy, trigger the first sync: `curl -H "Authorization: Bearer $CRON_SECRET" https://<site>/api/cron/sync` (then it runs daily).
 

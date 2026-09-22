@@ -135,3 +135,42 @@ export const idsParamSchema = z
   .max(2000)
   .transform((s) => s.split(",").filter((id) => /^[a-z0-9]{10,40}$/i.test(id)))
   .pipe(z.array(z.string()).max(100));
+
+// ---------------------------------------------------------------- candidates
+
+/** A profile URL on the expected site, so a typo'd link is caught while typing it. */
+const profileUrl = (host: RegExp, example: string) =>
+  z.preprocess(
+    (v) => (v === "" || v == null ? undefined : v),
+    httpsUrl
+      .refine((url) => host.test(new URL(url).hostname), `Enter a ${example} address`)
+      .optional(),
+  );
+
+/**
+ * Everything a candidate tells us about themselves is optional except their
+ * name: a half-filled profile is more useful than an abandoned form.
+ */
+export const profileInputSchema = z.object({
+  fullName: z.string().trim().min(1, "Tell us your name").max(80),
+  // Indian mobile numbers, with or without +91, and international formats.
+  phone: z.preprocess(
+    (v) => (typeof v === "string" ? v.replace(/[\s\-()]/g, "") : v),
+    z
+      .string()
+      .regex(/^\+?[0-9]{7,15}$/, "Enter a phone number like +91 98765 43210")
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
+  ),
+  city: optionalTrimmed(60),
+  yearsExperience: z.preprocess(
+    (v) => (v === "" || v == null ? undefined : v),
+    z.coerce.number().int().min(0, "Years can't be negative").max(60, "That looks too high").optional(),
+  ),
+  currentTitle: optionalTrimmed(80),
+  linkedinUrl: profileUrl(/(^|\.)linkedin\.com$/i, "linkedin.com"),
+  githubUrl: profileUrl(/(^|\.)github\.com$/i, "github.com"),
+  portfolioUrl: z.preprocess((v) => (v === "" || v == null ? undefined : v), httpsUrl.optional()),
+});
+
+export type ProfileInput = z.infer<typeof profileInputSchema>;

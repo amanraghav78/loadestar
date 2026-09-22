@@ -1,4 +1,5 @@
 import { after, NextResponse, type NextRequest } from "next/server";
+import { auth, authEnabled } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { clientIp, rateLimit } from "@/lib/ratelimit";
 
@@ -40,6 +41,8 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/apply/[jobId
 
   const referrer = request.headers.get("referer");
   const countryCode = request.headers.get("x-vercel-ip-country");
+  // Read now: the headers are gone by the time after() runs.
+  const requestHeaders = new Headers(request.headers);
   // Logging must never delay or break the redirect.
   after(async () => {
     try {
@@ -53,11 +56,35 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/apply/[jobId
     } catch (err) {
       console.error("failed to record apply click", err);
     }
+
+    // Separately, so a failure here can't cost us the anonymous click above.
+    try {
+      await recordApplication(jobId, requestHeaders);
+    } catch (err) {
+      console.error("failed to record the application", err);
+    }
   });
 
   return NextResponse.redirect(destination, {
     status: 302,
     headers: { "Cache-Control": "no-store", "X-Robots-Tag": "noindex" },
+  });
+}
+
+/**
+ * Notes that this candidate opened the employer's page, for their own list at
+ * /account/applications. Nothing is sent to the employer. Runs after the
+ * redirect has gone out, so it costs the candidate nothing.
+ */
+async function recordApplication(jobId: string, requestHeaders: Headers) {
+  if (!authEnabled) return;
+  const session = await auth.api.getSession({ headers: requestHeaders });
+  if (!session) return;
+
+  await db.jobApplication.upsert({
+    where: { userId_jobId: { userId: session.user.id, jobId } },
+    create: { userId: session.user.id, jobId },
+    update: { lastClickedAt: new Date() },
   });
 }
 

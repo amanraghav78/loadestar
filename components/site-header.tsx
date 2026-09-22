@@ -1,7 +1,9 @@
 import { Suspense } from "react";
+import { AccountNav, AccountNavFallback } from "@/components/account-nav";
 import { Logo } from "@/components/logo";
 import { NavLinks, NavLinksStatic } from "@/components/nav-links";
 import { SavedCount } from "@/components/saved-count";
+import { SavedJobsSync } from "@/components/saved-jobs-sync";
 import { LinkButton } from "@/components/ui/button";
 
 export function SiteHeader() {
@@ -19,6 +21,14 @@ export function SiteHeader() {
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <SavedCount />
+          {/* Streams in on its own so the rest of the header still prerenders. */}
+          <Suspense fallback={<AccountNavFallback />}>
+            <AccountNav />
+          </Suspense>
+          {/* Renders nothing; brings saved roles and the account into step. */}
+          <Suspense fallback={null}>
+            <SavedJobsSync />
+          </Suspense>
           <span className="hidden sm:block">
             <LinkButton href="/employers/post" variant="secondary" size="sm">
               Post a job
