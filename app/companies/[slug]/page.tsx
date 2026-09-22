@@ -58,7 +58,7 @@ async function CompanyDetail({ slug }: { slug: string }) {
       <header className="metal relative isolate mt-6 overflow-hidden rounded-3xl p-6 sm:p-8">
         <div className="hero-grid opacity-60" aria-hidden />
         <div className="flex flex-wrap items-center gap-5">
-          <CompanyAvatar name={company.name} logoUrl={company.logoUrl} size="lg" />
+          <CompanyAvatar company={company} size="lg" />
           <div className="min-w-0">
             <h1 className="steel-text pb-1 text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">{company.name}</h1>
             <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted">

@@ -21,6 +21,7 @@ import {
 } from "@/lib/format";
 import { getJobBySlug, getSimilarJobs, TAGS } from "@/lib/queries";
 import { listingExpiresAt } from "@/lib/listing-age";
+import { companyLogo } from "@/lib/logos";
 import { absoluteUrl } from "@/lib/site";
 
 export async function generateMetadata({ params }: PageProps<"/jobs/[slug]">): Promise<Metadata> {
@@ -86,7 +87,7 @@ async function JobDetail({ slug }: { slug: string }) {
           <header className="metal relative isolate overflow-hidden rounded-3xl p-6 sm:p-8">
             <div className="hero-grid opacity-60" aria-hidden />
             <div className="flex items-center gap-3">
-              <CompanyAvatar name={job.company.name} logoUrl={job.company.logoUrl} size="lg" />
+              <CompanyAvatar company={job.company} size="lg" />
               <Link
                 href={`/companies/${job.company.slug}`}
                 className="text-sm font-medium text-muted transition-colors hover:text-fg"
@@ -144,7 +145,7 @@ async function JobDetail({ slug }: { slug: string }) {
         <aside className="space-y-3 lg:sticky lg:top-24 lg:self-start">
           <section className="metal rounded-3xl p-5" aria-labelledby="about-company">
             <div className="flex items-center gap-3">
-              <CompanyAvatar name={job.company.name} logoUrl={job.company.logoUrl} />
+              <CompanyAvatar company={job.company} />
               <h2 id="about-company" className="min-w-0 truncate text-[15px] font-semibold text-fg">
                 {job.company.name}
               </h2>
@@ -208,6 +209,7 @@ type JobForLd = NonNullable<Awaited<ReturnType<typeof getJobBySlug>>>;
 
 function jobPostingJsonLd(job: JobForLd) {
   const validThrough = listingExpiresAt(job.postedAt);
+  const logo = companyLogo(job.company);
   return {
     "@context": "https://schema.org",
     "@type": "JobPosting",
@@ -222,7 +224,7 @@ function jobPostingJsonLd(job: JobForLd) {
       "@type": "Organization",
       name: job.company.name,
       sameAs: job.company.website,
-      ...(job.company.logoUrl ? { logo: job.company.logoUrl } : {}),
+      ...(logo ? { logo: absoluteUrl(logo) } : {}),
     },
     ...(job.remote === "REMOTE"
       ? {

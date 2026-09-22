@@ -24,6 +24,10 @@ A company with several career sites lists all its tokens separated by spaces. Th
 
 Each sync run handles the least recently synced companies that fit in ~200 s (a serverless function has 300 s). Vercel Cron calls `/api/cron/sync` eight times a day so every company is refreshed daily; **/admin/companies → Sync all feeds now** runs one batch on demand.
 
+### Company logos
+
+`npm run logos` saves a 112×112 WebP tile for each company in `lib/ingest/companies.ts` to `public/logos/` (about 1 KB each, 250 KB for all of them) and lists them in `lib/company-logos.json`. It reads the icons the company's own site declares, with Google's favicon service and the company's GitHub organisation as fallbacks. Logos are committed and served as static files: nothing is stored in the database or fetched at request time. A logo URL set in `/admin` takes precedence; companies with neither show their initial. A unit test fails if any tile passes 8 KB or the folder passes 600 KB.
+
 ## Stack
 
 | Concern | Choice |

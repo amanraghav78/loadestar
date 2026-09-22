@@ -38,7 +38,7 @@ export function CompanyDirectory({ companies }: { companies: Company[] }) {
                 href={`/companies/${c.slug}`}
                 className="metal-card flex min-w-0 flex-1 items-center gap-3 rounded-2xl p-3.5"
               >
-                <CompanyAvatar name={c.name} logoUrl={c.logoUrl} />
+                <CompanyAvatar company={c} />
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-semibold text-fg">{c.name}</span>
                   <span className="block text-xs text-subtle tabular-nums">

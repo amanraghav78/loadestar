@@ -37,11 +37,18 @@ const nextConfig: NextConfig = {
   turbopack: { root: process.cwd() },
   typedRoutes: false,
   images: {
-    // Company logos are entered by admins only.
+    // Logo URLs entered in /admin (the bundled ones in public/logos are served as is).
     remotePatterns: [{ protocol: "https", hostname: "**" }],
   },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      // Company logo tiles rarely change; a regenerated one reaches browsers within a week.
+      {
+        source: "/logos/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=604800, stale-while-revalidate=2592000" }],
+      },
+    ];
   },
 };
 

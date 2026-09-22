@@ -13,7 +13,7 @@ export function JobCard({ job }: { job: JobCardData }) {
   return (
     <article className="metal-card group flex min-w-0 flex-1 flex-col rounded-2xl p-5">
       <div className="flex items-start gap-3.5">
-        <CompanyAvatar name={job.company.name} logoUrl={job.company.logoUrl} />
+        <CompanyAvatar company={job.company} />
         <div className="min-w-0 flex-1">
           <p className="truncate text-xs font-medium text-muted">{job.company.name}</p>
           <h3 className="mt-1 line-clamp-2 text-[15px] leading-snug font-semibold text-fg">

@@ -18,7 +18,8 @@
     "postinstall": "prisma generate",
     "db:sync": "tsx --conditions=react-server scripts/sync.ts",
     "db:seed:test": "tsx prisma/test-fixtures.ts",
-    "ingest:preview": "tsx scripts/ingest-preview.ts"
+    "ingest:preview": "tsx scripts/ingest-preview.ts",
+    "logos": "tsx scripts/fetch-logos.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",
@@ -52,6 +53,7 @@
     "prettier": "^3.9.8",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "prisma": "^7.10.0",
+    "sharp": "^0.35.4",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5",
