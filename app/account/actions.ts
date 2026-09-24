@@ -40,6 +40,10 @@ export async function saveProfile(_prev: FormState, formData: FormData): Promise
       linkedinUrl: values.linkedinUrl ?? null,
       githubUrl: values.githubUrl ?? null,
       portfolioUrl: values.portfolioUrl ?? null,
+      currentSalary: values.currentSalary ?? null,
+      expectedSalary: values.expectedSalary ?? null,
+      noticePeriod: values.noticePeriod ?? null,
+      skills: values.skills,
     },
   });
   return { saved: true, message: "Profile saved." };

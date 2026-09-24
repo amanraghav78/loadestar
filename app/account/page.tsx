@@ -9,8 +9,7 @@ import { resumeUploadEnabled } from "@/lib/storage";
 import { SignOutButton } from "@/components/sign-out-button";
 import { Container } from "@/components/ui/container";
 import { DeleteAccount } from "./delete-account";
-import { ProfileForm } from "./profile-form";
-import { ResumeCard } from "./resume-card";
+import { ProfileSection } from "./profile-section";
 
 export const metadata: Metadata = {
   title: "Your account",
@@ -25,6 +24,10 @@ export default function AccountPage() {
       <h1 className="steel-text text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">Your account</h1>
       <p className="mt-2 text-sm text-muted">
         Your details and resume, kept private.{" "}
+        <Link href="/account/matches" className="underline underline-offset-2">
+          Roles that match you
+        </Link>
+        {" · "}
         <Link href="/account/applications" className="underline underline-offset-2">
           Roles you applied to
         </Link>
@@ -52,7 +55,7 @@ async function AccountDetails() {
         <SignOutButton />
       </section>
 
-      <ResumeCard
+      <ProfileSection
         uploadEnabled={resumeUploadEnabled}
         resume={
           profile?.resumeFilename && profile.resumeSize
@@ -63,15 +66,8 @@ async function AccountDetails() {
               }
             : null
         }
+        profile={{ fullName: profile?.fullName ?? user.name, ...profile }}
       />
-
-      <section className="metal rounded-3xl p-6" aria-labelledby="profile-heading">
-        <h2 id="profile-heading" className="text-[15px] font-semibold text-fg">
-          Profile
-        </h2>
-        <p className="mt-1 mb-5 text-sm text-muted">Everything except your name is optional.</p>
-        <ProfileForm profile={{ fullName: profile?.fullName ?? user.name, ...profile }} />
-      </section>
 
       <DeleteAccount />
     </div>

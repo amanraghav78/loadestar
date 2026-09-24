@@ -32,6 +32,16 @@ const CITIES: Array<[RegExp, string]> = [
 
 export const INDIA_CITIES = CITIES.map(([, name]) => name);
 
+/**
+ * The first city this text mentions, under the name we display it by, so
+ * "Bangalore" on a resume and "Bengaluru" in a feed become the same place.
+ * Order follows CITIES, which is roughly by hiring volume.
+ */
+export function matchIndiaCity(text: string): string | null {
+  for (const [re, name] of CITIES) if (re.test(text)) return name;
+  return null;
+}
+
 /** Indian states/UTs: "Surat, Gujarat" is India even if Surat isn't in CITIES. */
 const STATES =
   /\b(andhra pradesh|arunachal pradesh|assam|bihar|chhattisgarh|goa|gujarat|haryana|himachal pradesh|jharkhand|karnataka|kerala|madhya pradesh|maharashtra|manipur|meghalaya|mizoram|nagaland|odisha|orissa|punjab|rajasthan|sikkim|tamil nadu|telangana|tripura|uttar pradesh|uttarakhand|west bengal|jammu and kashmir|ladakh|puducherry)\b/i;
@@ -164,7 +174,9 @@ const TAGS: Array<[string, RegExp]> = [
   ["GCP", /\bGCP\b|Google Cloud/],
   ["Azure", /\bAzure\b/],
   ["Kafka", /\bKafka\b/],
-  ["PostgreSQL", /\bPostgres(?:QL)?\b/],
+  // Case-insensitive, unlike the language names above: "PostgreSQL" is not
+  // "Postgres" + "QL", so a case-sensitive pattern misses the usual spelling.
+  ["PostgreSQL", /\bpostgre(?:s|sql)\b/i],
   ["MySQL", /\bMySQL\b/],
   ["MongoDB", /\bMongoDB\b/],
   ["Redis", /\bRedis\b/],

@@ -36,12 +36,19 @@ export default function PrivacyPage() {
       <ul>
         <li>
           <strong>Your profile.</strong> Anything you choose to add: phone number, city, years of experience,
-          current job title, and links to LinkedIn, GitHub or your own site. All of it is optional.
+          current job title, skills, your current and expected salary, your notice period, and links to LinkedIn,
+          GitHub or your own site. All of it is optional. Salary is only ever shown back to you — it is never shown
+          to an employer, and never used anywhere public.
         </li>
         <li>
           <strong>Your saved and applied roles.</strong> Once you sign in, saved roles sync to your account so they
           follow you between devices. &ldquo;Applied&rdquo; means you opened the employer&rsquo;s page from here —
           we can&rsquo;t see whether you finished their form.
+        </li>
+        <li>
+          <strong>Matching.</strong> Your skills, experience, city and expected salary are used to rank open
+          listings for you on your own account page. That ranking is worked out here, when you ask for it. No
+          employer sees your profile, and nothing about you leaves Lodestar.
         </li>
         <li>
           <strong>A session cookie</strong> so you stay signed in. It is strictly necessary and is not used for
@@ -53,8 +60,14 @@ export default function PrivacyPage() {
       <p>
         Your resume is stored in private file storage, encrypted at rest. It is not public, it is not linked from
         any shareable address, and it can only be downloaded by you while you are signed in. Replacing it deletes
-        the previous file. We do not read it, and we do not send it, your profile or your contact details to any
-        employer — applying still happens on the employer&rsquo;s own site.
+        the previous file. We do not send it, your profile or your contact details to any employer — applying
+        still happens on the employer&rsquo;s own site.
+      </p>
+      <p>
+        When you upload it, we read the text of it once, on our own servers, to suggest values for the profile
+        fields above — your name, city, skills and so on. Nothing that comes out of it is saved until you look
+        over the form and press save, and you can edit or clear any of it. The text is used for that one response
+        and is not stored, and your resume is never sent to any outside service to be read, scored or ranked.
       </p>
 
       <h3>What we don&rsquo;t do</h3>

@@ -91,6 +91,12 @@ Optional, and off until configured: with no `BETTER_AUTH_SECRET` / `GOOGLE_CLIEN
 
 Lodestar never submits an application: listings come from employers' own careers sites, so "applied" means *you opened the employer's page*. The resume is the candidate's own copy, never sent anywhere.
 
+**Reading the resume, and matching**
+
+Uploading a PDF extracts its text in the upload request with [`unpdf`](https://github.com/unjs/unpdf) — a serverless build of pdf.js, no native modules and no outside service — and `lib/resume-parse.ts` (pure, heavily unit-tested) reads a name, phone, city, title, years of experience, links, CTC, notice period and skills out of it. The route returns those as *suggestions*: the form fills only the fields the candidate left blank, marks each one, and saves nothing until they press save. A PDF we can't read (a scan) still uploads — parsing never fails the request.
+
+Skills are extracted with the same `extractTags` vocabulary the job feeds are tagged with (`lib/ingest/classify.ts`), which is the whole trick: a candidate's skills and `Job.tags` are the same strings, so `/account/matches` draws a shortlist through the existing GIN index on `tags` and scores it in memory (`lib/recommendations.ts` — skill overlap, level band from years of experience, city, and whether published pay meets their expectation). Every card shows why it matched, so a candidate who disagrees can fix their profile. Roles they have already opened are left out.
+
 **Setup**
 
 1. Google Cloud Console → **Credentials** → **OAuth client ID** → *Web application*. Authorised redirect URIs: `http://localhost:3000/api/auth/callback/google` and `https://<site>/api/auth/callback/google`. Copy the id and secret into `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`.

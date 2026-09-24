@@ -2,6 +2,7 @@ import { z } from "zod";
 import { Currency, Discipline, JobSource, Level, RemotePolicy } from "@/lib/generated/prisma/enums";
 import { INDIA_CITIES } from "@/lib/ingest/classify";
 import { splitTokens, TOKEN_HINT } from "@/lib/ingest/tokens";
+import { parseInrAmount } from "@/lib/resume-parse";
 
 const optionalTrimmed = (max: number) =>
   z
@@ -148,6 +149,34 @@ const profileUrl = (host: RegExp, example: string) =>
   );
 
 /**
+ * Pay typed the way Indians quote it — "18", "18 LPA", "₹18,00,000" all mean
+ * the same thing — normalised to rupees per year by the resume parser's reader.
+ */
+const annualPay = (message: string) =>
+  z.preprocess(
+    (v) => {
+      if (typeof v !== "string" || v.trim() === "") return undefined;
+      // null (unparseable) becomes the string again so zod reports the message
+      // rather than silently dropping what they typed.
+      return parseInrAmount(v) ?? v.trim();
+    },
+    z.number().int().min(1000, message).max(200_000_000, message).optional(),
+  );
+
+/** Free-typed, comma-separated, and deduplicated case-insensitively. */
+const skillsField = z.preprocess(
+  (v) => (typeof v === "string" ? v : ""),
+  z.string().max(1200).transform((s) => {
+    const seen = new Map<string, string>();
+    for (const part of s.split(",")) {
+      const skill = part.trim().slice(0, 40);
+      if (skill && !seen.has(skill.toLowerCase())) seen.set(skill.toLowerCase(), skill);
+    }
+    return [...seen.values()].slice(0, 40);
+  }),
+);
+
+/**
  * Everything a candidate tells us about themselves is optional except their
  * name: a half-filled profile is more useful than an abandoned form.
  */
@@ -171,6 +200,13 @@ export const profileInputSchema = z.object({
   linkedinUrl: profileUrl(/(^|\.)linkedin\.com$/i, "linkedin.com"),
   githubUrl: profileUrl(/(^|\.)github\.com$/i, "github.com"),
   portfolioUrl: z.preprocess((v) => (v === "" || v == null ? undefined : v), httpsUrl.optional()),
+  currentSalary: annualPay("Enter your pay like 18 LPA or 1800000"),
+  expectedSalary: annualPay("Enter the pay you want, like 25 LPA"),
+  noticePeriod: z.preprocess(
+    (v) => (v === "" || v == null ? undefined : v),
+    z.coerce.number().int().min(0).max(180, "Pick a notice period of six months or less").optional(),
+  ),
+  skills: skillsField,
 });
 
 export type ProfileInput = z.infer<typeof profileInputSchema>;

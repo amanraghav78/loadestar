@@ -18,7 +18,8 @@ export const TAGS = {
 
 export const PAGE_SIZE = 20;
 
-const jobCardSelect = {
+/** The columns a job card renders. Exported so per-candidate reads return the same shape. */
+export const jobCardSelect = {
   id: true,
   slug: true,
   title: true,

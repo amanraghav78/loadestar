@@ -237,6 +237,15 @@ model CandidateProfile {
   linkedinUrl     String?
   githubUrl       String?
   portfolioUrl    String?
+  /// Annual pay in rupees. Private: only ever shown back to the candidate, and
+  /// used to rank roles against what they earn today.
+  currentSalary   Int?
+  expectedSalary  Int?
+  /// Days before they could start, 0 = immediately. Employers quote this in days.
+  noticePeriod    Int?
+  /// Skills, in the same vocabulary as Job.tags (lib/ingest/classify.ts), so the
+  /// two can be matched directly. Read from the resume, then the candidate's to edit.
+  skills          String[]  @default([])
   /// Object key in the private resume bucket. Never sent to the browser.
   resumeKey       String?
   /// Sanitised original filename, used for the download's Content-Disposition.
@@ -244,6 +253,8 @@ model CandidateProfile {
   resumeSize      Int?
   resumeType      String?
   resumeUpdatedAt DateTime?
+  /// When we last read a resume for suggestions. Null means we never have.
+  resumeParsedAt  DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 }

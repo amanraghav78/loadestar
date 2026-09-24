@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { resumePdf, SAMPLE_RESUME } from "../resume-pdf";
 
 /**
  * Google's consent screen can't be automated, so these sign in through the
@@ -145,6 +146,77 @@ test.describe("accounts", () => {
 
     await page.getByRole("button", { name: /Remove Ada CV.pdf/ }).click();
     await expect(page.getByText("No resume yet.")).toBeVisible();
+  });
+
+  test("a readable resume fills the blank profile fields, without saving anything", async ({ page }) => {
+    await signIn(page, candidate("parse"));
+    await page.goto("/account");
+
+    // Typed by hand first: the resume must not overwrite this.
+    await page.getByLabel("City").fill("Chennai");
+
+    const [chooser] = await Promise.all([
+      page.waitForEvent("filechooser"),
+      page.getByRole("button", { name: /(Upload|Replace) resume/ }).click(),
+    ]);
+    await chooser.setFiles({ name: "Priya CV.pdf", mimeType: "application/pdf", buffer: resumePdf(SAMPLE_RESUME) });
+
+    await expect(page.getByText(/We filled \d+ fields from your resume/)).toBeVisible();
+    await expect(page.getByLabel("Current title")).toHaveValue("Senior Data Engineer");
+    await expect(page.getByLabel("Years of experience")).toHaveValue("9");
+    await expect(page.getByLabel("Notice period")).toHaveValue("60");
+    await expect(page.getByLabel("Current salary")).toHaveValue("38 L");
+    await expect(page.getByLabel("Skills")).toHaveValue(/Python/);
+
+    // Neither the city they typed nor the name Google gave us is overwritten.
+    await expect(page.getByLabel("City")).toHaveValue("Chennai");
+    await expect(page.getByLabel("Full name")).toHaveValue("Ada Tester");
+
+    // Nothing is stored until they say so.
+    await page.reload();
+    await expect(page.getByLabel("Current title")).toHaveValue("");
+    await expect(page.getByLabel("Years of experience")).toHaveValue("");
+  });
+
+  test("salary, notice period and skills survive a save", async ({ page }) => {
+    await signIn(page, candidate("comp"));
+    await page.goto("/account");
+
+    await page.getByLabel("Full name").fill("Ada Tester");
+    await page.getByLabel("Current salary").fill("18 LPA");
+    await page.getByLabel("Expected salary").fill("2500000");
+    await page.getByLabel("Notice period").selectOption("30");
+    await page.getByLabel("Skills").fill("Kubernetes, Terraform, kubernetes");
+    await page.getByRole("button", { name: /Save profile/ }).click();
+    await expect(page.getByText("Profile saved.")).toBeVisible();
+
+    await page.reload();
+    // Both spellings of pay come back the way pay is quoted.
+    await expect(page.getByLabel("Current salary")).toHaveValue("18 L");
+    await expect(page.getByLabel("Expected salary")).toHaveValue("25 L");
+    await expect(page.getByLabel("Notice period")).toHaveValue("30");
+    // The duplicate is dropped, case-insensitively.
+    await expect(page.getByLabel("Skills")).toHaveValue("Kubernetes, Terraform");
+  });
+
+  test("matches rank open roles against the profile, and explain why", async ({ page }) => {
+    await signIn(page, candidate("matches"));
+
+    await page.goto("/account/matches");
+    await expect(page.getByText(/there is nothing to go on yet/)).toBeVisible();
+
+    await page.goto("/account");
+    await page.getByLabel("Full name").fill("Ada Tester");
+    await page.getByLabel("Years of experience").fill("8");
+    await page.getByLabel("Skills").fill("Kubernetes, Terraform");
+    await page.getByRole("button", { name: /Save profile/ }).click();
+    await expect(page.getByText("Profile saved.")).toBeVisible();
+
+    await page.goto("/account/matches");
+    await expect(page.getByRole("article").first()).toBeVisible();
+    await expect(page.getByText("Matching on Kubernetes, Terraform")).toBeVisible();
+    // Each card says why it is here, in the candidate's own skills.
+    await expect(page.getByText("Kubernetes and Terraform match").first()).toBeVisible();
   });
 
   test("applying while signed in lists the role under Applied", async ({ page }) => {

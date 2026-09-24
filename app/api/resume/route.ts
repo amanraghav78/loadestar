@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { clientIp, rateLimit } from "@/lib/ratelimit";
+import { countSuggestions, parseResumeText, type ResumeSuggestions } from "@/lib/resume-parse";
+import { extractResumeText } from "@/lib/resume-text";
 import { checkResumeBytes, resumeObjectKey, RESUME_ERROR, RESUME_TYPE, sanitizeResumeFilename } from "@/lib/resume";
 import { getUser } from "@/lib/session";
 import { resumeStore } from "@/lib/storage";
@@ -39,24 +41,24 @@ export async function POST(request: NextRequest) {
   });
 
   await resumeStore.put(key, bytes, RESUME_TYPE);
+
+  // Reading the file is a convenience, never a condition of storing it: a PDF
+  // we can't parse (a scan, an unusual producer, a password) still uploads.
+  const suggestions = await readSuggestions(bytes);
+
+  const now = new Date();
+  const resumeFields = {
+    resumeKey: key,
+    resumeFilename: filename,
+    resumeSize: bytes.length,
+    resumeType: RESUME_TYPE,
+    resumeUpdatedAt: now,
+    resumeParsedAt: suggestions ? now : null,
+  };
   await db.candidateProfile.upsert({
     where: { userId: user.id },
-    create: {
-      userId: user.id,
-      fullName: user.name,
-      resumeKey: key,
-      resumeFilename: filename,
-      resumeSize: bytes.length,
-      resumeType: RESUME_TYPE,
-      resumeUpdatedAt: new Date(),
-    },
-    update: {
-      resumeKey: key,
-      resumeFilename: filename,
-      resumeSize: bytes.length,
-      resumeType: RESUME_TYPE,
-      resumeUpdatedAt: new Date(),
-    },
+    create: { userId: user.id, fullName: user.name, ...resumeFields },
+    update: resumeFields,
   });
 
   // Replacing a resume removes the old file, or "we deleted it" stops being true.
@@ -68,7 +70,28 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({ filename, size: bytes.length, updatedAt: new Date().toISOString() });
+  return NextResponse.json({
+    filename,
+    size: bytes.length,
+    updatedAt: now.toISOString(),
+    // The candidate reviews these in the form and saves them themselves;
+    // nothing read out of a resume is written to the profile behind their back.
+    suggestions,
+    suggestionCount: suggestions ? countSuggestions(suggestions) : 0,
+  });
+}
+
+/** Never throws: a parse failure costs the candidate a convenience, not their upload. */
+async function readSuggestions(bytes: Uint8Array): Promise<ResumeSuggestions | null> {
+  try {
+    const text = await extractResumeText(bytes);
+    if (!text) return null;
+    const suggestions = parseResumeText(text);
+    return countSuggestions(suggestions) > 0 ? suggestions : null;
+  } catch (err) {
+    console.error("could not read the uploaded resume", err);
+    return null;
+  }
 }
 
 export async function GET() {
