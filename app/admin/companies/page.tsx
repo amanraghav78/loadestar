@@ -15,7 +15,7 @@ export default function AdminCompaniesPage() {
       <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold">Companies</h1>
-          <p className="mt-1 text-sm text-muted">
+          <p className="text-muted mt-1 text-sm">
             Companies with a job-board feed are synced daily at 08:00 IST. Others are managed by hand.
           </p>
         </div>
@@ -26,7 +26,7 @@ export default function AdminCompaniesPage() {
           </LinkButton>
         </div>
       </div>
-      <Suspense fallback={<p className="text-sm text-muted">Loading…</p>}>
+      <Suspense fallback={<p className="text-muted text-sm">Loading…</p>}>
         <CompaniesTable />
       </Suspense>
     </>
@@ -51,9 +51,9 @@ async function CompaniesTable() {
   });
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-line">
+    <div className="border-line overflow-x-auto rounded-xl border">
       <table className="w-full min-w-[48rem] text-sm">
-        <thead className="bg-surface text-left text-[11px] tracking-wide text-subtle uppercase">
+        <thead className="bg-surface text-subtle text-left text-[11px] tracking-wide uppercase">
           <tr>
             <th className="px-3 py-2.5 font-medium">Name</th>
             <th className="px-3 py-2.5 font-medium">Feed</th>
@@ -62,17 +62,21 @@ async function CompaniesTable() {
             <th className="px-3 py-2.5 text-right font-medium">Live roles</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-line">
+        <tbody className="divide-line divide-y">
           {companies.map((c) => (
             <tr key={c.id} className="bg-card align-top">
               <td className="px-3 py-2.5">
-                <Link href={`/admin/companies/${c.id}`} className="font-medium text-fg hover:underline">
+                <Link href={`/admin/companies/${c.id}`} className="text-fg font-medium hover:underline">
                   {c.name}
                 </Link>
-                {c.featured && <span className="ml-2 text-xs text-subtle">featured</span>}
+                {c.featured && <span className="text-subtle ml-2 text-xs">featured</span>}
               </td>
-              <td className="px-3 py-2.5 text-muted">
-                {c.atsSource ? `${c.atsSource.toLowerCase()} · ${c.atsToken}` : <span className="text-subtle">manual</span>}
+              <td className="text-muted px-3 py-2.5">
+                {c.atsSource ? (
+                  `${c.atsSource.toLowerCase()} · ${c.atsToken}`
+                ) : (
+                  <span className="text-subtle">manual</span>
+                )}
               </td>
               <td className="px-3 py-2.5">
                 {c.lastSyncError ? (
@@ -85,8 +89,8 @@ async function CompaniesTable() {
                   <span className="text-subtle">—</span>
                 )}
               </td>
-              <td className="px-3 py-2.5 font-mono text-xs text-muted">{c.slug}</td>
-              <td className="px-3 py-2.5 text-right text-muted tabular-nums">{c._count.jobs}</td>
+              <td className="text-muted px-3 py-2.5 font-mono text-xs">{c.slug}</td>
+              <td className="text-muted px-3 py-2.5 text-right tabular-nums">{c._count.jobs}</td>
             </tr>
           ))}
         </tbody>

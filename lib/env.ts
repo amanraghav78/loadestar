@@ -25,6 +25,9 @@ export const env = createEnv({
     // and tests use the in-memory driver in lib/storage/index.ts.
     BLOB_STORE_ID: z.string().min(1).optional(),
     BLOB_READ_WRITE_TOKEN: z.string().min(1).optional(),
+    // Cloudflare Turnstile. Optional: without the pair, the widget is not
+    // rendered and the check is skipped (see lib/captcha.ts).
+    TURNSTILE_SECRET_KEY: z.string().min(1).optional(),
     /// Enables a password sign-in route for end-to-end tests. Never set in production.
     E2E_TEST_AUTH: z.literal("1").optional(),
   },
@@ -32,11 +35,13 @@ export const env = createEnv({
     NEXT_PUBLIC_SITE_URL: z.url().default("http://localhost:3000"),
     NEXT_PUBLIC_POST_ROLE_FORM_URL: z.url().default("https://forms.gle/your-form-id"),
     NEXT_PUBLIC_CONTACT_EMAIL: z.email().default("hello@lodestar.jobs"),
+    NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().min(1).optional(),
   },
   experimental__runtimeEnv: {
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
     NEXT_PUBLIC_POST_ROLE_FORM_URL: process.env.NEXT_PUBLIC_POST_ROLE_FORM_URL,
     NEXT_PUBLIC_CONTACT_EMAIL: process.env.NEXT_PUBLIC_CONTACT_EMAIL,
+    NEXT_PUBLIC_TURNSTILE_SITE_KEY: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
   },
   // Lets lint/typecheck run in CI without secrets.
   skipValidation: process.env.SKIP_ENV_VALIDATION === "1",

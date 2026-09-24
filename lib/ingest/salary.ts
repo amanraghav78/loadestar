@@ -27,7 +27,8 @@ const RANGE = new RegExp(
 // Single figure, only accepted next to salary wording: "CTC of ₹18 LPA".
 const SINGLE = new RegExp(String.raw`(${CUR})\s*(${NUM})(${UNIT})|(${NUM})(\s*(?:LPA))`, "gi");
 
-const SALARY_WORDS = /(salary|ctc|compensation|pay range|pay band|base pay|remuneration|package|stipend|annual base|fixed pay|budget)/i;
+const SALARY_WORDS =
+  /(salary|ctc|compensation|pay range|pay band|base pay|remuneration|package|stipend|annual base|fixed pay|budget)/i;
 const MONTHLY = /(per month|\/\s*month|monthly|p\.?m\.?\b|a month)/i;
 const HOURLY = /(per hour|\/\s*h(ou)?r|hourly)/i;
 

@@ -10,10 +10,20 @@ export default function GlobalError({ error }: { error: Error & { digest?: strin
   }, [error]);
 
   return (
-    <html lang="en">
-      <body style={{ background: "#12141d", color: "#e8e9f0", fontFamily: "system-ui", padding: "6rem 1rem", textAlign: "center" }}>
+    // globals.css may be what failed, so the colours are inline; `light-dark()`
+    // follows the machine rather than the saved preference, which is enough here.
+    <html lang="en" style={{ colorScheme: "light dark" }}>
+      <body
+        style={{
+          background: "light-dark(#f4f4f6, #12141d)",
+          color: "light-dark(#101014, #e8e9f0)",
+          fontFamily: "system-ui",
+          padding: "6rem 1rem",
+          textAlign: "center",
+        }}
+      >
         <h1 style={{ fontSize: "1.5rem" }}>Lodestar is having trouble</h1>
-        <p style={{ color: "#a1a1a1" }}>Please refresh in a minute.</p>
+        <p style={{ color: "light-dark(#52525b, #a1a1a1)" }}>Please refresh in a minute.</p>
       </body>
     </html>
   );

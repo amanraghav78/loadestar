@@ -7,7 +7,15 @@ import { JobFilters } from "@/components/job-filters";
 import { SearchBar } from "@/components/search-bar";
 import { buttonClass } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
-import { DISCIPLINE_LABEL, formatInrShort, LEVEL_LABEL, numberFormat, REMOTE_LABEL } from "@/lib/format";
+import {
+  DISCIPLINE_LABEL,
+  EMPLOYMENT_TYPE_LABEL,
+  formatInrShort,
+  INDUSTRY_LABEL,
+  LEVEL_LABEL,
+  numberFormat,
+  REMOTE_LABEL,
+} from "@/lib/format";
 import { searchJobs } from "@/lib/queries";
 import { parseSearchParams, toQueryString, type JobSearchParams } from "@/lib/validators";
 
@@ -32,7 +40,8 @@ export default function JobsPage({ searchParams }: PageProps<"/jobs">) {
 
 /** Every filter currently applied, each with a link that removes it. */
 function activeFilters(params: JobSearchParams) {
-  const without = (key: keyof JobSearchParams) => `/jobs${toQueryString({ ...params, [key]: undefined, cursor: undefined })}`;
+  const without = (key: keyof JobSearchParams) =>
+    `/jobs${toQueryString({ ...params, [key]: undefined, cursor: undefined })}`;
   const out: { label: string; href: string }[] = [];
   if (params.q) out.push({ label: `“${params.q}”`, href: without("q") });
   if (params.location) out.push({ label: params.location, href: without("location") });
@@ -40,6 +49,9 @@ function activeFilters(params: JobSearchParams) {
   if (params.discipline) out.push({ label: DISCIPLINE_LABEL[params.discipline], href: without("discipline") });
   if (params.level) out.push({ label: LEVEL_LABEL[params.level], href: without("level") });
   if (params.remote) out.push({ label: REMOTE_LABEL[params.remote], href: without("remote") });
+  if (params.employmentType)
+    out.push({ label: EMPLOYMENT_TYPE_LABEL[params.employmentType], href: without("employmentType") });
+  if (params.industry) out.push({ label: INDUSTRY_LABEL[params.industry], href: without("industry") });
   if (params.salary) out.push({ label: "With salary", href: without("salary") });
   if (params.minSalary) out.push({ label: `₹${formatInrShort(params.minSalary)}+`, href: without("minSalary") });
   if (params.tag) out.push({ label: params.tag, href: without("tag") });
@@ -62,22 +74,22 @@ async function Results({ params }: { params: JobSearchParams }) {
 
         <section aria-labelledby="results-heading" className="min-w-0">
           <details className="metal group mb-5 rounded-2xl lg:hidden">
-            <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-sm font-medium text-fg [&::-webkit-details-marker]:hidden">
-              <SlidersHorizontal className="size-4 text-muted" aria-hidden />
+            <summary className="text-fg flex cursor-pointer list-none items-center gap-2 px-4 py-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
+              <SlidersHorizontal className="text-muted size-4" aria-hidden />
               Filters
               {filterCount > 0 && (
-                <span className="rounded-full bg-white/10 px-1.5 text-[11px] tabular-nums">{filterCount}</span>
+                <span className="bg-tint-strong rounded-full px-1.5 text-[11px] tabular-nums">{filterCount}</span>
               )}
-              <span className="ml-auto text-xs text-muted group-open:hidden">Show</span>
-              <span className="ml-auto hidden text-xs text-muted group-open:inline">Hide</span>
+              <span className="text-muted ml-auto text-xs group-open:hidden">Show</span>
+              <span className="text-muted ml-auto hidden text-xs group-open:inline">Hide</span>
             </summary>
-            <div className="border-t border-line p-4">
+            <div className="border-line border-t p-4">
               <JobFilters params={params} />
             </div>
           </details>
 
           <div className="mb-5 flex flex-wrap items-center gap-2">
-            <h2 id="results-heading" className="mr-2 text-lg font-semibold text-fg" aria-live="polite">
+            <h2 id="results-heading" className="text-fg mr-2 text-lg font-semibold" aria-live="polite">
               <span className="tabular-nums">{numberFormat.format(total)}</span> {total === 1 ? "job" : "jobs"}
             </h2>
             {active.map((f) => (
@@ -92,7 +104,7 @@ async function Results({ params }: { params: JobSearchParams }) {
               </Link>
             ))}
             {active.length > 1 && (
-              <Link href="/jobs" className="text-xs text-muted underline-offset-4 hover:text-fg hover:underline">
+              <Link href="/jobs" className="text-muted hover:text-fg text-xs underline-offset-4 hover:underline">
                 Clear all
               </Link>
             )}
@@ -101,9 +113,9 @@ async function Results({ params }: { params: JobSearchParams }) {
           {jobs.length > 0 ? (
             <JobList jobs={jobs} />
           ) : (
-            <div className="rounded-2xl border border-dashed border-line p-12 text-center">
-              <p className="text-base font-medium text-fg">No jobs match that search</p>
-              <p className="mt-1 text-sm text-muted">Try fewer filters or a broader keyword.</p>
+            <div className="border-line rounded-2xl border border-dashed p-12 text-center">
+              <p className="text-fg text-base font-medium">No jobs match that search</p>
+              <p className="text-muted mt-1 text-sm">Try fewer filters or a broader keyword.</p>
               <Link href="/jobs" className={buttonClass("secondary", "md", "mt-5")}>
                 Show all jobs
               </Link>
@@ -112,14 +124,20 @@ async function Results({ params }: { params: JobSearchParams }) {
 
           <nav aria-label="Pagination" className="mt-8 flex items-center justify-between gap-4">
             {params.cursor ? (
-              <Link href={`/jobs${toQueryString({ ...params, cursor: undefined })}`} className="text-sm text-muted hover:text-fg">
+              <Link
+                href={`/jobs${toQueryString({ ...params, cursor: undefined })}`}
+                className="text-muted hover:text-fg text-sm"
+              >
                 Back to newest
               </Link>
             ) : (
               <span />
             )}
             {nextCursor && (
-              <Link href={`/jobs${toQueryString({ ...params, cursor: nextCursor })}`} className={buttonClass("secondary", "md")}>
+              <Link
+                href={`/jobs${toQueryString({ ...params, cursor: nextCursor })}`}
+                className={buttonClass("secondary", "md")}
+              >
                 More jobs <ArrowRight className="size-4" aria-hidden />
               </Link>
             )}
@@ -133,9 +151,9 @@ async function Results({ params }: { params: JobSearchParams }) {
 function ResultsSkeleton() {
   return (
     <div aria-busy="true" aria-label="Loading jobs">
-      <div className="h-[54px] animate-pulse rounded-full border border-line bg-card" />
+      <div className="border-line bg-card h-[54px] animate-pulse rounded-full border" />
       <div className="mt-8 grid gap-10 lg:grid-cols-[15.5rem_1fr]">
-        <div className="hidden h-96 animate-pulse rounded-2xl bg-card lg:block" />
+        <div className="bg-card hidden h-96 animate-pulse rounded-2xl lg:block" />
         <div className="grid gap-3 md:grid-cols-2">
           {Array.from({ length: 6 }, (_, i) => (
             <JobCardSkeleton key={i} />

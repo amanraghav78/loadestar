@@ -12,7 +12,7 @@ export function SyncButton() {
         {pending ? "Syncing… (up to a few minutes)" : "Sync all feeds now"}
       </Button>
       {state.message && (
-        <div role="status" className="text-xs text-muted">
+        <div role="status" className="text-muted text-xs">
           <p className="text-ok">{state.message}</p>
           {state.failed?.map((f) => (
             <p key={f} className="text-danger">

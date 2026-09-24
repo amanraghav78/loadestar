@@ -14,41 +14,41 @@ export default function PrivacyPage() {
       <h3>Browsing without an account</h3>
       <ul>
         <li>
-          <strong>Saved roles</strong> live in your browser&rsquo;s local storage. They never reach our servers
-          except as a list of listing IDs when you open the Saved page.
+          <strong>Saved roles</strong> live in your browser&rsquo;s local storage. They never reach our servers except
+          as a list of listing IDs when you open the Saved page.
         </li>
         <li>
-          <strong>Apply clicks.</strong> When you click Apply we record the listing, the time, the page you came
-          from (without query strings) and your country as reported by our host. Not your IP address. These counts
-          are anonymous: nothing in them points to a person, and they are not linked to any account.
+          <strong>Apply clicks.</strong> When you click Apply we record the listing, the time, the page you came from
+          (without query strings) and your country as reported by our host. Not your IP address. These counts are
+          anonymous: nothing in them points to a person, and they are not linked to any account.
         </li>
         <li>
-          <strong>Aggregate analytics.</strong> We use privacy-friendly, cookie-free page analytics to see which
-          pages are used.
+          <strong>Aggregate analytics.</strong> We use privacy-friendly, cookie-free page analytics to see which pages
+          are used.
         </li>
       </ul>
 
       <h3>If you create an account</h3>
       <p>
-        Signing in with Google is the only way in. Google tells us your name, email address and profile picture.
-        We never receive your Google password, and we never post anything anywhere.
+        Signing in with Google is the only way in. Google tells us your name, email address and profile picture. We
+        never receive your Google password, and we never post anything anywhere.
       </p>
       <ul>
         <li>
-          <strong>Your profile.</strong> Anything you choose to add: phone number, city, years of experience,
-          current job title, skills, your current and expected salary, your notice period, and links to LinkedIn,
-          GitHub or your own site. All of it is optional. Salary is only ever shown back to you — it is never shown
-          to an employer, and never used anywhere public.
+          <strong>Your profile.</strong> Anything you choose to add: phone number, city, years of experience, current
+          job title, skills, your current and expected salary, your notice period, and links to LinkedIn, GitHub or your
+          own site. All of it is optional. Salary is only ever shown back to you — it is never shown to an employer, and
+          never used anywhere public.
         </li>
         <li>
           <strong>Your saved and applied roles.</strong> Once you sign in, saved roles sync to your account so they
-          follow you between devices. &ldquo;Applied&rdquo; means you opened the employer&rsquo;s page from here —
-          we can&rsquo;t see whether you finished their form.
+          follow you between devices. &ldquo;Applied&rdquo; means you opened the employer&rsquo;s page from here — we
+          can&rsquo;t see whether you finished their form.
         </li>
         <li>
-          <strong>Matching.</strong> Your skills, experience, city and expected salary are used to rank open
-          listings for you on your own account page. That ranking is worked out here, when you ask for it. No
-          employer sees your profile, and nothing about you leaves Lodestar.
+          <strong>Matching.</strong> Your skills, experience, city and expected salary are used to rank open listings
+          for you on your own account page. That ranking is worked out here, when you ask for it. No employer sees your
+          profile, and nothing about you leaves Lodestar.
         </li>
         <li>
           <strong>A session cookie</strong> so you stay signed in. It is strictly necessary and is not used for
@@ -58,16 +58,16 @@ export default function PrivacyPage() {
 
       <h3>Your resume</h3>
       <p>
-        Your resume is stored in private file storage, encrypted at rest. It is not public, it is not linked from
-        any shareable address, and it can only be downloaded by you while you are signed in. Replacing it deletes
-        the previous file. We do not send it, your profile or your contact details to any employer — applying
-        still happens on the employer&rsquo;s own site.
+        Your resume is stored in private file storage, encrypted at rest. It is not public, it is not linked from any
+        shareable address, and it can only be downloaded by you while you are signed in. Replacing it deletes the
+        previous file. We do not send it, your profile or your contact details to any employer — applying still happens
+        on the employer&rsquo;s own site.
       </p>
       <p>
-        When you upload it, we read the text of it once, on our own servers, to suggest values for the profile
-        fields above — your name, city, skills and so on. Nothing that comes out of it is saved until you look
-        over the form and press save, and you can edit or clear any of it. The text is used for that one response
-        and is not stored, and your resume is never sent to any outside service to be read, scored or ranked.
+        When you upload it, we read the text of it once, on our own servers, to suggest values for the profile fields
+        above — your name, city, skills and so on. Nothing that comes out of it is saved until you look over the form
+        and press save, and you can edit or clear any of it. The text is used for that one response and is not stored,
+        and your resume is never sent to any outside service to be read, scored or ranked.
       </p>
 
       <h3>What we don&rsquo;t do</h3>
@@ -79,10 +79,10 @@ export default function PrivacyPage() {
 
       <h3>Deleting your data</h3>
       <p>
-        Delete your account yourself from your account page at any time. That removes your profile, your resume
-        file, your saved roles and your applied roles. What remains is the anonymous apply-click count described
-        above, which contains nothing that identifies you. Your sign-in session expires after 30 days; everything
-        else is kept until you delete it.
+        Delete your account yourself from your account page at any time. That removes your profile, your resume file,
+        your saved roles and your applied roles. What remains is the anonymous apply-click count described above, which
+        contains nothing that identifies you. Your sign-in session expires after 30 days; everything else is kept until
+        you delete it.
       </p>
       <p>
         If you would rather we did it, or you want a copy of what we hold, write to{" "}

@@ -1,10 +1,19 @@
 @import "tailwindcss";
 
 /*
- * Lodestar is dark-only: a graphite canvas, flat steel surfaces with a lit top
- * edge, and polished chrome for the few things that should shine (headline,
- * primary actions). Colour gradients are avoided; the only gradients are the
- * metal itself. Violet is a small accent (focus, logo, selected states).
+ * Lodestar is a metal UI: a flat canvas, steel surfaces with a lit top edge,
+ * and polished chrome for the few things that should shine (headline, primary
+ * actions). Colour gradients are avoided; the only gradients are the metal
+ * itself. Violet is a small accent (focus, logo, selected states).
+ *
+ * Dark — graphite and chrome — is the default. The light theme re-cuts the same
+ * metal in aluminium and paper: the chrome inverts to polished graphite so
+ * headlines and primary actions are still the brightest thing on the page.
+ *
+ * Every theme-dependent value is a custom property, so the two themes are the
+ * two blocks below and nothing else. `--color-*` names also become Tailwind
+ * utilities (`bg-card`, `text-muted`, `border-line`…); the rest are effect
+ * tokens that the @utility blocks read.
  */
 @theme {
   --color-bg: #060608;
@@ -13,6 +22,7 @@
   --color-card-hover: #15151a;
   --color-line: #ffffff12;
   --color-line-strong: #ffffff22;
+  --color-line-hover: #ffffff38;
   --color-fg: #f5f5f7;
   --color-muted: #a1a1aa;
   --color-subtle: #8a8a94;
@@ -21,6 +31,10 @@
   --color-accent-fg: #c4bcff;
   --color-danger: #f87171;
   --color-ok: #4ade80;
+
+  /* Low-alpha washes used for skeletons and quiet fills: white on graphite, ink on paper. */
+  --color-tint: #ffffff0d;
+  --color-tint-strong: #ffffff1a;
 
   --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
@@ -58,8 +72,102 @@
   }
 }
 
+/* ------------------------------------------------------------- the themes */
+
+/* Dark: graphite and chrome. The default, and what a visitor without JS gets. */
 :root {
   color-scheme: dark;
+
+  --edge: rgb(255 255 255 / 0.06);
+  --edge-strong: rgb(255 255 255 / 0.1);
+  --sheen: rgb(255 255 255 / 0.07);
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.5);
+  --shadow-lift:
+    0 18px 40px -20px rgb(0 0 0 / 0.9),
+    0 0 0 1px rgb(255 255 255 / 0.03);
+  --shadow-panel: 0 24px 60px -30px rgb(0 0 0 / 0.9);
+
+  --chrome-fg: #0b0b0e;
+  --chrome-fill: linear-gradient(180deg, #ffffff 0%, #e6e6ea 52%, #c3c3cb 100%);
+  --chrome-fill-flat: linear-gradient(180deg, #ffffff 0%, #dcdce1 100%);
+  --chrome-border: rgb(255 255 255 / 0.9);
+  --chrome-inset:
+    inset 0 1px 0 #ffffff,
+    inset 0 -1px 0 rgb(0 0 0 / 0.18);
+  --chrome-glow: 0 10px 28px -12px rgb(255 255 255 / 0.28);
+  --chrome-glow-hover: 0 14px 36px -12px rgb(255 255 255 / 0.4);
+  --chrome-sheen: rgb(255 255 255 / 0.95);
+
+  --chrome-text-fill: linear-gradient(180deg, #ffffff 0%, #ececf0 38%, #a9a9b3 72%, #d9d9df 100%);
+  --chrome-text-glint: rgb(255 255 255 / 0.95);
+  --steel-text-fill: linear-gradient(180deg, #ffffff 10%, #b8b8c1 100%);
+
+  --steel-bg: #16161b;
+  --steel-bg-hover: #1c1c22;
+
+  --grid-line: rgb(255 255 255 / 0.045);
+  --hairline-color: rgb(255 255 255 / 0.22);
+  --selection-bg: rgb(196 188 255 / 0.3);
+  --selection-fg: #ffffff;
+}
+
+/* Light: brushed aluminium on paper. Set on <html> by the pre-paint script. */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --color-bg: #f4f4f6;
+  --color-surface: #fafafb;
+  --color-card: #ffffff;
+  --color-card-hover: #ffffff;
+  --color-line: #09090b14;
+  --color-line-strong: #09090b24;
+  --color-line-hover: #09090b45;
+  --color-fg: #101014;
+  --color-muted: #52525b;
+  --color-subtle: #6b6b76;
+  --color-silver: #3f3f46;
+  --color-accent: #6d5ce4;
+  --color-accent-fg: #5647c9;
+  --color-danger: #d4353b;
+  --color-ok: #15803d;
+
+  --color-tint: #09090b0a;
+  --color-tint-strong: #09090b14;
+
+  /* The lit edge stays white; the lift comes from cast shadow, not glow. */
+  --edge: rgb(255 255 255 / 0.9);
+  --edge-strong: rgb(255 255 255 / 1);
+  --sheen: rgb(9 9 11 / 0.035);
+
+  --shadow-sm: 0 1px 2px rgb(9 9 11 / 0.06);
+  --shadow-lift:
+    0 18px 40px -22px rgb(9 9 11 / 0.35),
+    0 0 0 1px rgb(9 9 11 / 0.03);
+  --shadow-panel: 0 24px 60px -32px rgb(9 9 11 / 0.3);
+
+  --chrome-fg: #fafafa;
+  --chrome-fill: linear-gradient(180deg, #33333d 0%, #1c1c22 52%, #0c0c10 100%);
+  --chrome-fill-flat: linear-gradient(180deg, #2c2c35 0%, #131318 100%);
+  --chrome-border: rgb(9 9 11 / 0.9);
+  --chrome-inset:
+    inset 0 1px 0 rgb(255 255 255 / 0.16),
+    inset 0 -1px 0 rgb(0 0 0 / 0.3);
+  --chrome-glow: 0 10px 28px -12px rgb(9 9 11 / 0.35);
+  --chrome-glow-hover: 0 14px 34px -12px rgb(9 9 11 / 0.45);
+  --chrome-sheen: rgb(255 255 255 / 0.3);
+
+  --chrome-text-fill: linear-gradient(180deg, #3a3a45 0%, #101014 38%, #4a4a55 72%, #1c1c22 100%);
+  --chrome-text-glint: rgb(255 255 255 / 0.85);
+  --steel-text-fill: linear-gradient(180deg, #2a2a33 10%, #55555f 100%);
+
+  --steel-bg: #ffffff;
+  --steel-bg-hover: #f1f1f4;
+
+  --grid-line: rgb(9 9 11 / 0.055);
+  --hairline-color: rgb(9 9 11 / 0.18);
+  --selection-bg: rgb(139 124 246 / 0.22);
+  --selection-fg: #0b0b0e;
 }
 
 html {
@@ -76,8 +184,8 @@ body {
 }
 
 ::selection {
-  background: rgb(196 188 255 / 0.3);
-  color: #fff;
+  background: var(--selection-bg);
+  color: var(--selection-fg);
 }
 
 :focus-visible {
@@ -87,11 +195,11 @@ body {
 
 /* ------------------------------------------------------------------ metal */
 
-/* Polished chrome lettering with a travelling glint. */
+/* Polished lettering with a travelling glint. */
 @utility chrome-text {
   background-image:
-    linear-gradient(105deg, transparent 42%, rgb(255 255 255 / 0.95) 50%, transparent 58%),
-    linear-gradient(180deg, #ffffff 0%, #ececf0 38%, #a9a9b3 72%, #d9d9df 100%);
+    linear-gradient(105deg, transparent 42%, var(--chrome-text-glint) 50%, transparent 58%),
+    var(--chrome-text-fill);
   background-size:
     250% 100%,
     100% 100%;
@@ -106,20 +214,20 @@ body {
 
 /* Brushed steel for smaller headings: static, no glint. */
 @utility steel-text {
-  background-image: linear-gradient(180deg, #ffffff 10%, #b8b8c1 100%);
+  background-image: var(--steel-text-fill);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
-/* Dark steel surface: flat fill, lit top edge, crisp hairline border. */
+/* Steel surface: flat fill, lit top edge, crisp hairline border. */
 @utility metal {
   position: relative;
   background-color: var(--color-card);
   border: 1px solid var(--color-line);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.06),
-    0 1px 2px rgb(0 0 0 / 0.5);
+    inset 0 1px 0 var(--edge),
+    var(--shadow-sm);
 }
 
 /* Interactive steel: the border catches the light and a sheen passes over it on hover. */
@@ -130,8 +238,8 @@ body {
   background-color: var(--color-card);
   border: 1px solid var(--color-line);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.06),
-    0 1px 2px rgb(0 0 0 / 0.5);
+    inset 0 1px 0 var(--edge),
+    var(--shadow-sm);
   transition:
     background-color 0.3s ease,
     border-color 0.3s ease,
@@ -144,7 +252,7 @@ body {
     inset: 0;
     z-index: -1;
     pointer-events: none;
-    background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.07) 50%, transparent 65%);
+    background: linear-gradient(105deg, transparent 35%, var(--sheen) 50%, transparent 65%);
     transform: translateX(-100%);
     transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
   }
@@ -152,11 +260,10 @@ body {
   &:hover {
     transform: translateY(-2px);
     background-color: var(--color-card-hover);
-    border-color: rgb(255 255 255 / 0.2);
+    border-color: var(--color-line-hover);
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.1),
-      0 18px 40px -20px rgb(0 0 0 / 0.9),
-      0 0 0 1px rgb(255 255 255 / 0.03);
+      inset 0 1px 0 var(--edge-strong),
+      var(--shadow-lift);
   }
 
   &:hover::before {
@@ -169,34 +276,33 @@ body {
   background-color: var(--color-card);
   border: 1px solid var(--color-line-strong);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.07),
-    0 24px 60px -30px rgb(0 0 0 / 0.9);
+    inset 0 1px 0 var(--edge),
+    var(--shadow-panel);
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease;
 
   &:focus-within {
-    border-color: rgb(196 188 255 / 0.55);
+    border-color: color-mix(in srgb, var(--color-accent) 55%, transparent);
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.07),
-      0 0 0 4px rgb(139 124 246 / 0.14),
-      0 24px 60px -30px rgb(0 0 0 / 0.9);
+      inset 0 1px 0 var(--edge),
+      0 0 0 4px color-mix(in srgb, var(--color-accent) 16%, transparent),
+      var(--shadow-panel);
   }
 }
 
-/* Primary action: polished silver with dark text and a sheen on hover. */
+/* Primary action: polished metal with contrasting text and a sheen on hover. */
 @utility btn-chrome {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  color: #0b0b0e;
-  background-image: linear-gradient(180deg, #ffffff 0%, #e6e6ea 52%, #c3c3cb 100%);
-  border: 1px solid rgb(255 255 255 / 0.9);
+  color: var(--chrome-fg);
+  background-image: var(--chrome-fill);
+  border: 1px solid var(--chrome-border);
   box-shadow:
-    inset 0 1px 0 #ffffff,
-    inset 0 -1px 0 rgb(0 0 0 / 0.18),
-    0 1px 2px rgb(0 0 0 / 0.6),
-    0 10px 28px -12px rgb(255 255 255 / 0.28);
+    var(--chrome-inset),
+    var(--shadow-sm),
+    var(--chrome-glow);
   transition:
     box-shadow 0.25s ease,
     transform 0.15s ease,
@@ -207,7 +313,7 @@ body {
     position: absolute;
     inset: 0;
     z-index: -1;
-    background: linear-gradient(105deg, transparent 30%, rgb(255 255 255 / 0.95) 50%, transparent 70%);
+    background: linear-gradient(105deg, transparent 30%, var(--chrome-sheen) 50%, transparent 70%);
     transform: translateX(-130%);
     transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
   }
@@ -215,10 +321,9 @@ body {
   &:hover {
     filter: brightness(1.04);
     box-shadow:
-      inset 0 1px 0 #ffffff,
-      inset 0 -1px 0 rgb(0 0 0 / 0.18),
-      0 1px 2px rgb(0 0 0 / 0.6),
-      0 14px 36px -12px rgb(255 255 255 / 0.4);
+      var(--chrome-inset),
+      var(--shadow-sm),
+      var(--chrome-glow-hover);
   }
 
   &:hover::after {
@@ -230,25 +335,25 @@ body {
   }
 }
 
-/* Secondary action: dark steel. */
+/* Secondary action: plain steel. */
 @utility btn-steel {
   color: var(--color-fg);
-  background-color: #16161b;
+  background-color: var(--steel-bg);
   border: 1px solid var(--color-line-strong);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.08),
-    0 1px 2px rgb(0 0 0 / 0.5);
+    inset 0 1px 0 var(--edge),
+    var(--shadow-sm);
   transition:
     background-color 0.2s ease,
     border-color 0.2s ease;
 
   &:hover {
-    background-color: #1c1c22;
-    border-color: rgb(255 255 255 / 0.24);
+    background-color: var(--steel-bg-hover);
+    border-color: var(--color-line-hover);
   }
 }
 
-/* Chips: quiet by default, polished silver when selected. A component class, so size utilities override it. */
+/* Chips: quiet by default, polished when selected. A component class, so size utilities override it. */
 @layer components {
   .chip {
     display: inline-flex;
@@ -263,7 +368,7 @@ body {
     color: var(--color-muted);
     background-color: var(--color-surface);
     border: 1px solid var(--color-line);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+    box-shadow: inset 0 1px 0 var(--edge);
     transition:
       color 0.2s ease,
       border-color 0.2s ease,
@@ -277,10 +382,10 @@ body {
 
     &[aria-current="true"],
     &[aria-pressed="true"] {
-      color: #0b0b0e;
-      background-image: linear-gradient(180deg, #ffffff 0%, #dcdce1 100%);
-      border-color: rgb(255 255 255 / 0.9);
-      box-shadow: inset 0 1px 0 #ffffff;
+      color: var(--chrome-fg);
+      background-image: var(--chrome-fill-flat);
+      border-color: var(--chrome-border);
+      box-shadow: inset 0 1px 0 var(--edge-strong);
     }
   }
 }
@@ -292,8 +397,8 @@ body {
   z-index: -1;
   pointer-events: none;
   background-image:
-    linear-gradient(rgb(255 255 255 / 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(255 255 255 / 0.045) 1px, transparent 1px);
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
   background-size: 64px 64px;
   background-position: center top;
   mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 30%, transparent 100%);
@@ -302,7 +407,7 @@ body {
 /* A hairline that catches the light in the middle. */
 @utility hairline {
   height: 1px;
-  background-image: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.22), transparent);
+  background-image: linear-gradient(90deg, transparent, var(--hairline-color), transparent);
 }
 
 @utility scrollbar-none {

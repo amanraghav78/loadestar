@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Download, FileText, Trash2, Upload } from "lucide-react";
 import { buttonClass } from "@/components/ui/button";
@@ -72,20 +73,24 @@ export function ResumeCard({
 
   return (
     <section className="metal rounded-3xl p-6" aria-labelledby="resume-heading">
-      <h2 id="resume-heading" className="text-[15px] font-semibold text-fg">
+      <h2 id="resume-heading" className="text-fg text-[15px] font-semibold">
         Resume
       </h2>
-      <p className="mt-1 text-sm text-muted">
+      <p className="text-muted mt-1 text-sm">
         PDF, up to 4 MB. Only you can download it — we never send it to employers. We read it once to fill in your
-        profile below, which you can then edit.
+        profile below, which you can then edit. Nothing to upload?{" "}
+        <Link href="/account/resume" className="underline underline-offset-2">
+          write one here
+        </Link>{" "}
+        and we&rsquo;ll check it reads properly to an ATS.
       </p>
 
       {current ? (
-        <div className="mt-5 flex flex-wrap items-center gap-3 rounded-2xl border border-line p-3">
-          <FileText className="size-5 shrink-0 text-subtle" aria-hidden />
+        <div className="border-line mt-5 flex flex-wrap items-center gap-3 rounded-2xl border p-3">
+          <FileText className="text-subtle size-5 shrink-0" aria-hidden />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-fg">{current.filename}</p>
-            <p className="text-xs text-subtle">{readable(current.size)}</p>
+            <p className="text-fg truncate text-sm font-medium">{current.filename}</p>
+            <p className="text-subtle text-xs">{readable(current.size)}</p>
           </div>
           <a href="/api/resume" className={buttonClass("secondary", "sm", "gap-1.5")}>
             <Download className="size-3.5" aria-hidden />
@@ -103,7 +108,7 @@ export function ResumeCard({
           </button>
         </div>
       ) : (
-        <p className="mt-5 text-sm text-subtle">No resume yet.</p>
+        <p className="text-subtle mt-5 text-sm">No resume yet.</p>
       )}
 
       {uploadEnabled && (
@@ -133,13 +138,13 @@ export function ResumeCard({
       )}
 
       {error && (
-        <p role="alert" className="mt-3 text-sm text-danger">
+        <p role="alert" className="text-danger mt-3 text-sm">
           {error}
         </p>
       )}
 
       {unreadable && !error && (
-        <p role="status" className="mt-3 text-sm text-subtle">
+        <p role="status" className="text-subtle mt-3 text-sm">
           Saved, but we couldn&rsquo;t read any text from it &mdash; a scanned resume is a picture to us. Fill the
           profile in below and matching will still work.
         </p>

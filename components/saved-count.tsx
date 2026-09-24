@@ -14,7 +14,7 @@ export function SavedCount() {
       <Bookmark className="size-3.5" aria-hidden />
       Saved
       <span
-        className="min-w-4 rounded-full bg-white/10 px-1.5 text-center text-[11px] tabular-nums text-fg"
+        className="text-fg min-w-4 rounded-full bg-tint-strong px-1.5 text-center text-[11px] tabular-nums"
         aria-label={`${ids.length} saved roles`}
       >
         {ids.length}

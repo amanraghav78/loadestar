@@ -9,7 +9,9 @@ const files = readdirSync(dir).filter((f) => f.endsWith(".webp"));
 
 describe("companyLogo", () => {
   it("prefers a logo URL set in /admin", () => {
-    expect(companyLogo({ slug: "stripe", logoUrl: "https://example.com/stripe.png" })).toBe("https://example.com/stripe.png");
+    expect(companyLogo({ slug: "stripe", logoUrl: "https://example.com/stripe.png" })).toBe(
+      "https://example.com/stripe.png",
+    );
   });
 
   it("falls back to the bundled tile, then to nothing", () => {

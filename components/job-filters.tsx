@@ -1,9 +1,9 @@
 import { Chip } from "@/components/ui/tag";
-import { DISCIPLINE_LABEL, LEVEL_LABEL, REMOTE_LABEL } from "@/lib/format";
+import { DISCIPLINE_LABEL, EMPLOYMENT_TYPE_LABEL, INDUSTRY_LABEL, LEVEL_LABEL, REMOTE_LABEL } from "@/lib/format";
 import { INDIA_CITIES } from "@/lib/ingest/classify";
 import { toQueryString, type JobSearchParams } from "@/lib/validators";
 
-type Key = "city" | "discipline" | "level" | "remote" | "salary";
+type Key = "city" | "discipline" | "employmentType" | "industry" | "level" | "remote" | "salary";
 
 /** Cities shown up front; the rest sit under "More cities". */
 const TOP_CITIES = ["Bengaluru", "Hyderabad", "Pune", "Gurugram", "Chennai", "Mumbai", "Noida", "Delhi"];
@@ -46,7 +46,7 @@ export function JobFilters({ params }: { params: JobSearchParams }) {
           </Chip>
         ))}
         <details className="group w-full" open={Boolean(cityHidden)}>
-          <summary className="cursor-pointer list-none py-1 text-xs text-muted hover:text-fg [&::-webkit-details-marker]:hidden">
+          <summary className="text-muted hover:text-fg cursor-pointer list-none py-1 text-xs [&::-webkit-details-marker]:hidden">
             <span className="group-open:hidden">More cities</span>
             <span className="hidden group-open:inline">Fewer cities</span>
           </summary>
@@ -68,9 +68,24 @@ export function JobFilters({ params }: { params: JobSearchParams }) {
         ))}
       </Group>
 
+      <Group label="Job type">
+        {Object.entries(EMPLOYMENT_TYPE_LABEL).map(([value, label]) => (
+          <Chip key={value} href={filterHref(params, "employmentType", value)} active={params.employmentType === value}>
+            {label}
+          </Chip>
+        ))}
+      </Group>
+
       <Group label="Level">
         {Object.entries(LEVEL_LABEL).map(([value, label]) => (
           <Chip key={value} href={filterHref(params, "level", value)} active={params.level === value}>
+            {label}
+          </Chip>
+        ))}
+      </Group>
+      <Group label="Industry">
+        {Object.entries(INDUSTRY_LABEL).map(([value, label]) => (
+          <Chip key={value} href={filterHref(params, "industry", value)} active={params.industry === value}>
             {label}
           </Chip>
         ))}
@@ -82,7 +97,7 @@ export function JobFilters({ params }: { params: JobSearchParams }) {
 function Group({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <section aria-label={label}>
-      <h3 className="mb-2.5 text-[11px] font-medium tracking-[0.14em] text-subtle uppercase">{label}</h3>
+      <h3 className="text-subtle mb-2.5 text-[11px] font-medium tracking-[0.14em] uppercase">{label}</h3>
       <div className="flex flex-wrap gap-1.5">{children}</div>
     </section>
   );

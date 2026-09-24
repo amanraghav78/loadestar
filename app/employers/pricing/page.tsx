@@ -6,14 +6,10 @@ export const metadata: Metadata = { title: "Pricing", alternates: { canonical: "
 
 export default function PricingPage() {
   return (
-    <ContentPage
-      eyebrow="Employers"
-      title="Pricing"
-      intro="Posting on Lodestar is free while we launch."
-    >
+    <ContentPage eyebrow="Employers" title="Pricing" intro="Posting on Lodestar is free while we launch.">
       <p>
-        Every listing that meets our editorial standards goes live at no cost. Featured placement on the home
-        page and volume plans for teams hiring for many roles are coming later. If you&rsquo;re interested,{" "}
+        Every listing that meets our editorial standards goes live at no cost. Featured placement on the home page and
+        volume plans for teams hiring for many roles are coming later. If you&rsquo;re interested,{" "}
         <Link href="/contact" className="text-fg underline underline-offset-4">
           get in touch
         </Link>

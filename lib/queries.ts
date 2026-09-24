@@ -65,14 +65,17 @@ export async function getHomeData() {
       take: 12,
     }),
     Promise.all(
-      HOME_CITIES.map(async (city) => ({ city, count: await db.job.count({ where: { ...ACTIVE, location: { contains: city } } }) })),
+      HOME_CITIES.map(async (city) => ({
+        city,
+        count: await db.job.count({ where: { ...ACTIVE, location: { contains: city } } }),
+      })),
     ),
     db.job.count({ where: { ...ACTIVE, remote: "REMOTE" } }),
   ]);
 
-  const disciplineCounts = Object.fromEntries(
-    byDiscipline.map((d) => [d.discipline, d._count._all]),
-  ) as Partial<Record<Discipline, number>>;
+  const disciplineCounts = Object.fromEntries(byDiscipline.map((d) => [d.discipline, d._count._all])) as Partial<
+    Record<Discipline, number>
+  >;
   const hiringCompanies = companies.map(({ _count, ...c }) => ({ ...c, openRoles: _count.jobs }));
   const cities = cityCounts.filter((c) => c.count > 0).sort((a, b) => b.count - a.count);
 
@@ -109,6 +112,9 @@ function buildWhere(f: SearchFilters): Prisma.JobWhereInput {
   if (f.remote) and.push({ remote: f.remote });
   if (f.discipline) and.push({ discipline: f.discipline });
   if (f.level) and.push({ level: f.level });
+  if (f.employmentType) and.push({ employmentType: f.employmentType });
+  // Sector lives on the company, so this filters through the relation.
+  if (f.industry) and.push({ company: { industry: f.industry } });
   if (f.city) and.push({ location: { contains: f.city } });
   if (f.salary) and.push({ salaryDisclosed: true });
   if (f.currency) and.push({ currency: f.currency });

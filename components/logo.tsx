@@ -24,7 +24,7 @@ export function LogoMark({ className = "size-6" }: { className?: string }) {
 
 export function Logo() {
   return (
-    <Link href="/" className="group flex items-center gap-2.5 text-[15px] font-semibold tracking-tight text-fg">
+    <Link href="/" className="group text-fg flex items-center gap-2.5 text-[15px] font-semibold tracking-tight">
       <span className="transition-transform duration-500 group-hover:rotate-[20deg]">
         <LogoMark />
       </span>

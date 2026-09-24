@@ -49,7 +49,7 @@ export function GoogleSignIn({ next }: { next: string }) {
         {pending ? "Taking you to Google…" : "Continue with Google"}
       </button>
       {failed && (
-        <p role="alert" className="mt-3 text-sm text-muted">
+        <p role="alert" className="text-muted mt-3 text-sm">
           That didn&rsquo;t work. Please try again.
         </p>
       )}

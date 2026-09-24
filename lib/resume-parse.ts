@@ -1,3 +1,4 @@
+import type { EducationLevel } from "@/lib/generated/prisma/enums";
 import { extractTags, matchIndiaCity } from "@/lib/ingest/classify";
 
 /**
@@ -25,6 +26,10 @@ export type ResumeSuggestions = {
   city?: string;
   currentTitle?: string;
   yearsExperience?: number;
+  educationLevel?: EducationLevel;
+  degree?: string;
+  institution?: string;
+  graduationYear?: number;
   linkedinUrl?: string;
   githubUrl?: string;
   portfolioUrl?: string;
@@ -33,6 +38,90 @@ export type ResumeSuggestions = {
   noticePeriod?: number;
   skills: string[];
 };
+
+/**
+ * The highest qualification named in the resume, the course it was in, where it
+ * was taken and when it finished.
+ *
+ * Resumes write education a dozen ways, so this stays deliberately literal: the
+ * degree has to be one we recognise by name, and the institution has to sit on
+ * the same line or the one after it. A guess nobody can explain is worse than
+ * leaving the field blank for the candidate to fill in themselves.
+ */
+export function findEducation(
+  lines: string[],
+  now: Date = new Date(),
+): Pick<ResumeSuggestions, "educationLevel" | "degree" | "institution" | "graduationYear"> {
+  const out: Pick<ResumeSuggestions, "educationLevel" | "degree" | "institution" | "graduationYear"> = {};
+  let bestRank = -1;
+
+  lines.forEach((line, i) => {
+    if (!line || line.length > 200) return;
+    const found = DEGREES.find(([re]) => re.test(line));
+    if (!found) return;
+    const [, level, rank] = found;
+    // Keep the highest qualification, not the first one listed.
+    if (rank <= bestRank) return;
+
+    bestRank = rank;
+    const next = lines[i + 1] ?? "";
+    out.educationLevel = level;
+    out.degree = tidyDegree(line);
+    out.institution = findInstitution(line) ?? findInstitution(next) ?? undefined;
+    out.graduationYear = findGraduationYear(line, next, now);
+  });
+
+  // Same contract as the rest of the parser: a key we found nothing for is absent.
+  if (!out.degree) delete out.degree;
+  if (!out.institution) delete out.institution;
+  if (out.graduationYear === undefined) delete out.graduationYear;
+  return out;
+}
+
+/**
+ * Degrees we recognise, lowest first. `rank` orders them, so a resume listing
+ * both a B.Tech and an M.Tech reports the master's.
+ */
+const DEGREES: Array<[RegExp, EducationLevel, number]> = [
+  [/\b(class 12|12th|higher secondary|hsc|intermediate|cbse|icse)\b/i, "HIGH_SCHOOL", 0],
+  [/\b(diploma|polytechnic)\b/i, "DIPLOMA", 1],
+  [/\b(b\.?\s?tech|b\.?\s?e\b|bachelor(?:'s)?|b\.?\s?sc|b\.?\s?c\.?a|b\.?\s?com|b\.?\s?a\b|bs\b)/i, "BACHELORS", 2],
+  [/\b(m\.?\s?tech|m\.?\s?e\b|master(?:'s)?|m\.?\s?sc|m\.?\s?c\.?a|m\.?\s?com|mba|pgdm|ms\b)/i, "MASTERS", 3],
+  [/\b(ph\.?\s?d|doctorate|doctoral)\b/i, "DOCTORATE", 4],
+];
+
+/** Phrases that mark a line as naming a place of study rather than a course. */
+const INSTITUTION =
+  /\b(?:indian institute of [a-z ]+|iiit[a-z ]*|iit[a-z ]*|nit [a-z ]+|bits [a-z ]+|[a-z.& ]{2,40}(?:university|college|institute of technology)|university of [a-z ]+)\b/i;
+
+function findInstitution(line: string) {
+  const m = INSTITUTION.exec(line);
+  if (!m) return null;
+  const name = m[0].replace(/\s+/g, " ").trim();
+  return name.length >= 4 && name.length <= 120 ? name : null;
+}
+
+/** The course as written, with the institution, dates and marks stripped off. */
+function tidyDegree(line: string) {
+  const degree = line
+    .split(/[|•]|,\s*(?=[A-Z])/)[0]!
+    .replace(/\b(19|20)\d{2}\b\s*(?:-|to|–)?\s*(?:(?:19|20)\d{2}|present)?/gi, "")
+    .replace(/\b(cgpa|gpa|percentage|marks)\b.*/i, "")
+    .replace(/^(education|academic details|qualification)\s*:?\s*/i, "")
+    .replace(/[\s:;.\-–]+$/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return degree.length >= 2 && degree.length <= 80 ? degree : undefined;
+}
+
+/** The later year around the degree line, which is when the course ended. */
+function findGraduationYear(line: string, next: string, now: Date) {
+  const max = now.getFullYear() + 8;
+  const years = [...`${line} ${next}`.matchAll(/\b(19[5-9]\d|20\d\d)\b/g)]
+    .map((m) => Number(m[1]))
+    .filter((y) => y >= 1950 && y <= max);
+  return years.length > 0 ? Math.max(...years) : undefined;
+}
 
 export function parseResumeText(raw: string, now: Date = new Date()): ResumeSuggestions {
   // Normalise the line endings and the non-breaking spaces PDFs are full of,
@@ -51,6 +140,7 @@ export function parseResumeText(raw: string, now: Date = new Date()): ResumeSugg
     city: matchIndiaCity(text) ?? undefined,
     currentTitle: findTitle(lines),
     yearsExperience: findYearsExperience(text, now),
+    ...findEducation(lines, now),
     ...findLinks(text, lines),
     ...findCompensation(text),
     noticePeriod: findNoticePeriod(text),
@@ -170,9 +260,7 @@ function findLinks(
     }
   }
 
-  const portfolio = urlsIn(contactBlock(lines)).find(
-    ({ host }) => !KNOWN_HOST.test(host) && !NOT_A_DOMAIN.has(host),
-  );
+  const portfolio = urlsIn(contactBlock(lines)).find(({ host }) => !KNOWN_HOST.test(host) && !NOT_A_DOMAIN.has(host));
 
   return { linkedinUrl, githubUrl, portfolioUrl: portfolio?.url };
 }
@@ -183,7 +271,8 @@ function urlsIn(text: string): FoundUrl[] {
   // Email addresses go first: "aman.raghav@gmail.com" contains "aman.raghav",
   // which is shaped exactly like a personal domain.
   const withoutEmails = text.replace(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi, " ");
-  const matches = withoutEmails.match(/\b(?:https?:\/\/)?(?:www\.)?[a-z0-9-]+(?:\.[a-z0-9-]+)+(?:\/[^\s)<>"']*)?/gi) ?? [];
+  const matches =
+    withoutEmails.match(/\b(?:https?:\/\/)?(?:www\.)?[a-z0-9-]+(?:\.[a-z0-9-]+)+(?:\/[^\s)<>"']*)?/gi) ?? [];
 
   const found: FoundUrl[] = [];
   for (const raw of matches) {
@@ -217,10 +306,11 @@ function urlsIn(text: string): FoundUrl[] {
  * candidate's own site is recognised and a filename or a library name is not.
  */
 const TLDS = new Set(
-  ("com net org io dev me co in app ai edu gov info xyz tech site online store studio design digital agency " +
+  (
+    "com net org io dev me co in app ai edu gov info xyz tech site online store studio design digital agency " +
     "solutions works live life world today news blog wiki link one pro name biz tv cc gg sh to ly is am fm " +
-    "cloud page space us uk ca de fr au nl se no fi dk es it ch jp cn br mx ru pl pt gr ie nz sg hk kr tw za ae")
-    .split(" "),
+    "cloud page space us uk ca de fr au nl se no fi dk es it ch jp cn br mx ru pl pt gr ie nz sg hk kr tw za ae"
+  ).split(" "),
 );
 
 /** Technology names that survive the suffix check because their ending is a real TLD. */
@@ -249,7 +339,10 @@ function findTitle(lines: string[]): string | undefined {
     if (/[@|]/.test(line) || /\b(experience|education|skills|projects|summary)\b/i.test(line)) continue;
     if (!TITLE_LINE.test(line)) continue;
     // "Software Engineer at Acme" — keep the role, drop the employer.
-    return line.split(/\s+(?:at|@|-|·|\|)\s+/)[0]!.trim().slice(0, 80);
+    return line
+      .split(/\s+(?:at|@|-|·|\|)\s+/)[0]!
+      .trim()
+      .slice(0, 80);
   }
   return undefined;
 }
@@ -258,7 +351,8 @@ function findTitle(lines: string[]): string | undefined {
 
 /** Where a work-history section starts, and where the next section ends it. */
 const EXPERIENCE_HEADING = /^\s*(work\s+|professional\s+|employment\s+)?(experience|history|employment)\s*:?\s*$/im;
-const NEXT_HEADING = /^\s*(education|academic|skills|technical skills|projects|certifications|awards|publications|interests|languages)\s*:?\s*$/im;
+const NEXT_HEADING =
+  /^\s*(education|academic|skills|technical skills|projects|certifications|awards|publications|interests|languages)\s*:?\s*$/im;
 
 function findYearsExperience(text: string, now: Date): number | undefined {
   // What the candidate says outright always wins over anything we infer.
@@ -329,8 +423,14 @@ export function parseInrAmount(input: string): number | null {
 const AMOUNT = String.raw`((?:₹|INR|Rs\.?)?\s*\d[\d,.]*\s*(?:LPA|lakhs?|lacs?|crores?|Cr|L|K)?)`;
 
 function findCompensation(text: string): Pick<ResumeSuggestions, "currentSalary" | "expectedSalary"> {
-  const current = new RegExp(String.raw`\b(?:current|present|existing)\s*(?:ctc|salary|compensation|package)\s*[:\-–]?\s*${AMOUNT}`, "i").exec(text);
-  const expected = new RegExp(String.raw`\b(?:expected|desired|expecting)\s*(?:ctc|salary|compensation|package)\s*[:\-–]?\s*${AMOUNT}`, "i").exec(text);
+  const current = new RegExp(
+    String.raw`\b(?:current|present|existing)\s*(?:ctc|salary|compensation|package)\s*[:\-–]?\s*${AMOUNT}`,
+    "i",
+  ).exec(text);
+  const expected = new RegExp(
+    String.raw`\b(?:expected|desired|expecting)\s*(?:ctc|salary|compensation|package)\s*[:\-–]?\s*${AMOUNT}`,
+    "i",
+  ).exec(text);
   // A lone "CTC: 18 LPA" with no qualifier means what they earn now.
   const bare = new RegExp(String.raw`\bctc\s*[:\-–]\s*${AMOUNT}`, "i").exec(text);
 
@@ -346,7 +446,11 @@ function findCompensation(text: string): Pick<ResumeSuggestions, "currentSalary"
 const MAX_NOTICE_DAYS = 180;
 
 function findNoticePeriod(text: string): number | undefined {
-  if (/\b(?:notice\s*period\s*[:\-–]?\s*)?(?:immediate(?:ly)?\s*(?:joiner|available|joining)|available\s*immediately|serving\s*notice\s*period\s*[:\-–]?\s*immediate)\b/i.test(text)) {
+  if (
+    /\b(?:notice\s*period\s*[:\-–]?\s*)?(?:immediate(?:ly)?\s*(?:joiner|available|joining)|available\s*immediately|serving\s*notice\s*period\s*[:\-–]?\s*immediate)\b/i.test(
+      text,
+    )
+  ) {
     return 0;
   }
 

@@ -161,11 +161,27 @@ Engineer at Acme (acme.com)
 
 describe("skills, on the stacks people actually list", () => {
   it.each([
-    ["a Java stack", "Skills\nJava, Spring Boot, Hibernate, Jenkins, Maven, JUnit, SQL Server", ["Java", "Spring Boot", "Hibernate", "Jenkins", "Maven", "JUnit", "SQL Server"]],
-    ["a JavaScript stack", "Skills\nNode.js, Express, Angular, Vue.js, Next.js, Redux, Tailwind CSS", ["Node.js", "Express", "Angular", "Vue", "Next.js", "Redux", "Tailwind CSS"]],
-    ["a Python data stack", "Skills\nPython, Pandas, NumPy, scikit-learn, Hadoop, Hive, Tableau, Power BI", ["Python", "Pandas", "NumPy", "scikit-learn", "Hadoop", "Hive", "Tableau", "Power BI"]],
+    [
+      "a Java stack",
+      "Skills\nJava, Spring Boot, Hibernate, Jenkins, Maven, JUnit, SQL Server",
+      ["Java", "Spring Boot", "Hibernate", "Jenkins", "Maven", "JUnit", "SQL Server"],
+    ],
+    [
+      "a JavaScript stack",
+      "Skills\nNode.js, Express, Angular, Vue.js, Next.js, Redux, Tailwind CSS",
+      ["Node.js", "Express", "Angular", "Vue", "Next.js", "Redux", "Tailwind CSS"],
+    ],
+    [
+      "a Python data stack",
+      "Skills\nPython, Pandas, NumPy, scikit-learn, Hadoop, Hive, Tableau, Power BI",
+      ["Python", "Pandas", "NumPy", "scikit-learn", "Hadoop", "Hive", "Tableau", "Power BI"],
+    ],
     ["a .NET stack", "Skills\nC#, ASP.NET, SQL Server, Azure", ["C#", ".NET", "SQL Server", "Azure"]],
-    ["an infrastructure stack", "Skills\nKubernetes, Terraform, Ansible, Grafana, Prometheus, Nginx, Linux", ["Kubernetes", "Terraform", "Ansible", "Grafana", "Prometheus", "Nginx", "Linux"]],
+    [
+      "an infrastructure stack",
+      "Skills\nKubernetes, Terraform, Ansible, Grafana, Prometheus, Nginx, Linux",
+      ["Kubernetes", "Terraform", "Ansible", "Grafana", "Prometheus", "Nginx", "Linux"],
+    ],
   ])("reads %s in full", (_label, text, expected) => {
     expect(parseResumeText(text, NOW).skills).toEqual(expect.arrayContaining(expected));
   });
@@ -177,7 +193,8 @@ describe("skills, on the stacks people actually list", () => {
   });
 
   it("keeps the list short enough to stay editable", () => {
-    const everything = "Skills\nJava, Python, Go, Rust, Kotlin, Swift, React, Angular, Vue, Next.js, Redux, Django, Flask, FastAPI, Express, Hibernate, Spring Boot, Laravel, Rails, Jenkins, Ansible, Grafana, Prometheus, Nginx, Linux, Docker, Kubernetes, Terraform, AWS, GCP, Azure, Kafka, Redis, MongoDB, Cassandra, Snowflake, Tableau, Hadoop, Hive, Spark, Airflow, Maven, Gradle, JUnit, Jest, Cypress";
+    const everything =
+      "Skills\nJava, Python, Go, Rust, Kotlin, Swift, React, Angular, Vue, Next.js, Redux, Django, Flask, FastAPI, Express, Hibernate, Spring Boot, Laravel, Rails, Jenkins, Ansible, Grafana, Prometheus, Nginx, Linux, Docker, Kubernetes, Terraform, AWS, GCP, Azure, Kafka, Redis, MongoDB, Cassandra, Snowflake, Tableau, Hadoop, Hive, Spark, Airflow, Maven, Gradle, JUnit, Jest, Cypress";
     expect(parseResumeText(everything, NOW).skills.length).toBeLessThanOrEqual(30);
   });
 

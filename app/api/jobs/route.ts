@@ -13,8 +13,5 @@ export async function GET(request: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: "invalid_ids" }, { status: 400 });
 
   const jobs = await getJobsByIds(parsed.data);
-  return NextResponse.json(
-    { jobs },
-    { headers: { "Cache-Control": "private, max-age=60" } },
-  );
+  return NextResponse.json({ jobs }, { headers: { "Cache-Control": "private, max-age=60" } });
 }

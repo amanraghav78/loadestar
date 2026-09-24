@@ -36,7 +36,7 @@ export function NavLinks() {
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
-            className={cn(linkClass, active ? "bg-white/[0.08] text-fg" : "text-muted hover:text-fg")}
+            className={cn(linkClass, active ? "text-fg bg-tint-strong" : "text-muted hover:text-fg")}
           >
             {item.label}
           </Link>

@@ -29,10 +29,10 @@ export function ProfileSection({
       />
 
       <section className="metal rounded-3xl p-6" aria-labelledby="profile-heading">
-        <h2 id="profile-heading" className="text-[15px] font-semibold text-fg">
+        <h2 id="profile-heading" className="text-fg text-[15px] font-semibold">
           Profile
         </h2>
-        <p className="mt-1 mb-5 text-sm text-muted">
+        <p className="text-muted mt-1 mb-5 text-sm">
           Everything except your name is optional. Your skills and experience are what we match roles against.
         </p>
         <ProfileForm profile={profile} ref={form} />

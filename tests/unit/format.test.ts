@@ -45,7 +45,9 @@ describe("formatPostedAgo", () => {
 describe("formatJobLocation", () => {
   it("describes remote, hybrid and on-site roles", () => {
     expect(formatJobLocation({ location: "India", remote: "REMOTE", remoteRegion: "India" })).toBe("Remote (India)");
-    expect(formatJobLocation({ location: "Pune", remote: "REMOTE", remoteRegion: "India" })).toBe("Remote (India) · Pune");
+    expect(formatJobLocation({ location: "Pune", remote: "REMOTE", remoteRegion: "India" })).toBe(
+      "Remote (India) · Pune",
+    );
     expect(formatJobLocation({ location: "London", remote: "HYBRID", remoteRegion: null })).toBe("Hybrid · London");
     expect(formatJobLocation({ location: "Utrecht", remote: "ONSITE", remoteRegion: null })).toBe("Utrecht");
   });

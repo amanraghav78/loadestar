@@ -27,18 +27,18 @@ export function SearchBar({ q, location, size = "md" }: { q?: string; location?:
       )}
     >
       <label className="flex min-w-0 flex-[1.4] items-center gap-3 px-4">
-        <Search className="size-4 shrink-0 text-subtle" aria-hidden />
+        <Search className="text-subtle size-4 shrink-0" aria-hidden />
         <span className="sr-only">Job title, skill or company</span>
         <input name="q" defaultValue={q} placeholder="Job title, skill or company" maxLength={100} className={field} />
       </label>
-      <span className="hidden h-7 w-px bg-line-strong sm:block" aria-hidden />
+      <span className="bg-line-strong hidden h-7 w-px sm:block" aria-hidden />
       <label
         className={cn(
           "min-w-0 flex-1 items-center gap-3 px-4",
-          lg ? "flex border-t border-line sm:border-t-0" : "hidden sm:flex",
+          lg ? "border-line flex border-t sm:border-t-0" : "hidden sm:flex",
         )}
       >
-        <MapPin className="size-4 shrink-0 text-subtle" aria-hidden />
+        <MapPin className="text-subtle size-4 shrink-0" aria-hidden />
         <span className="sr-only">City or remote</span>
         <input name="location" defaultValue={location} placeholder="City or remote" maxLength={80} className={field} />
       </label>

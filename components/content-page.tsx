@@ -15,9 +15,9 @@ export function ContentPage({
   return (
     <Container className="py-16">
       <div className="max-w-2xl">
-        {eyebrow && <p className="text-[11px] font-medium tracking-[0.16em] text-subtle uppercase">{eyebrow}</p>}
+        {eyebrow && <p className="text-subtle text-[11px] font-medium tracking-[0.16em] uppercase">{eyebrow}</p>}
         <h1 className="steel-text mt-3 pb-1 text-4xl font-semibold tracking-[-0.035em] sm:text-5xl">{title}</h1>
-        {intro && <p className="mt-5 text-base leading-relaxed text-muted">{intro}</p>}
+        {intro && <p className="text-muted mt-5 text-base leading-relaxed">{intro}</p>}
         <div className="hairline my-10" aria-hidden />
         <div className="prose-job text-[15px]">{children}</div>
       </div>

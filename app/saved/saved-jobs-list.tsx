@@ -23,9 +23,7 @@ export function SavedJobsList() {
         if (!r.ok) throw new Error(String(r.status));
         return r.json() as Promise<{ jobs: ApiJob[] }>;
       })
-      .then(({ jobs }) =>
-        setState({ key, jobs: jobs.map((j) => ({ ...j, postedAt: new Date(j.postedAt) })) }),
-      )
+      .then(({ jobs }) => setState({ key, jobs: jobs.map((j) => ({ ...j, postedAt: new Date(j.postedAt) })) }))
       .catch((err: unknown) => {
         if ((err as Error).name !== "AbortError") setState({ key, error: true });
       });
@@ -35,8 +33,8 @@ export function SavedJobsList() {
   if (ids.length === 0) {
     return (
       <div className="metal rounded-3xl p-12 text-center">
-        <p className="text-base font-medium text-fg">No saved roles yet.</p>
-        <p className="mt-1 text-sm text-muted">Tap the bookmark on any job to keep it here.</p>
+        <p className="text-fg text-base font-medium">No saved roles yet.</p>
+        <p className="text-muted mt-1 text-sm">Tap the bookmark on any job to keep it here.</p>
         <Link href="/jobs" className={buttonClass("primary", "md", "mt-5")}>
           Browse jobs
         </Link>
@@ -55,7 +53,7 @@ export function SavedJobsList() {
   }
 
   if ("error" in state) {
-    return <p className="text-sm text-danger">Couldn&rsquo;t load your saved roles. Please refresh to try again.</p>;
+    return <p className="text-danger text-sm">Couldn&rsquo;t load your saved roles. Please refresh to try again.</p>;
   }
 
   // Keep the order the user saved them in.
@@ -70,16 +68,16 @@ export function SavedJobsList() {
       {active.length > 0 ? (
         <JobList jobs={active} />
       ) : (
-        <p className="text-sm text-muted">None of your saved jobs are open any more.</p>
+        <p className="text-muted text-sm">None of your saved jobs are open any more.</p>
       )}
       {(expired.length > 0 || missing.length > 0) && (
         <section className="metal rounded-2xl p-5">
-          <h2 className="text-sm font-medium text-fg">
+          <h2 className="text-fg text-sm font-medium">
             {expired.length + missing.length} saved {expired.length + missing.length === 1 ? "role has" : "roles have"}{" "}
             closed
           </h2>
           {expired.length > 0 && (
-            <ul className="mt-2 space-y-1 text-sm text-muted">
+            <ul className="text-muted mt-2 space-y-1 text-sm">
               {expired.map((j) => (
                 <li key={j.id}>
                   {j.title} · {j.company.name}
@@ -90,7 +88,7 @@ export function SavedJobsList() {
           <button
             type="button"
             onClick={() => remove([...expired.map((j) => j.id), ...missing])}
-            className="mt-3 text-xs text-muted underline underline-offset-4 hover:text-fg"
+            className="text-muted hover:text-fg mt-3 text-xs underline underline-offset-4"
           >
             Clear closed roles
           </button>

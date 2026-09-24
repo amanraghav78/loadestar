@@ -1,4 +1,13 @@
-import type { Currency, Discipline, Level, RemotePolicy } from "@/lib/generated/prisma/enums";
+import type {
+  ApplicationStage,
+  Currency,
+  Discipline,
+  EducationLevel,
+  EmploymentType,
+  Industry,
+  Level,
+  RemotePolicy,
+} from "@/lib/generated/prisma/enums";
 
 const moneyFormatters = new Map<Currency, Intl.NumberFormat>();
 
@@ -92,12 +101,53 @@ export const REMOTE_LABEL: Record<RemotePolicy, string> = {
   REMOTE: "Remote",
 };
 
+export const EMPLOYMENT_TYPE_LABEL: Record<EmploymentType, string> = {
+  FULL_TIME: "Full-time",
+  PART_TIME: "Part-time",
+  CONTRACT: "Contract",
+  INTERNSHIP: "Internship",
+  TEMPORARY: "Temporary",
+};
+
+export const INDUSTRY_LABEL: Record<Industry, string> = {
+  SAAS: "SaaS",
+  FINTECH: "Fintech",
+  ECOMMERCE: "E-commerce",
+  HEALTHTECH: "Healthtech",
+  EDTECH: "Edtech",
+  GAMING: "Gaming",
+  AI_ML: "AI & ML",
+  SECURITY: "Security",
+  CONSUMER: "Consumer",
+  MOBILITY: "Mobility",
+  LOGISTICS: "Logistics",
+  MEDIA: "Media",
+  IT_SERVICES: "IT services",
+  HARDWARE: "Hardware",
+  ENERGY: "Energy",
+  OTHER: "Other",
+};
+
+export const EDUCATION_LABEL: Record<EducationLevel, string> = {
+  HIGH_SCHOOL: "Class 12 / high school",
+  DIPLOMA: "Diploma",
+  BACHELORS: "Bachelor's",
+  MASTERS: "Master's",
+  DOCTORATE: "Doctorate",
+  OTHER: "Other",
+};
+
+/** Wording is the candidate's own view: this is their record, not the employer's. */
+export const APPLICATION_STAGE_LABEL: Record<ApplicationStage, string> = {
+  APPLIED: "Applied",
+  INTERVIEWING: "Interviewing",
+  OFFER: "Offer",
+  REJECTED: "Not selected",
+  GHOSTED: "No reply",
+};
+
 /** "Bengaluru · Pune", "Remote (India)", "Hybrid · Gurugram" */
-export function formatJobLocation(job: {
-  location: string;
-  remote: RemotePolicy;
-  remoteRegion: string | null;
-}) {
+export function formatJobLocation(job: { location: string; remote: RemotePolicy; remoteRegion: string | null }) {
   if (job.remote === "REMOTE") {
     const region = job.remoteRegion ? `Remote (${job.remoteRegion})` : "Remote";
     const hasCities = job.location && job.location !== "India" && job.location !== job.remoteRegion;

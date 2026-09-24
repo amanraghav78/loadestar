@@ -106,7 +106,10 @@ describe("classifyLevel", () => {
 
 describe("extractTags", () => {
   it("finds proper-noun skills and ignores ordinary English", () => {
-    const tags = extractTags("Backend Engineer (Go)", "Experience with Java, Go or Python. Kubernetes on AWS. We go fast.");
+    const tags = extractTags(
+      "Backend Engineer (Go)",
+      "Experience with Java, Go or Python. Kubernetes on AWS. We go fast.",
+    );
     expect(tags).toEqual(expect.arrayContaining(["Go", "Java", "Python", "Kubernetes", "AWS"]));
     expect(extractTags("Engineer", "Let's go and swift action, rust-free")).toEqual([]);
   });
@@ -114,7 +117,8 @@ describe("extractTags", () => {
 
 describe("htmlToText", () => {
   it("converts board HTML to headings, paragraphs and bullet lists", () => {
-    const html = "<h3>What you&rsquo;ll do</h3><p>Build &amp; ship.</p><ul><li>Own services</li><li>Mentor</li></ul><script>x</script>";
+    const html =
+      "<h3>What you&rsquo;ll do</h3><p>Build &amp; ship.</p><ul><li>Own services</li><li>Mentor</li></ul><script>x</script>";
     expect(htmlToText(html)).toBe("## What you’ll do\n\nBuild & ship.\n\n- Own services\n- Mentor");
   });
 });
@@ -138,7 +142,10 @@ describe("normalizePosting", () => {
   });
 
   it("uses a structured INR band when the board provides one", () => {
-    const r = normalizePosting({ ...base, pay: { min: 3_000_000, max: 4_000_000, currency: "INR", interval: "1 YEAR" } });
+    const r = normalizePosting({
+      ...base,
+      pay: { min: 3_000_000, max: 4_000_000, currency: "INR", interval: "1 YEAR" },
+    });
     expect("job" in r && [r.job.salaryMin, r.job.salaryMax]).toEqual([3_000_000, 4_000_000]);
   });
 
@@ -177,7 +184,9 @@ describe("30-day window", () => {
   };
 
   it("skips postings 30 or more days old", () => {
-    expect(normalizePosting({ ...recent, postedAt: new Date(Date.now() - 31 * 86_400_000) })).toEqual({ skip: "too_old" });
+    expect(normalizePosting({ ...recent, postedAt: new Date(Date.now() - 31 * 86_400_000) })).toEqual({
+      skip: "too_old",
+    });
     expect("job" in normalizePosting({ ...recent, postedAt: new Date(Date.now() - 29 * 86_400_000) })).toBe(true);
   });
 
@@ -199,7 +208,14 @@ describe("workdayIndiaFacet", () => {
       {
         facetParameter: "locationMainGroup",
         values: [
-          { facetParameter: "locationHierarchy1", id: "", values: [{ descriptor: "India", id: "in1" }, { descriptor: "Canada", id: "ca1" }] },
+          {
+            facetParameter: "locationHierarchy1",
+            id: "",
+            values: [
+              { descriptor: "India", id: "in1" },
+              { descriptor: "Canada", id: "ca1" },
+            ],
+          },
           { facetParameter: "locations", id: "", values: [{ descriptor: "India, Pune", id: "p1" }] },
         ],
       },
@@ -219,7 +235,9 @@ describe("workdayIndiaFacet", () => {
       },
     ];
     expect(workdayIndiaFacet(facets)).toEqual({ locations: ["b1", "h1"] });
-    expect(workdayIndiaFacet([{ facetParameter: "locations", values: [{ descriptor: "London", id: "l1" }] }])).toBeNull();
+    expect(
+      workdayIndiaFacet([{ facetParameter: "locations", values: [{ descriptor: "London", id: "l1" }] }]),
+    ).toBeNull();
   });
 });
 
@@ -233,12 +251,15 @@ describe("MNC titles", () => {
     expect(classifyDiscipline(title)).toBe(expected);
   });
 
-  it.each(["Mechanical Design Engineer", "Plant Maintenance Engineer", "Electrical Engineer - Power Systems", "Process Engineer II", "Field Service Engineer"])(
-    "excludes %s",
-    (title) => {
-      expect(classifyDiscipline(title)).toBeNull();
-    },
-  );
+  it.each([
+    "Mechanical Design Engineer",
+    "Plant Maintenance Engineer",
+    "Electrical Engineer - Power Systems",
+    "Process Engineer II",
+    "Field Service Engineer",
+  ])("excludes %s", (title) => {
+    expect(classifyDiscipline(title)).toBeNull();
+  });
 });
 
 describe("mergeLocations", () => {
@@ -253,9 +274,12 @@ describe("company feed tokens", () => {
   const company = { name: "NVIDIA", website: "https://www.nvidia.com", featured: "" };
 
   it("accepts each source's token format, including several career sites", () => {
-    const ok = (atsSource: string, atsToken: string) => companyInputSchema.safeParse({ ...company, atsSource, atsToken }).success;
+    const ok = (atsSource: string, atsToken: string) =>
+      companyInputSchema.safeParse({ ...company, atsSource, atsToken }).success;
     expect(ok("WORKDAY", "nvidia.wd5.myworkdayjobs.com|nvidia|NVIDIAExternalCareerSite")).toBe(true);
-    expect(ok("WORKDAY", "hpe.wd5.myworkdayjobs.com|hpe|Jobsathpe  hpe.wd5.myworkdayjobs.com|hpe|ACJobSite")).toBe(true);
+    expect(ok("WORKDAY", "hpe.wd5.myworkdayjobs.com|hpe|Jobsathpe  hpe.wd5.myworkdayjobs.com|hpe|ACJobSite")).toBe(
+      true,
+    );
     expect(ok("ORACLE", "jpmc.fa.oraclecloud.com|CX_1001|300000000289360")).toBe(true);
     expect(ok("GREENHOUSE", "stripe")).toBe(true);
     expect(ok("WORKDAY", "nvidia")).toBe(false);

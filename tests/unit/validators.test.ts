@@ -3,7 +3,9 @@ import { idsParamSchema, jobInputSchema, parseSearchParams, toQueryString } from
 
 describe("parseSearchParams", () => {
   it("keeps valid filters", () => {
-    expect(parseSearchParams({ q: "  go  ", discipline: "ENGINEERING", minSalary: "80000", remote: "REMOTE" })).toMatchObject({
+    expect(
+      parseSearchParams({ q: "  go  ", discipline: "ENGINEERING", minSalary: "80000", remote: "REMOTE" }),
+    ).toMatchObject({
       q: "go",
       discipline: "ENGINEERING",
       minSalary: 80000,
@@ -23,7 +25,9 @@ describe("parseSearchParams", () => {
   });
 
   it("round-trips through toQueryString", () => {
-    expect(toQueryString({ q: "design systems", tag: undefined, minSalary: 60000 })).toBe("?q=design+systems&minSalary=60000");
+    expect(toQueryString({ q: "design systems", tag: undefined, minSalary: 60000 })).toBe(
+      "?q=design+systems&minSalary=60000",
+    );
     expect(toQueryString({})).toBe("");
   });
 });
@@ -70,6 +74,9 @@ describe("jobInputSchema", () => {
 
 describe("idsParamSchema", () => {
   it("keeps only well-formed ids", () => {
-    expect(idsParamSchema.parse("cm0abc123def456,bad id,../x,cm0xyz987uvw654")).toEqual(["cm0abc123def456", "cm0xyz987uvw654"]);
+    expect(idsParamSchema.parse("cm0abc123def456,bad id,../x,cm0xyz987uvw654")).toEqual([
+      "cm0abc123def456",
+      "cm0xyz987uvw654",
+    ]);
   });
 });

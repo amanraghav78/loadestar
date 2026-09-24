@@ -6,7 +6,7 @@ import { CompanyForm } from "../../company-form";
 
 export default function EditCompanyPage({ params }: PageProps<"/admin/companies/[id]">) {
   return (
-    <Suspense fallback={<p className="text-sm text-muted">Loading…</p>}>
+    <Suspense fallback={<p className="text-muted text-sm">Loading…</p>}>
       {params.then(({ id }) => (
         <EditCompany id={id} />
       ))}

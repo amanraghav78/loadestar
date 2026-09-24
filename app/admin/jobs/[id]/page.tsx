@@ -7,7 +7,7 @@ import { JobForm } from "../../job-form";
 
 export default function EditJobPage({ params }: PageProps<"/admin/jobs/[id]">) {
   return (
-    <Suspense fallback={<p className="text-sm text-muted">Loading…</p>}>
+    <Suspense fallback={<p className="text-muted text-sm">Loading…</p>}>
       {params.then(({ id }) => (
         <EditJob id={id} />
       ))}
@@ -27,13 +27,13 @@ async function EditJob({ id }: { id: string }) {
     <>
       <h1 className="mb-6 text-xl font-semibold">Edit: {job.title}</h1>
       <JobForm job={job} companies={companies} />
-      <form action={deleteJob} className="mt-12 border-t border-line pt-6">
+      <form action={deleteJob} className="border-line mt-12 border-t pt-6">
         <input type="hidden" name="id" value={job.id} />
-        <p className="mb-3 text-sm text-muted">
-          Deleting removes the listing and its click history. To take a filled role down, use &ldquo;Take
-          down&rdquo; on the jobs list instead.
+        <p className="text-muted mb-3 text-sm">
+          Deleting removes the listing and its click history. To take a filled role down, use &ldquo;Take down&rdquo; on
+          the jobs list instead.
         </p>
-        <button className="text-sm text-danger hover:underline">Delete permanently</button>
+        <button className="text-danger text-sm hover:underline">Delete permanently</button>
       </form>
     </>
   );

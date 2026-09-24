@@ -43,7 +43,7 @@ export function SaveButton({
       title={label}
       // Sits above the card's stretched link.
       className={cn(
-        "relative z-10 -m-1 flex size-8 shrink-0 items-center justify-center rounded-full border border-transparent transition-colors hover:border-line-strong hover:bg-white/5 hover:text-fg",
+        "hover:border-line-strong hover:text-fg relative z-10 -m-1 flex size-8 shrink-0 items-center justify-center rounded-full border border-transparent transition-colors hover:bg-tint",
         saved ? "text-fg" : "text-subtle",
         className,
       )}

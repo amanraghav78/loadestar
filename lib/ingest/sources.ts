@@ -55,7 +55,12 @@ function http(url: string, init: HttpInit, redirects = 0): Promise<HttpResponse>
       url,
       {
         method: init.method ?? "GET",
-        headers: { Accept: "application/json", "Accept-Encoding": "gzip, deflate, br", "User-Agent": UA, ...init.headers },
+        headers: {
+          Accept: "application/json",
+          "Accept-Encoding": "gzip, deflate, br",
+          "User-Agent": UA,
+          ...init.headers,
+        },
         timeout: TIMEOUT_MS,
         agent,
       },
@@ -137,7 +142,10 @@ function workplaceOf(v?: string | null): Workplace {
 }
 
 /** Searches below are already filtered to India, so make sure the location says so. */
-const withIndia = (locations: (string | null | undefined)[]) => [...locations.filter((l): l is string => Boolean(l)), "India"];
+const withIndia = (locations: (string | null | undefined)[]) => [
+  ...locations.filter((l): l is string => Boolean(l)),
+  "India",
+];
 
 // ------------------------------------------------------------------ Greenhouse
 // https://developers.greenhouse.io/job-board.html (public, no key)
@@ -162,7 +170,9 @@ async function greenhouse(token: string): Promise<RawPosting[]> {
     data.jobs.map((j) => ({
       externalId: String(j.id),
       title: j.title.trim(),
-      locations: [j.location?.name ?? "", ...(j.offices ?? []).flatMap((o) => [o.name ?? "", o.location ?? ""])].filter(Boolean),
+      locations: [j.location?.name ?? "", ...(j.offices ?? []).flatMap((o) => [o.name ?? "", o.location ?? ""])].filter(
+        Boolean,
+      ),
       workplace: null,
       department: j.departments?.[0]?.name ?? null,
       // Greenhouse double-encodes content: decode once to get HTML.
@@ -267,7 +277,12 @@ async function ashby(token: string): Promise<RawPosting[]> {
           applyUrl: j.jobUrl,
           postedAt: date(j.publishedAt),
           pay: salary
-            ? { min: salary.minValue!, max: salary.maxValue!, currency: salary.currencyCode!, interval: salary.interval }
+            ? {
+                min: salary.minValue!,
+                max: salary.maxValue!,
+                currency: salary.currencyCode!,
+                interval: salary.interval,
+              }
             : null,
         };
       }),
@@ -278,12 +293,24 @@ async function ashby(token: string): Promise<RawPosting[]> {
 // The JSON API behind every *.myworkdayjobs.com careers site (public, no key).
 // Token: "host|tenant|site", e.g. "nvidia.wd5.myworkdayjobs.com|nvidia|NVIDIAExternalCareerSite".
 
-type WdFacetValue = { descriptor?: string; id: string; count?: number; facetParameter?: string; values?: WdFacetValue[] };
+type WdFacetValue = {
+  descriptor?: string;
+  id: string;
+  count?: number;
+  facetParameter?: string;
+  values?: WdFacetValue[];
+};
 type WdFacet = { facetParameter: string; values?: WdFacetValue[] };
 type WdList = {
   total?: number;
   facets?: WdFacet[];
-  jobPostings?: { title: string; externalPath: string; locationsText?: string; postedOn?: string; bulletFields?: string[] }[];
+  jobPostings?: {
+    title: string;
+    externalPath: string;
+    locationsText?: string;
+    postedOn?: string;
+    bulletFields?: string[];
+  }[];
 };
 type WdDetail = {
   jobPostingInfo?: {
@@ -313,7 +340,8 @@ export function workdayIndiaFacet(facets: WdFacet[]): Record<string, string[]> |
       for (const v of values) {
         const label = v.descriptor?.trim() ?? "";
         if (/^india$/i.test(label)) country ??= [f.facetParameter!, v.id];
-        else if (INDIA_FACET_VALUE.test(label)) partial.set(f.facetParameter!, [...(partial.get(f.facetParameter!) ?? []), v.id]);
+        else if (INDIA_FACET_VALUE.test(label))
+          partial.set(f.facetParameter!, [...(partial.get(f.facetParameter!) ?? []), v.id]);
       }
     }
   };
@@ -338,7 +366,9 @@ async function workday(token: string, { since }: FetchOptions): Promise<RawPosti
   if (!host || !tenant || !site) throw new Error(`Bad Workday token "${token}" (expected host|tenant|site)`);
   const api = `https://${host}/wday/cxs/${tenant}/${site}`;
   // myworkdaysite.com hosts put the tenant in the public URL path.
-  const publicBase = host.includes("myworkdaysite.com") ? `https://${host}/recruiting/${tenant}/${site}` : `https://${host}/${site}`;
+  const publicBase = host.includes("myworkdaysite.com")
+    ? `https://${host}/recruiting/${tenant}/${site}`
+    : `https://${host}/${site}`;
 
   const first = await postJson<WdList>(`${api}/jobs`, { appliedFacets: {}, limit: 20, offset: 0, searchText: "" });
   const facet = workdayIndiaFacet(first.facets ?? []);
@@ -443,7 +473,9 @@ async function smartrecruiters(token: string, { since }: FetchOptions): Promise<
           const d = await getJson<SrDetail>(`${api}/${p.id}`);
           const sections = Object.values(d.jobAd?.sections ?? {});
           return {
-            description: htmlToText(sections.map((s) => (s.title ? `<h3>${s.title}</h3>` : "") + (s.text ?? "")).join("")),
+            description: htmlToText(
+              sections.map((s) => (s.title ? `<h3>${s.title}</h3>` : "") + (s.text ?? "")).join(""),
+            ),
             applyUrl: d.postingUrl || undefined,
           };
         },
@@ -480,7 +512,7 @@ async function eightfold(token: string, { since }: FetchOptions): Promise<RawPos
   if (!host || !domain) throw new Error(`Bad Eightfold token "${token}" (expected host|domain)`);
   const base = `https://${host}/api/pcsx`;
   const out: RawPosting[] = [];
-  for (let start = 0; start < 2000; ) {
+  for (let start = 0; start < 2000;) {
     const page = await getJson<EfList>(
       `${base}/search?domain=${domain}&query=&location=India&start=${start}&sort_by=timestamp`,
     );
@@ -502,7 +534,8 @@ async function eightfold(token: string, { since }: FetchOptions): Promise<RawPos
         postedAt,
         pay: null,
         detail: async () => {
-          const d = (await getJson<EfDetail>(`${base}/position_details?position_id=${p.id}&domain=${domain}&hl=en`)).data ?? {};
+          const d =
+            (await getJson<EfDetail>(`${base}/position_details?position_id=${p.id}&domain=${domain}&hl=en`)).data ?? {};
           return { description: htmlToText(d.jobDescription ?? ""), applyUrl: d.publicUrl || undefined };
         },
       });
@@ -533,12 +566,17 @@ type OrList = {
   }[];
 };
 type OrDetail = {
-  items?: { ExternalDescriptionStr?: string; ExternalResponsibilitiesStr?: string; ExternalQualificationsStr?: string }[];
+  items?: {
+    ExternalDescriptionStr?: string;
+    ExternalResponsibilitiesStr?: string;
+    ExternalQualificationsStr?: string;
+  }[];
 };
 
 async function oracle(token: string, { since }: FetchOptions): Promise<RawPosting[]> {
   const [host, siteNumber, locationId] = token.split("|");
-  if (!host || !siteNumber || !locationId) throw new Error(`Bad Oracle token "${token}" (expected host|site|locationId)`);
+  if (!host || !siteNumber || !locationId)
+    throw new Error(`Bad Oracle token "${token}" (expected host|site|locationId)`);
   const api = `https://${host}/hcmRestApi/resources/latest`;
   const out: RawPosting[] = [];
   for (let offset = 0; offset < 2000; offset += 25) {
@@ -640,4 +678,3 @@ export const FETCHERS: Record<SyncedSource, (token: string, opts: FetchOptions) 
   ORACLE: oracle,
   AMAZON: amazon,
 };
-

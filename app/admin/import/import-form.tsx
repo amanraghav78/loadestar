@@ -18,7 +18,7 @@ export function ImportForm() {
           name="file"
           type="file"
           accept=".csv,text/csv"
-          className="block text-sm text-muted file:mr-3 file:rounded-md file:border file:border-line-strong file:bg-card file:px-3 file:py-1.5 file:text-fg"
+          className="text-muted file:border-line-strong file:bg-card file:text-fg block text-sm file:mr-3 file:rounded-md file:border file:px-3 file:py-1.5"
         />
       </div>
       <div>
@@ -30,10 +30,10 @@ export function ImportForm() {
       </Button>
 
       {state.message && (
-        <div role="status" className="rounded-lg border border-line-strong bg-card p-4 text-sm">
+        <div role="status" className="border-line-strong bg-card rounded-lg border p-4 text-sm">
           <p className={rowErrors ? "text-danger" : "text-ok"}>{state.message}</p>
           {rowErrors && (
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-muted">
+            <ul className="text-muted mt-2 list-disc space-y-1 pl-5 text-xs">
               {rowErrors.map((e) => (
                 <li key={e}>{e}</li>
               ))}

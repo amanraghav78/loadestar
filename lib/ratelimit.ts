@@ -47,9 +47,5 @@ export async function rateLimit(kind: keyof typeof limiters, identifier: string)
 }
 
 export function clientIp(headers: Headers) {
-  return (
-    headers.get("x-real-ip") ??
-    headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    "anonymous"
-  );
+  return headers.get("x-real-ip") ?? headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "anonymous";
 }

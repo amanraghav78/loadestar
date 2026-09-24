@@ -11,7 +11,7 @@ import { buildSearchText } from "@/lib/format";
 import { syncAll } from "@/lib/ingest/sync";
 import { revalidateCompanies, revalidateJobs } from "@/lib/revalidate";
 import type { Prisma } from "@/lib/generated/prisma/client";
-import { companyInputSchema, jobInputSchema } from "@/lib/validators";
+import { companyInputSchema, jobInputSchema, moderationDecisionSchema } from "@/lib/validators";
 
 export type FormState = {
   message?: string;
@@ -205,4 +205,87 @@ export async function syncNow(_prev: SyncState, formData: FormData): Promise<Syn
       (remaining > 0 ? ` ${remaining} companies left for the next run — click again to continue.` : ""),
     failed: results.filter((r) => !r.ok).map((r) => `${r.name}: ${r.error}`),
   };
+}
+
+// ---------------------------------------------------------------- moderation
+
+/**
+ * Approve or turn down a recruiter's listing.
+ *
+ * Approving is what puts it on the board, so it also resets the confirmation
+ * clock — the role has just been checked by a person. A refusal must say why:
+ * the reason is shown to the recruiter on their dashboard.
+ */
+export async function decideJob(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const parsed = moderationDecisionSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return { message: "Add a reason for turning it down.", errors: z.flattenError(parsed.error).fieldErrors };
+  }
+  const { id, decision, reviewNote } = parsed.data;
+
+  const job = await db.job.update({
+    where: { id },
+    data:
+      decision === "APPROVED"
+        ? {
+            status: "ACTIVE",
+            moderationNote: null,
+            reviewedAt: new Date(),
+            lastVerifiedAt: new Date(),
+            postedAt: new Date(),
+          }
+        : { status: "REJECTED", moderationNote: reviewNote ?? null, reviewedAt: new Date() },
+    select: { slug: true },
+  });
+
+  revalidateJobs([job.slug]);
+  revalidateCompanies();
+  return { message: decision === "APPROVED" ? "Published." : "Turned down." };
+}
+
+/** Approve or turn down a recruiter's claim on a company. */
+export async function decideClaim(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const parsed = moderationDecisionSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return { message: "Add a reason for turning it down.", errors: z.flattenError(parsed.error).fieldErrors };
+  }
+  const { id, decision, reviewNote } = parsed.data;
+
+  await db.companyMember.update({
+    where: { id },
+    data: {
+      status: decision,
+      reviewNote: decision === "APPROVED" ? null : (reviewNote ?? null),
+      reviewedAt: new Date(),
+    },
+  });
+  return { message: decision === "APPROVED" ? "Verified." : "Turned down." };
+}
+
+/**
+ * Approve or turn down a company review. Approving publishes it and moves the
+ * company's rating, so the company's pages are invalidated.
+ */
+export async function decideReview(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireAdmin();
+  const parsed = moderationDecisionSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return { message: "Add a reason for turning it down.", errors: z.flattenError(parsed.error).fieldErrors };
+  }
+  const { id, decision, reviewNote } = parsed.data;
+
+  const review = await db.companyReview.update({
+    where: { id },
+    data: {
+      status: decision,
+      reviewNote: decision === "APPROVED" ? null : (reviewNote ?? null),
+      reviewedAt: new Date(),
+    },
+    select: { company: { select: { slug: true } } },
+  });
+
+  revalidateCompanies([review.company.slug]);
+  return { message: decision === "APPROVED" ? "Published." : "Turned down." };
 }

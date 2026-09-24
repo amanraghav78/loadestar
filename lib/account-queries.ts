@@ -41,6 +41,10 @@ export async function getProfile() {
       city: true,
       yearsExperience: true,
       currentTitle: true,
+      educationLevel: true,
+      degree: true,
+      institution: true,
+      graduationYear: true,
       linkedinUrl: true,
       githubUrl: true,
       portfolioUrl: true,
@@ -66,6 +70,10 @@ export async function getApplications() {
     take: 100,
     select: {
       lastClickedAt: true,
+      stage: true,
+      stageUpdatedAt: true,
+      note: true,
+      jobId: true,
       job: {
         select: {
           slug: true,

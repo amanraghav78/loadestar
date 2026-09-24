@@ -9,6 +9,7 @@ import { JobCardSkeleton, JobList } from "@/components/job-card";
 import { Container } from "@/components/ui/container";
 import { numberFormat } from "@/lib/format";
 import { getCompanyBySlug, TAGS } from "@/lib/queries";
+import { ReviewsSection } from "./reviews-section";
 
 export async function generateMetadata({ params }: PageProps<"/companies/[slug]">): Promise<Metadata> {
   const { slug } = await params;
@@ -24,7 +25,10 @@ export async function generateMetadata({ params }: PageProps<"/companies/[slug]"
 export default function CompanyPage({ params }: PageProps<"/companies/[slug]">) {
   return (
     <Container wide className="py-8">
-      <Link href="/companies" className="inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-fg">
+      <Link
+        href="/companies"
+        className="text-muted hover:text-fg inline-flex items-center gap-1.5 text-sm transition-colors"
+      >
         <ArrowLeft className="size-3.5" aria-hidden /> All companies
       </Link>
       <Suspense
@@ -37,11 +41,28 @@ export default function CompanyPage({ params }: PageProps<"/companies/[slug]">) 
         }
       >
         {params.then(({ slug }) => (
-          <CompanyDetail slug={slug} />
+          <>
+            <CompanyDetail slug={slug} />
+            {/*
+             * Reviews sit outside CompanyDetail because part of them is
+             * per-person ("your review"), which must never be written to the
+             * shared cache that CompanyDetail renders into.
+             */}
+            <Suspense fallback={<div className="bg-tint mt-12 h-64 animate-pulse rounded-3xl" />}>
+              <CompanyReviews slug={slug} />
+            </Suspense>
+          </>
         ))}
       </Suspense>
     </Container>
   );
+}
+
+/** Uncached on purpose: ReviewsSection reads the session. */
+async function CompanyReviews({ slug }: { slug: string }) {
+  const company = await getCompanyBySlug(slug);
+  if (!company) return null;
+  return <ReviewsSection companyId={company.id} slug={slug} companyName={company.name} />;
 }
 
 async function CompanyDetail({ slug }: { slug: string }) {
@@ -61,7 +82,7 @@ async function CompanyDetail({ slug }: { slug: string }) {
           <CompanyAvatar company={company} size="lg" />
           <div className="min-w-0">
             <h1 className="steel-text pb-1 text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">{company.name}</h1>
-            <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted">
+            <ul className="text-muted mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">
               <li className="text-fg">
                 <span className="tabular-nums">{numberFormat.format(count)}</span> open {count === 1 ? "job" : "jobs"}
               </li>
@@ -80,7 +101,7 @@ async function CompanyDetail({ slug }: { slug: string }) {
                   href={company.website}
                   target="_blank"
                   rel="noopener"
-                  className="flex items-center gap-1.5 transition-colors hover:text-fg"
+                  className="hover:text-fg flex items-center gap-1.5 transition-colors"
                 >
                   <Globe className="size-3.5" aria-hidden />
                   {new URL(company.website).hostname.replace(/^www\./, "")}
@@ -90,7 +111,7 @@ async function CompanyDetail({ slug }: { slug: string }) {
           </div>
         </div>
         {company.description && (
-          <p className="mt-6 max-w-2xl text-[15px] leading-relaxed text-muted">{company.description}</p>
+          <p className="text-muted mt-6 max-w-2xl text-[15px] leading-relaxed">{company.description}</p>
         )}
       </header>
 
@@ -101,7 +122,7 @@ async function CompanyDetail({ slug }: { slug: string }) {
         {count > 0 ? (
           <JobList jobs={company.jobs} />
         ) : (
-          <p className="rounded-2xl border border-dashed border-line p-10 text-center text-sm text-muted">
+          <p className="border-line text-muted rounded-2xl border border-dashed p-10 text-center text-sm">
             {company.name} has no open jobs right now.
           </p>
         )}

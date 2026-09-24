@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { levelsForExperience, matchingReadiness, scoreJob, type MatchProfile, type ScorableJob } from "@/lib/recommendations";
+import {
+  levelsForExperience,
+  matchingReadiness,
+  scoreJob,
+  type MatchProfile,
+  type ScorableJob,
+} from "@/lib/recommendations";
 
 const job = (over: Partial<ScorableJob> = {}): ScorableJob => ({
   tags: ["Python", "AWS"],
@@ -55,7 +61,10 @@ describe("scoreJob", () => {
   });
 
   it("scores nothing for skills the candidate doesn't have", () => {
-    const { score, matchedSkills, reasons } = scoreJob(job({ tags: ["Scala", "Rust"] }), profile({ city: null, expectedSalary: null }));
+    const { score, matchedSkills, reasons } = scoreJob(
+      job({ tags: ["Scala", "Rust"] }),
+      profile({ city: null, expectedSalary: null }),
+    );
     expect(matchedSkills).toEqual([]);
     expect(reasons).toEqual([]);
     // Only the level match is left.

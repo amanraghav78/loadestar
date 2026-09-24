@@ -12,7 +12,7 @@ export function CompanyAvatar({ company, size = "md" }: { company: AvatarCompany
 
   if (logo) {
     return (
-      <span className={cn("flex shrink-0 overflow-hidden bg-white ring-1 ring-white/10", shape)}>
+      <span className={cn("flex shrink-0 overflow-hidden bg-white ring-line-strong ring-1", shape)}>
         {/* Bundled tiles are already tiny WebP files; only logo URLs entered in /admin go through the optimizer. */}
         <Image
           src={logo}
@@ -27,7 +27,11 @@ export function CompanyAvatar({ company, size = "md" }: { company: AvatarCompany
   }
   return (
     <span
-      className={cn("metal flex shrink-0 items-center justify-center font-semibold", shape, size === "lg" ? "text-xl" : "text-sm")}
+      className={cn(
+        "metal flex shrink-0 items-center justify-center font-semibold",
+        shape,
+        size === "lg" ? "text-xl" : "text-sm",
+      )}
       aria-hidden
     >
       <span className="steel-text">{company.name.charAt(0).toUpperCase()}</span>

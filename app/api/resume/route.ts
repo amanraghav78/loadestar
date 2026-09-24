@@ -3,7 +3,8 @@ import { db } from "@/lib/db";
 import { clientIp, rateLimit } from "@/lib/ratelimit";
 import { countSuggestions, parseResumeText, type ResumeSuggestions } from "@/lib/resume-parse";
 import { extractResumeText } from "@/lib/resume-text";
-import { checkResumeBytes, resumeObjectKey, RESUME_ERROR, RESUME_TYPE, sanitizeResumeFilename } from "@/lib/resume";
+import { checkResumeBytes, RESUME_ERROR, RESUME_TYPE, sanitizeResumeFilename } from "@/lib/resume";
+import { storeResumeFile } from "@/lib/resume-file";
 import { getUser } from "@/lib/session";
 import { resumeStore } from "@/lib/storage";
 
@@ -34,41 +35,18 @@ export async function POST(request: NextRequest) {
   if (rejection) return NextResponse.json({ error: RESUME_ERROR[rejection] }, { status: 400 });
 
   const filename = sanitizeResumeFilename(file.name);
-  const key = resumeObjectKey(user.id);
-  const previous = await db.candidateProfile.findUnique({
-    where: { userId: user.id },
-    select: { resumeKey: true },
-  });
-
-  await resumeStore.put(key, bytes, RESUME_TYPE);
 
   // Reading the file is a convenience, never a condition of storing it: a PDF
   // we can't parse (a scan, an unusual producer, a password) still uploads.
   const suggestions = await readSuggestions(bytes);
 
-  const now = new Date();
-  const resumeFields = {
-    resumeKey: key,
-    resumeFilename: filename,
-    resumeSize: bytes.length,
-    resumeType: RESUME_TYPE,
-    resumeUpdatedAt: now,
-    resumeParsedAt: suggestions ? now : null,
-  };
-  await db.candidateProfile.upsert({
-    where: { userId: user.id },
-    create: { userId: user.id, fullName: user.name, ...resumeFields },
-    update: resumeFields,
+  const now = await storeResumeFile({
+    userId: user.id,
+    fullName: user.name,
+    bytes,
+    filename,
+    parsed: suggestions !== null,
   });
-
-  // Replacing a resume removes the old file, or "we deleted it" stops being true.
-  if (previous?.resumeKey && previous.resumeKey !== key) {
-    try {
-      await resumeStore.delete(previous.resumeKey);
-    } catch (err) {
-      console.error("could not remove the replaced resume", previous.resumeKey, err);
-    }
-  }
 
   return NextResponse.json({
     filename,

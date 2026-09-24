@@ -10,6 +10,8 @@ export const metadata: Metadata = {
 const nav = [
   { href: "/admin", label: "Jobs" },
   { href: "/admin/jobs/new", label: "New job" },
+  { href: "/admin/moderation", label: "Moderation" },
+  { href: "/admin/analytics", label: "Analytics" },
   { href: "/admin/companies", label: "Companies" },
   { href: "/admin/import", label: "CSV import" },
 ];
@@ -17,13 +19,13 @@ const nav = [
 export default function AdminLayout({ children }: LayoutProps<"/admin">) {
   return (
     <Container wide className="py-8">
-      <div className="mb-8 flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-line pb-4">
-        <span className="rounded-md border border-line-strong px-2 py-0.5 text-[11px] font-medium tracking-wide text-muted uppercase">
+      <div className="border-line mb-8 flex flex-wrap items-center gap-x-6 gap-y-2 border-b pb-4">
+        <span className="border-line-strong text-muted rounded-md border px-2 py-0.5 text-[11px] font-medium tracking-wide uppercase">
           Admin
         </span>
         <nav aria-label="Admin" className="flex flex-wrap gap-5">
           {nav.map((n) => (
-            <Link key={n.href} href={n.href} className="text-sm text-muted hover:text-fg">
+            <Link key={n.href} href={n.href} className="text-muted hover:text-fg text-sm">
               {n.label}
             </Link>
           ))}

@@ -4,7 +4,8 @@ import { useActionState, useImperativeHandle, useState, type Ref } from "react";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/field";
-import { formatInrShort } from "@/lib/format";
+import { EDUCATION_LABEL, formatInrShort } from "@/lib/format";
+import type { EducationLevel } from "@/lib/generated/prisma/enums";
 import type { ResumeSuggestions } from "@/lib/resume-parse";
 import { cn } from "@/lib/cn";
 import { saveProfile, type FormState } from "./actions";
@@ -15,6 +16,10 @@ export type ProfileValues = {
   city?: string | null;
   yearsExperience?: number | null;
   currentTitle?: string | null;
+  educationLevel?: EducationLevel | null;
+  degree?: string | null;
+  institution?: string | null;
+  graduationYear?: number | null;
   linkedinUrl?: string | null;
   githubUrl?: string | null;
   portfolioUrl?: string | null;
@@ -33,6 +38,10 @@ type Field =
   | "city"
   | "currentTitle"
   | "yearsExperience"
+  | "educationLevel"
+  | "degree"
+  | "institution"
+  | "graduationYear"
   | "linkedinUrl"
   | "githubUrl"
   | "portfolioUrl"
@@ -65,6 +74,10 @@ function initialValues(profile: ProfileValues): Values {
     city: profile.city ?? "",
     currentTitle: profile.currentTitle ?? "",
     yearsExperience: profile.yearsExperience?.toString() ?? "",
+    educationLevel: profile.educationLevel ?? "",
+    degree: profile.degree ?? "",
+    institution: profile.institution ?? "",
+    graduationYear: profile.graduationYear?.toString() ?? "",
     linkedinUrl: profile.linkedinUrl ?? "",
     githubUrl: profile.githubUrl ?? "",
     portfolioUrl: profile.portfolioUrl ?? "",
@@ -116,6 +129,10 @@ export function ProfileForm({ profile, ref }: { profile: ProfileValues; ref?: Re
       fill("city", s.city);
       fill("currentTitle", s.currentTitle);
       fill("yearsExperience", s.yearsExperience?.toString());
+      fill("educationLevel", s.educationLevel);
+      fill("degree", s.degree);
+      fill("institution", s.institution);
+      fill("graduationYear", s.graduationYear?.toString());
       fill("linkedinUrl", s.linkedinUrl);
       fill("githubUrl", s.githubUrl);
       fill("portfolioUrl", s.portfolioUrl);
@@ -126,7 +143,10 @@ export function ProfileForm({ profile, ref }: { profile: ProfileValues; ref?: Re
       // Skills are additive: the resume finds ones they forgot without
       // dropping any they added by hand.
       if (s.skills.length > 0) {
-        const existing = next.skills.split(",").map((t) => t.trim()).filter(Boolean);
+        const existing = next.skills
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean);
         const seen = new Set(existing.map((t) => t.toLowerCase()));
         const added = s.skills.filter((skill) => !seen.has(skill.toLowerCase()));
         if (added.length > 0) {
@@ -153,13 +173,13 @@ export function ProfileForm({ profile, ref }: { profile: ProfileValues; ref?: Re
       <Label htmlFor={name}>{label}</Label>
       {input}
       {err(name) ? (
-        <p className="mt-1 text-xs text-danger">{err(name)}</p>
+        <p className="text-danger mt-1 text-xs">{err(name)}</p>
       ) : filled.has(name) ? (
-        <p id={`${name}-source`} className="mt-1 text-xs text-accent-fg">
+        <p id={`${name}-source`} className="text-accent-fg mt-1 text-xs">
           From your resume
         </p>
       ) : (
-        hint && <p className="mt-1 text-xs text-subtle">{hint}</p>
+        hint && <p className="text-subtle mt-1 text-xs">{hint}</p>
       )}
     </div>
   );
@@ -179,8 +199,11 @@ export function ProfileForm({ profile, ref }: { profile: ProfileValues; ref?: Re
   return (
     <form action={action} className="space-y-5" noValidate>
       {filledCount > 0 && !state.saved && (
-        <p role="status" className="flex items-start gap-2 rounded-lg border border-accent-fg/40 px-4 py-2.5 text-sm text-muted">
-          <Sparkles className="mt-0.5 size-4 shrink-0 text-accent-fg" aria-hidden />
+        <p
+          role="status"
+          className="border-accent-fg/40 text-muted flex items-start gap-2 rounded-lg border px-4 py-2.5 text-sm"
+        >
+          <Sparkles className="text-accent-fg mt-0.5 size-4 shrink-0" aria-hidden />
           <span>
             We filled {filledCount} {filledCount === 1 ? "field" : "fields"} from your resume. Check them, then save
             &mdash; nothing is stored until you do.
@@ -223,8 +246,52 @@ export function ProfileForm({ profile, ref }: { profile: ProfileValues; ref?: Re
         "Comma separated. These are what we match roles against.",
       )}
 
+      <fieldset className="border-line space-y-5 rounded-2xl border p-5">
+        <legend className="text-muted px-1 text-xs font-medium">Highest qualification</legend>
+        <div className="grid gap-5 sm:grid-cols-2">
+          {field(
+            "educationLevel",
+            "Level",
+            <Select
+              id="educationLevel"
+              name="educationLevel"
+              value={values.educationLevel}
+              onChange={set("educationLevel")}
+              aria-describedby={filled.has("educationLevel") ? "educationLevel-source" : undefined}
+            >
+              <option value="">Not saying</option>
+              {Object.entries(EDUCATION_LABEL).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </Select>,
+          )}
+          {field("degree", "Degree", text("degree", { placeholder: "B.Tech, Computer Science" }))}
+        </div>
+        <div className="grid gap-5 sm:grid-cols-2">
+          {field("institution", "College or university", text("institution", { placeholder: "IIT Bombay" }))}
+          {field(
+            "graduationYear",
+            "Year of completion",
+            text("graduationYear", {
+              type: "number",
+              min: 1950,
+              max: new Date().getFullYear() + 8,
+              placeholder: "2021",
+            }),
+            "Expected year is fine.",
+          )}
+        </div>
+      </fieldset>
+
       <div className="grid gap-5 sm:grid-cols-3">
-        {field("currentSalary", "Current salary", text("currentSalary", { placeholder: "18 LPA" }), "Per year. Private.")}
+        {field(
+          "currentSalary",
+          "Current salary",
+          text("currentSalary", { placeholder: "18 LPA" }),
+          "Per year. Private.",
+        )}
         {field("expectedSalary", "Expected salary", text("expectedSalary", { placeholder: "25 LPA" }), "Per year.")}
         {field(
           "noticePeriod",

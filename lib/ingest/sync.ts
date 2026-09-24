@@ -57,6 +57,7 @@ function rowData(job: NormalizedJob, companyName: string) {
     description: job.description,
     discipline: job.discipline,
     level: job.level,
+    employmentType: job.employmentType,
     tags: job.tags,
     location: job.location,
     remote: job.remote,
@@ -221,7 +222,10 @@ export async function syncCompany(company: CompanyRow, deadline = Infinity): Pro
     data: { lastSyncedAt: now, lastSyncError: null, lastSyncJobCount: live },
   });
 
-  const all = [...jobs.filter((j) => !needDetail.includes(j)), ...hydrated.filter((j): j is NormalizedJob => j !== null)];
+  const all = [
+    ...jobs.filter((j) => !needDetail.includes(j)),
+    ...hydrated.filter((j): j is NormalizedJob => j !== null),
+  ];
   return {
     ...base,
     ok: true,
@@ -248,7 +252,10 @@ export type SyncRun = { results: CompanySyncResult[]; remaining: number; purged:
  * `budgetMs` (a serverless function has ~300s). Run it again to continue; the
  * daily crons are spread out so every company is covered each day.
  */
-export async function syncAll({ onlySlug, budgetMs = Infinity }: { onlySlug?: string; budgetMs?: number } = {}): Promise<SyncRun> {
+export async function syncAll({
+  onlySlug,
+  budgetMs = Infinity,
+}: { onlySlug?: string; budgetMs?: number } = {}): Promise<SyncRun> {
   await ensureBootstrapCompanies();
   const companies = await db.company.findMany({
     where: { atsSource: { not: null }, atsToken: { not: null }, ...(onlySlug ? { slug: onlySlug } : {}) },

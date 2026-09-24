@@ -23,8 +23,7 @@ export default function EditorialStandardsPage() {
       </ul>
       <h3>Something wrong?</h3>
       <p>
-        If a job is filled, misleading or the link is broken, tell us through the contact page and we&rsquo;ll fix
-        it.
+        If a job is filled, misleading or the link is broken, tell us through the contact page and we&rsquo;ll fix it.
       </p>
     </ContentPage>
   );

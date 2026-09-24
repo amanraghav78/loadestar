@@ -20,8 +20,8 @@ export default function ContactPage() {
       </p>
       <h3>Reporting a listing</h3>
       <p>
-        Include the listing URL and what&rsquo;s wrong with it: a missing or misleading band, a filled role, or
-        a broken application link. We review every report.
+        Include the listing URL and what&rsquo;s wrong with it: a missing or misleading band, a filled role, or a broken
+        application link. We review every report.
       </p>
     </ContentPage>
   );

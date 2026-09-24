@@ -29,12 +29,12 @@ export default async function SalariesPage() {
   return (
     <Container wide className="py-12">
       <h1 className="steel-text text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">Salaries</h1>
-      <p className="mt-2 text-sm text-muted">Published pay for live jobs, by level.</p>
+      <p className="text-muted mt-2 text-sm">Published pay for live jobs, by level.</p>
 
       {rows.length === 0 ? (
         <div className="metal mt-10 rounded-3xl p-10 text-center">
-          <p className="text-base font-medium text-fg">Not enough salary data yet</p>
-          <p className="mt-1 text-sm text-muted">Browse jobs that show pay while this fills in.</p>
+          <p className="text-fg text-base font-medium">Not enough salary data yet</p>
+          <p className="text-muted mt-1 text-sm">Browse jobs that show pay while this fills in.</p>
           <Link href="/jobs?salary=1" className={buttonClass("secondary", "md", "mt-5")}>
             Jobs with salary
           </Link>
@@ -47,13 +47,13 @@ export default async function SalariesPage() {
                 <h2 id={`s-${discipline}`} className="text-lg font-semibold">
                   {DISCIPLINE_LABEL[discipline]}
                 </h2>
-                <Link href={`/jobs?discipline=${discipline}`} className="text-xs text-muted hover:text-fg">
+                <Link href={`/jobs?discipline=${discipline}`} className="text-muted hover:text-fg text-xs">
                   See jobs →
                 </Link>
               </div>
               <div className="metal overflow-x-auto rounded-2xl">
                 <table className="w-full min-w-[34rem] text-sm">
-                  <thead className="bg-surface text-left text-[11px] tracking-wide text-subtle uppercase">
+                  <thead className="bg-surface text-subtle text-left text-[11px] tracking-wide uppercase">
                     <tr>
                       <th scope="col" className="px-4 py-2.5 font-medium">
                         Level
@@ -75,19 +75,19 @@ export default async function SalariesPage() {
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-line tabular-nums">
+                  <tbody className="divide-line divide-y tabular-nums">
                     {list.map((r) => (
                       <tr key={`${r.level}-${r.currency}`} className="bg-card">
-                        <th scope="row" className="px-4 py-2.5 text-left font-medium text-fg">
+                        <th scope="row" className="text-fg px-4 py-2.5 text-left font-medium">
                           {LEVEL_LABEL[r.level]}
                         </th>
-                        <td className="px-4 py-2.5 text-muted">{r.currency}</td>
-                        <td className="px-4 py-2.5 text-right text-muted">{formatMoney(r.p25, r.currency)}</td>
-                        <td className="px-4 py-2.5 text-right font-medium text-fg">
+                        <td className="text-muted px-4 py-2.5">{r.currency}</td>
+                        <td className="text-muted px-4 py-2.5 text-right">{formatMoney(r.p25, r.currency)}</td>
+                        <td className="text-fg px-4 py-2.5 text-right font-medium">
                           {formatMoney(r.median, r.currency)}
                         </td>
-                        <td className="px-4 py-2.5 text-right text-muted">{formatMoney(r.p75, r.currency)}</td>
-                        <td className="px-4 py-2.5 text-right text-muted">{numberFormat.format(r.roles)}</td>
+                        <td className="text-muted px-4 py-2.5 text-right">{formatMoney(r.p75, r.currency)}</td>
+                        <td className="text-muted px-4 py-2.5 text-right">{numberFormat.format(r.roles)}</td>
                       </tr>
                     ))}
                   </tbody>

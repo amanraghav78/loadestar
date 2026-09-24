@@ -13,10 +13,10 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
   return (
     <Container className="py-24 text-center">
       <h1 className="text-2xl font-semibold tracking-tight">Something went wrong</h1>
-      <p className="mt-2 text-sm text-muted">
+      <p className="text-muted mt-2 text-sm">
         We&rsquo;ve been notified. Try again, and if it keeps happening, come back in a few minutes.
       </p>
-      {error.digest && <p className="mt-2 font-mono text-xs text-subtle">Ref: {error.digest}</p>}
+      {error.digest && <p className="text-subtle mt-2 font-mono text-xs">Ref: {error.digest}</p>}
       <Button onClick={reset} className="mt-6">
         Try again
       </Button>

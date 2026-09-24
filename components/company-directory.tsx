@@ -17,19 +17,19 @@ export function CompanyDirectory({ companies }: { companies: Company[] }) {
   return (
     <>
       <label className="metal-panel mt-8 flex h-12 max-w-md items-center gap-3 rounded-full px-4">
-        <Search className="size-4 shrink-0 text-subtle" aria-hidden />
+        <Search className="text-subtle size-4 shrink-0" aria-hidden />
         <span className="sr-only">Search companies</span>
         <input
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search companies"
-          className="h-full w-full bg-transparent text-sm text-fg placeholder:text-subtle focus:outline-none"
+          className="text-fg placeholder:text-subtle h-full w-full bg-transparent text-sm focus:outline-none"
         />
       </label>
 
       {shown.length === 0 ? (
-        <p className="mt-10 text-sm text-muted">No company matches &ldquo;{query}&rdquo;.</p>
+        <p className="text-muted mt-10 text-sm">No company matches &ldquo;{query}&rdquo;.</p>
       ) : (
         <ul className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {shown.map((c) => (
@@ -40,8 +40,8 @@ export function CompanyDirectory({ companies }: { companies: Company[] }) {
               >
                 <CompanyAvatar company={c} />
                 <span className="min-w-0">
-                  <span className="block truncate text-sm font-semibold text-fg">{c.name}</span>
-                  <span className="block text-xs text-subtle tabular-nums">
+                  <span className="text-fg block truncate text-sm font-semibold">{c.name}</span>
+                  <span className="text-subtle block text-xs tabular-nums">
                     {numberFormat.format(c.openRoles)} {c.openRoles === 1 ? "job" : "jobs"}
                   </span>
                 </span>

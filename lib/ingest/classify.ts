@@ -1,4 +1,4 @@
-import type { Discipline, Level } from "@/lib/generated/prisma/enums";
+import type { Discipline, EmploymentType, Level } from "@/lib/generated/prisma/enums";
 
 // ------------------------------------------------------------------ India
 
@@ -55,7 +55,10 @@ export type IndiaLocation = { cities: string[]; remote: boolean };
  * or null when the role isn't based in India. "Remote" only counts when it is
  * explicitly Indian ("Remote - India"), never worldwide/APAC remote.
  */
-export function indiaLocation(locations: string[], workplace?: "REMOTE" | "HYBRID" | "ONSITE" | null): IndiaLocation | null {
+export function indiaLocation(
+  locations: string[],
+  workplace?: "REMOTE" | "HYBRID" | "ONSITE" | null,
+): IndiaLocation | null {
   const cities = new Set<string>();
   let remoteIndia = false;
   let mentionsIndia = false;
@@ -101,19 +104,35 @@ const EXCLUDE =
   /\b(sales|account (executive|manager|management)|business development|recruit|talent|marketing|legal|counsel|finance|accountant|payroll|customer success|support engineer|technical services? engineer|\bTSE\b|solutions? (engineer|architect|consultant)|sales engineer|customer engineer|field engineer|implementation|pre-?sales|technical account|partner (manager|marketing|enablement|development)|partnerships|operations manager|hr\b|people partner|gtm|go-to-market|client (onboarding|success|partner|director|manager)|corporate it|it (support|administrator|helpdesk)|desktop support|copywriter|video editor)/i;
 
 const RULES: Array<[RegExp, Discipline]> = [
-  [/\b(security|secops|siem|appsec|infosec|soc analyst|penetration|incident response|detection (and|&) response)\b/i, "SECURITY"],
-  [/\b(site reliability|sre|devops|dev ops|infrastructure|platform engineer|cloud engineer|network engineer|database (engineer|administrator)|dba|systems engineer|reliability)\b/i, "INFRASTRUCTURE"],
-  [/\b(data (scientist|science|engineer|engineering|analyst|analytics|architect)|analytics|machine learning|ml|ml ?ops|ai (engineer|researcher|scientist)|applied (ai|scientist)|research (scientist|engineer)|researcher|deep learning|nlp|computer vision)\b/i, "DATA"],
+  [
+    /\b(security|secops|siem|appsec|infosec|soc analyst|penetration|incident response|detection (and|&) response)\b/i,
+    "SECURITY",
+  ],
+  [
+    /\b(site reliability|sre|devops|dev ops|infrastructure|platform engineer|cloud engineer|network engineer|database (engineer|administrator)|dba|systems engineer|reliability)\b/i,
+    "INFRASTRUCTURE",
+  ],
+  [
+    /\b(data (scientist|science|engineer|engineering|analyst|analytics|architect)|analytics|machine learning|ml|ml ?ops|ai (engineer|researcher|scientist)|applied (ai|scientist)|research (scientist|engineer)|researcher|deep learning|nlp|computer vision)\b/i,
+    "DATA",
+  ],
   [/\b(designer|design|ux|ui\/ux|user research(er)?|ux research(er)?)\b/i, "DESIGN"],
-  [/\b(product manager|product management|product owner|product lead|head of product|director of product|vp,? product|group product|technical program manager|program manager)\b/i, "PRODUCT"],
-  [/\b(engineer|engineering|developer|software|sde|swe|programmer|architect|qa|sdet|tester|test automation|mobile|android|ios|frontend|front-end|backend|back-end|full[- ]?stack)\b/i, "ENGINEERING"],
+  [
+    /\b(product manager|product management|product owner|product lead|head of product|director of product|vp,? product|group product|technical program manager|program manager)\b/i,
+    "PRODUCT",
+  ],
+  [
+    /\b(engineer|engineering|developer|software|sde|swe|programmer|architect|qa|sdet|tester|test automation|mobile|android|ios|frontend|front-end|backend|back-end|full[- ]?stack)\b/i,
+    "ENGINEERING",
+  ],
 ];
 
 // Non-software engineering that MNC feeds are full of ("Mechanical Design Engineer",
 // "Plant Maintenance Engineer"). Kept only when the title is clearly about software.
 const NON_SOFTWARE =
   /\b(mechanical|civil|structural|chemical|piping|hvac|process engineer|manufacturing|production|plant|maintenance|welding|tooling|instrumentation|electrical|power systems|field service|installation|commissioning|technician|quality (inspector|control|assurance engineer - mech)|supplier quality|procurement|sourcing|logistics|warehouse|clinical|medical|pharmacovigilance|regulatory|biostatistic|actuar|underwrit|audit|tax|treasury|fund (accounting|controller)|claims)\b/i;
-const SOFTWARE_HINT = /\b(software|firmware|embedded|data|cloud|devops|ai|ml|digital|automation engineer|sde|developer|full[- ]?stack|backend|frontend|platform)\b/i;
+const SOFTWARE_HINT =
+  /\b(software|firmware|embedded|data|cloud|devops|ai|ml|digital|automation engineer|sde|developer|full[- ]?stack|backend|frontend|platform)\b/i;
 
 export function classifyDiscipline(title: string, department?: string | null): Discipline | null {
   if (EXCLUDE.test(title)) return null;
@@ -124,6 +143,25 @@ export function classifyDiscipline(title: string, department?: string | null): D
     return "ENGINEERING";
   }
   return null;
+}
+
+// ---------------------------------------------------------- employment type
+
+/**
+ * Contract shape, read from the title.
+ *
+ * Feeds almost never state this in a field we can trust, but they do say it in
+ * the title when the role is not an ordinary job — and a candidate filtering
+ * for full-time work should not be shown an internship. Order matters: an
+ * "intern (contract)" is an internship first.
+ */
+export function classifyEmploymentType(title: string): EmploymentType {
+  const t = ` ${title} `;
+  if (/\b(intern|interns|internship|trainee|apprentice)\b/i.test(t)) return "INTERNSHIP";
+  if (/\b(contract|contractual|contractor|freelance|consultant|c2h)\b/i.test(t)) return "CONTRACT";
+  if (/\bpart[\s-]?time\b/i.test(t)) return "PART_TIME";
+  if (/\b(temporary|seasonal|fixed[\s-]?term)\b/i.test(t)) return "TEMPORARY";
+  return "FULL_TIME";
 }
 
 // ------------------------------------------------------------------ level
@@ -137,7 +175,10 @@ export function classifyLevel(title: string): Level {
   if (/\b(principal|distinguished|fellow)\b/i.test(t)) return "PRINCIPAL";
   if (/\bstaff\b/i.test(t)) return "STAFF";
   if (/\b(senior|sr\.?|lead)\b/i.test(t) || /\b(sde|swe|engineer|developer)[\s-]*(iii|3)\b/i.test(t)) return "SENIOR";
-  if (/\b(junior|jr\.?|associate|graduate|fresher|entry[- ]level|new grad)\b/i.test(t) || /\b(sde|swe|engineer|developer)[\s-]*(i|1)\b/i.test(t)) {
+  if (
+    /\b(junior|jr\.?|associate|graduate|fresher|entry[- ]level|new grad)\b/i.test(t) ||
+    /\b(sde|swe|engineer|developer)[\s-]*(i|1)\b/i.test(t)
+  ) {
     return "JUNIOR";
   }
   return "MID";

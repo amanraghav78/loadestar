@@ -21,12 +21,12 @@ export default async function CompaniesPage() {
   return (
     <Container wide className="py-12">
       <h1 className="steel-text text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">Companies</h1>
-      <p className="mt-2 text-sm text-muted">
+      <p className="text-muted mt-2 text-sm">
         <span className="text-fg tabular-nums">{numberFormat.format(companies.length)}</span> hiring now
       </p>
 
       {companies.length === 0 ? (
-        <p className="mt-10 text-sm text-muted">No companies are hiring right now.</p>
+        <p className="text-muted mt-10 text-sm">No companies are hiring right now.</p>
       ) : (
         <CompanyDirectory
           companies={companies.map((c) => ({ slug: c.slug, name: c.name, logoUrl: c.logoUrl, openRoles: c.openRoles }))}

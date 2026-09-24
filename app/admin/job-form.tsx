@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { Input, Label, Select, Textarea } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
-import { DISCIPLINE_LABEL, LEVEL_LABEL, REMOTE_LABEL } from "@/lib/format";
+import { DISCIPLINE_LABEL, EMPLOYMENT_TYPE_LABEL, LEVEL_LABEL, REMOTE_LABEL } from "@/lib/format";
 import { saveJob, type FormState } from "./actions";
 
 export type JobFormValues = {
@@ -12,6 +12,7 @@ export type JobFormValues = {
   companyId?: string;
   description?: string;
   discipline?: string;
+  employmentType?: string;
   level?: string;
   tags?: string[];
   location?: string;
@@ -24,13 +25,7 @@ export type JobFormValues = {
   featured?: boolean;
 };
 
-export function JobForm({
-  job = {},
-  companies,
-}: {
-  job?: JobFormValues;
-  companies: { id: string; name: string }[];
-}) {
+export function JobForm({ job = {}, companies }: { job?: JobFormValues; companies: { id: string; name: string }[] }) {
   const [state, action, pending] = useActionState<FormState, FormData>(saveJob, {});
   const err = (field: string) => state.errors?.[field]?.[0];
 
@@ -39,7 +34,7 @@ export function JobForm({
       {job.id && <input type="hidden" name="id" value={job.id} />}
 
       {state.message && (
-        <p role="alert" className="rounded-lg border border-danger/40 px-4 py-2 text-sm text-danger">
+        <p role="alert" className="border-danger/40 text-danger rounded-lg border px-4 py-2 text-sm">
           {state.message}
         </p>
       )}
@@ -70,6 +65,15 @@ export function JobForm({
             ))}
           </Select>
         </Field>
+        <Field label="Job type" name="employmentType" error={err("employmentType")}>
+          <Select id="employmentType" name="employmentType" defaultValue={job.employmentType ?? "FULL_TIME"}>
+            {Object.entries(EMPLOYMENT_TYPE_LABEL).map(([v, l]) => (
+              <option key={v} value={v}>
+                {l}
+              </option>
+            ))}
+          </Select>
+        </Field>
         <Field label="Level" name="level" error={err("level")}>
           <Select id="level" name="level" defaultValue={job.level ?? "SENIOR"}>
             {Object.entries(LEVEL_LABEL).map(([v, l]) => (
@@ -82,11 +86,35 @@ export function JobForm({
       </div>
 
       <div className="grid gap-5 sm:grid-cols-3">
-        <Field label="Salary min (annual, optional)" name="salaryMin" error={err("salaryMin")} hint="In rupees, e.g. 2500000 for ₹25 LPA">
-          <Input id="salaryMin" name="salaryMin" type="number" min={1} step={10000} defaultValue={job.salaryMin ?? ""} />
+        <Field
+          label="Salary min (annual, optional)"
+          name="salaryMin"
+          error={err("salaryMin")}
+          hint="In rupees, e.g. 2500000 for ₹25 LPA"
+        >
+          <Input
+            id="salaryMin"
+            name="salaryMin"
+            type="number"
+            min={1}
+            step={10000}
+            defaultValue={job.salaryMin ?? ""}
+          />
         </Field>
-        <Field label="Salary max (annual, optional)" name="salaryMax" error={err("salaryMax")} hint="Leave both empty if not disclosed">
-          <Input id="salaryMax" name="salaryMax" type="number" min={1} step={10000} defaultValue={job.salaryMax ?? ""} />
+        <Field
+          label="Salary max (annual, optional)"
+          name="salaryMax"
+          error={err("salaryMax")}
+          hint="Leave both empty if not disclosed"
+        >
+          <Input
+            id="salaryMax"
+            name="salaryMax"
+            type="number"
+            min={1}
+            step={10000}
+            defaultValue={job.salaryMax ?? ""}
+          />
         </Field>
         <Field label="Currency" name="currency" error={err("currency")}>
           <Select id="currency" name="currency" defaultValue={job.currency ?? "INR"}>
@@ -138,8 +166,8 @@ export function JobForm({
         <Textarea id="description" name="description" rows={16} defaultValue={job.description} required />
       </Field>
 
-      <label className="flex items-center gap-2 text-sm text-muted">
-        <input type="checkbox" name="featured" defaultChecked={job.featured} className="size-4 accent-[#7c6cf0]" />
+      <label className="text-muted flex items-center gap-2 text-sm">
+        <input type="checkbox" name="featured" defaultChecked={job.featured} className="accent-accent size-4" />
         Feature on the home page
       </label>
 
@@ -168,9 +196,9 @@ function Field({
       <Label htmlFor={name}>{label}</Label>
       {children}
       {error ? (
-        <p className="mt-1 text-xs text-danger">{error}</p>
+        <p className="text-danger mt-1 text-xs">{error}</p>
       ) : (
-        hint && <p className="mt-1 text-xs text-subtle">{hint}</p>
+        hint && <p className="text-subtle mt-1 text-xs">{hint}</p>
       )}
     </div>
   );

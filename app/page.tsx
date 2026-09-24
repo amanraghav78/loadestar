@@ -37,10 +37,10 @@ export default async function HomePage() {
       <section className="relative isolate overflow-hidden">
         <div className="hero-grid" aria-hidden />
         <Container wide className="flex flex-col items-center pt-16 pb-16 text-center sm:pt-28 sm:pb-20">
-          <p className="animate-fade-up metal inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-medium text-muted">
+          <p className="animate-fade-up metal text-muted inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-medium">
             <span className="relative flex size-1.5" aria-hidden>
-              <span className="animate-ping-slow absolute inline-flex size-full rounded-full bg-ok opacity-75" />
-              <span className="relative inline-flex size-1.5 rounded-full bg-ok" />
+              <span className="animate-ping-slow bg-ok absolute inline-flex size-full rounded-full opacity-75" />
+              <span className="bg-ok relative inline-flex size-1.5 rounded-full" />
             </span>
             <span className="text-fg tabular-nums">{total}</span> live jobs across India
           </p>
@@ -51,8 +51,8 @@ export default async function HomePage() {
             </h1>
           </div>
 
-          <p className="animate-fade-up mt-5 inline-flex items-center gap-2 text-sm text-muted [animation-delay:180ms] sm:text-base">
-            <ShieldCheck className="size-4 text-silver" aria-hidden />
+          <p className="animate-fade-up text-muted mt-5 inline-flex items-center gap-2 text-sm [animation-delay:180ms] sm:text-base">
+            <ShieldCheck className="text-silver size-4" aria-hidden />
             {site.promise}
           </p>
 
@@ -60,7 +60,10 @@ export default async function HomePage() {
             <SearchBar size="lg" />
           </div>
 
-          <ul className="animate-fade-up mt-6 flex flex-wrap justify-center gap-2 [animation-delay:360ms]" aria-label="Shortcuts">
+          <ul
+            className="animate-fade-up mt-6 flex flex-wrap justify-center gap-2 [animation-delay:360ms]"
+            aria-label="Shortcuts"
+          >
             {SHORTCUTS.map((s) => (
               <li key={s.label}>
                 <Chip href={s.href}>{s.label}</Chip>
@@ -76,7 +79,7 @@ export default async function HomePage() {
         {recommended.length > 0 ? (
           <JobGrid jobs={recommended} />
         ) : (
-          <p className="rounded-2xl border border-dashed border-line p-10 text-center text-sm text-muted">
+          <p className="border-line text-muted rounded-2xl border border-dashed p-10 text-center text-sm">
             Fresh jobs are on their way. Check back shortly.
           </p>
         )}
@@ -90,7 +93,7 @@ export default async function HomePage() {
               <li key={city}>
                 <Chip href={`/jobs?city=${city}`} className="h-10 px-4 text-sm">
                   {city}
-                  <span className="text-xs text-subtle tabular-nums">{numberFormat.format(count)}</span>
+                  <span className="text-subtle text-xs tabular-nums">{numberFormat.format(count)}</span>
                 </Chip>
               </li>
             ))}
@@ -98,7 +101,7 @@ export default async function HomePage() {
               <li>
                 <Chip href="/jobs?remote=REMOTE" className="h-10 px-4 text-sm">
                   Remote
-                  <span className="text-xs text-subtle tabular-nums">{numberFormat.format(remoteCount)}</span>
+                  <span className="text-subtle text-xs tabular-nums">{numberFormat.format(remoteCount)}</span>
                 </Chip>
               </li>
             )}
@@ -117,11 +120,14 @@ export default async function HomePage() {
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {hiringCompanies.map((c) => (
               <li key={c.slug} className="flex min-w-0">
-                <Link href={`/companies/${c.slug}`} className="metal-card flex min-w-0 flex-1 items-center gap-3 rounded-2xl p-3.5">
+                <Link
+                  href={`/companies/${c.slug}`}
+                  className="metal-card flex min-w-0 flex-1 items-center gap-3 rounded-2xl p-3.5"
+                >
                   <CompanyAvatar company={c} />
                   <span className="min-w-0">
-                    <span className="block truncate text-sm font-semibold text-fg">{c.name}</span>
-                    <span className="block text-xs text-subtle tabular-nums">
+                    <span className="text-fg block truncate text-sm font-semibold">{c.name}</span>
+                    <span className="text-subtle block text-xs tabular-nums">
                       {numberFormat.format(c.openRoles)} {c.openRoles === 1 ? "job" : "jobs"}
                     </span>
                   </span>
@@ -140,7 +146,10 @@ function SectionHeading({ title, href, link }: { title: string; href?: string; l
     <div className="mb-5 flex items-end justify-between gap-4">
       <h2 className="steel-text text-xl font-semibold tracking-tight sm:text-2xl">{title}</h2>
       {href && link && (
-        <Link href={href} className="group inline-flex items-center gap-1 text-sm text-muted transition-colors hover:text-fg">
+        <Link
+          href={href}
+          className="group text-muted hover:text-fg inline-flex items-center gap-1 text-sm transition-colors"
+        >
           {link}
           <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
         </Link>

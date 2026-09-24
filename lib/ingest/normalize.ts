@@ -1,6 +1,12 @@
 import { createHash } from "node:crypto";
-import type { Discipline, Level, RemotePolicy } from "@/lib/generated/prisma/enums";
-import { classifyDiscipline, classifyLevel, extractTags, indiaLocation } from "@/lib/ingest/classify";
+import type { Discipline, EmploymentType, Level, RemotePolicy } from "@/lib/generated/prisma/enums";
+import {
+  classifyDiscipline,
+  classifyEmploymentType,
+  classifyLevel,
+  extractTags,
+  indiaLocation,
+} from "@/lib/ingest/classify";
 import { listingCutoff } from "@/lib/listing-age";
 import { parseInrSalary } from "@/lib/ingest/salary";
 import type { RawPosting } from "@/lib/ingest/sources";
@@ -11,6 +17,7 @@ export type NormalizedJob = {
   description: string;
   discipline: Discipline;
   level: Level;
+  employmentType: EmploymentType;
   tags: string[];
   location: string;
   remote: RemotePolicy;
@@ -30,7 +37,10 @@ export type SkipReason = "too_old" | "not_india" | "not_in_scope" | "bad_url";
  * last 30 days pass. Salary is kept only when stated in INR, so a US band on a
  * multi-country posting never shows up on an Indian role.
  */
-export function normalizePosting(p: RawPosting, since = listingCutoff()): { job: NormalizedJob } | { skip: SkipReason } {
+export function normalizePosting(
+  p: RawPosting,
+  since = listingCutoff(),
+): { job: NormalizedJob } | { skip: SkipReason } {
   if (p.postedAt < since) return { skip: "too_old" };
 
   const india = indiaLocation(p.locations, p.workplace);
@@ -66,6 +76,7 @@ export function normalizePosting(p: RawPosting, since = listingCutoff()): { job:
     description: p.description || "See the full description on the company's careers page.",
     discipline,
     level: classifyLevel(p.title),
+    employmentType: classifyEmploymentType(p.title),
     tags: extractTags(p.title, p.description),
     location,
     remote,

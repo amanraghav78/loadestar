@@ -8,7 +8,7 @@
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../lib/generated/prisma/client";
-import type { Currency, Discipline, Level, RemotePolicy } from "../lib/generated/prisma/enums";
+import type { Currency, Discipline, EmploymentType, Level, RemotePolicy } from "../lib/generated/prisma/enums";
 import { buildSearchText, slugify } from "../lib/format";
 
 const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }) });
@@ -19,6 +19,7 @@ const daysAgo = (n: number) => new Date(Date.now() - n * DAY);
 const companies = [
   {
     slug: "arclight",
+    industry: "ENERGY" as const,
     name: "Arclight",
     hq: "Berlin, Germany",
     size: "201–500",
@@ -30,16 +31,19 @@ const companies = [
   },
   {
     slug: "quillon",
+    industry: "FINTECH" as const,
     name: "Quillon",
     hq: "London, UK",
     size: "51–200",
     website: "https://quillon.example.com",
     medianResponseDays: 6,
     featured: true,
-    description: "Quillon is payments infrastructure for B2B marketplaces: payouts, compliance and reconciliation in one API.",
+    description:
+      "Quillon is payments infrastructure for B2B marketplaces: payouts, compliance and reconciliation in one API.",
   },
   {
     slug: "northbound",
+    industry: "LOGISTICS" as const,
     name: "Northbound",
     hq: "Minneapolis, MN",
     size: "51–200",
@@ -50,6 +54,7 @@ const companies = [
   },
   {
     slug: "vellum",
+    industry: "SAAS" as const,
     name: "Vellum",
     hq: "Utrecht, Netherlands",
     size: "11–50",
@@ -60,6 +65,7 @@ const companies = [
   },
   {
     slug: "halcyon",
+    industry: "HEALTHTECH" as const,
     name: "Halcyon",
     hq: "Lisbon, Portugal",
     size: "201–500",
@@ -70,6 +76,7 @@ const companies = [
   },
   {
     slug: "ostrom",
+    industry: "SECURITY" as const,
     name: "Ostrom",
     hq: "Copenhagen, Denmark",
     size: "501–1000",
@@ -94,34 +101,244 @@ type SeedJob = {
   currency: Currency;
   postedDaysAgo: number;
   featured?: boolean;
+  employmentType?: EmploymentType;
 };
 
 // The six roles from the mockup.
 const mockupJobs: SeedJob[] = [
-  { company: "arclight", title: "Senior Backend Engineer, Ingest", discipline: "ENGINEERING", level: "SENIOR", tags: ["Go", "Kafka", "Distributed systems"], location: "Berlin", remote: "ONSITE", salaryMin: 95_000, salaryMax: 125_000, currency: "EUR", postedDaysAgo: 2, featured: true },
-  { company: "quillon", title: "Product Designer, Payouts", discipline: "DESIGN", level: "SENIOR", tags: ["Figma", "Fintech", "Research"], location: "London", remote: "REMOTE", remoteRegion: "EMEA", salaryMin: 72_000, salaryMax: 88_000, currency: "GBP", postedDaysAgo: 4, featured: true },
-  { company: "arclight", title: "Staff Platform Engineer", discipline: "INFRASTRUCTURE", level: "STAFF", tags: ["Kubernetes", "Terraform", "Platform"], location: "Berlin", remote: "REMOTE", remoteRegion: "Europe", salaryMin: 130_000, salaryMax: 165_000, currency: "EUR", postedDaysAgo: 7, featured: true },
-  { company: "northbound", title: "Frontend Engineer", discipline: "ENGINEERING", level: "MID", tags: ["React", "TypeScript", "Offline-first"], location: "Minneapolis, MN", remote: "ONSITE", salaryMin: 110_000, salaryMax: 140_000, currency: "USD", postedDaysAgo: 3, featured: true },
-  { company: "vellum", title: "Accessibility Engineer", discipline: "ENGINEERING", level: "SENIOR", tags: ["WCAG", "ARIA", "Testing"], location: "Utrecht", remote: "HYBRID", salaryMin: 78_000, salaryMax: 96_000, currency: "EUR", postedDaysAgo: 5, featured: true },
-  { company: "quillon", title: "Product Manager, Compliance", discipline: "PRODUCT", level: "SENIOR", tags: ["Regulation", "B2B", "Roadmapping"], location: "London", remote: "HYBRID", salaryMin: 95_000, salaryMax: 118_000, currency: "GBP", postedDaysAgo: 7, featured: true },
+  {
+    company: "arclight",
+    title: "Senior Backend Engineer, Ingest",
+    discipline: "ENGINEERING",
+    level: "SENIOR",
+    tags: ["Go", "Kafka", "Distributed systems"],
+    location: "Berlin",
+    remote: "ONSITE",
+    salaryMin: 95_000,
+    salaryMax: 125_000,
+    currency: "EUR",
+    postedDaysAgo: 2,
+    featured: true,
+  },
+  {
+    company: "quillon",
+    title: "Product Designer, Payouts",
+    discipline: "DESIGN",
+    level: "SENIOR",
+    tags: ["Figma", "Fintech", "Research"],
+    location: "London",
+    remote: "REMOTE",
+    remoteRegion: "EMEA",
+    salaryMin: 72_000,
+    salaryMax: 88_000,
+    currency: "GBP",
+    postedDaysAgo: 4,
+    featured: true,
+  },
+  {
+    company: "arclight",
+    title: "Staff Platform Engineer",
+    discipline: "INFRASTRUCTURE",
+    level: "STAFF",
+    tags: ["Kubernetes", "Terraform", "Platform"],
+    location: "Berlin",
+    remote: "REMOTE",
+    remoteRegion: "Europe",
+    salaryMin: 130_000,
+    salaryMax: 165_000,
+    currency: "EUR",
+    postedDaysAgo: 7,
+    featured: true,
+  },
+  {
+    company: "northbound",
+    title: "Frontend Engineer",
+    discipline: "ENGINEERING",
+    level: "MID",
+    tags: ["React", "TypeScript", "Offline-first"],
+    location: "Minneapolis, MN",
+    remote: "ONSITE",
+    salaryMin: 110_000,
+    salaryMax: 140_000,
+    currency: "USD",
+    postedDaysAgo: 3,
+    featured: true,
+  },
+  {
+    company: "vellum",
+    title: "Accessibility Engineer",
+    discipline: "ENGINEERING",
+    level: "SENIOR",
+    tags: ["WCAG", "ARIA", "Testing"],
+    location: "Utrecht",
+    remote: "HYBRID",
+    salaryMin: 78_000,
+    salaryMax: 96_000,
+    currency: "EUR",
+    postedDaysAgo: 5,
+    featured: true,
+  },
+  {
+    company: "quillon",
+    title: "Product Manager, Compliance",
+    discipline: "PRODUCT",
+    level: "SENIOR",
+    tags: ["Regulation", "B2B", "Roadmapping"],
+    location: "London",
+    remote: "HYBRID",
+    salaryMin: 95_000,
+    salaryMax: 118_000,
+    currency: "GBP",
+    postedDaysAgo: 7,
+    featured: true,
+  },
+];
+
+// Not every role is a permanent one, so the job-type filter has something to find.
+const otherShapes: SeedJob[] = [
+  {
+    company: "halcyon",
+    title: "Data Engineering Intern",
+    discipline: "DATA",
+    level: "INTERN",
+    tags: ["Python", "SQL", "dbt"],
+    location: "Bengaluru",
+    remote: "ONSITE",
+    salaryMin: 600_000,
+    salaryMax: 900_000,
+    currency: "INR",
+    postedDaysAgo: 3,
+    employmentType: "INTERNSHIP",
+  },
+  {
+    company: "vellum",
+    title: "Accessibility Consultant (Contract)",
+    discipline: "DESIGN",
+    level: "SENIOR",
+    tags: ["WCAG", "Audits", "Testing"],
+    location: "Remote",
+    remote: "REMOTE",
+    remoteRegion: "India",
+    salaryMin: 2_400_000,
+    salaryMax: 3_000_000,
+    currency: "INR",
+    postedDaysAgo: 6,
+    employmentType: "CONTRACT",
+  },
+  {
+    company: "ostrom",
+    title: "Part-time Security Analyst",
+    discipline: "SECURITY",
+    level: "MID",
+    tags: ["SOC", "Detection", "Incident response"],
+    location: "Pune",
+    remote: "HYBRID",
+    salaryMin: 1_200_000,
+    salaryMax: 1_600_000,
+    currency: "INR",
+    postedDaysAgo: 9,
+    employmentType: "PART_TIME",
+  },
 ];
 
 // Generated roles so filters, pagination and the salary table have data.
-const templates: Array<Omit<SeedJob, "company" | "postedDaysAgo" | "location" | "remote" | "currency" | "salaryMin" | "salaryMax"> & { base: number }> = [
-  { title: "Backend Engineer", discipline: "ENGINEERING", level: "MID", tags: ["Go", "PostgreSQL", "APIs"], base: 75_000 },
-  { title: "Senior Backend Engineer", discipline: "ENGINEERING", level: "SENIOR", tags: ["Rust", "Distributed systems", "gRPC"], base: 95_000 },
-  { title: "Staff Software Engineer", discipline: "ENGINEERING", level: "STAFF", tags: ["Architecture", "Go", "Mentoring"], base: 130_000 },
-  { title: "Senior Frontend Engineer", discipline: "ENGINEERING", level: "SENIOR", tags: ["React", "TypeScript", "Design systems"], base: 90_000 },
-  { title: "Mobile Engineer", discipline: "ENGINEERING", level: "MID", tags: ["Swift", "Kotlin", "Offline-first"], base: 80_000 },
-  { title: "Product Designer", discipline: "DESIGN", level: "MID", tags: ["Figma", "Prototyping", "Research"], base: 65_000 },
-  { title: "Senior Product Designer", discipline: "DESIGN", level: "SENIOR", tags: ["Design systems", "Figma", "B2B"], base: 82_000 },
-  { title: "Product Manager", discipline: "PRODUCT", level: "MID", tags: ["Discovery", "B2B", "Analytics"], base: 80_000 },
-  { title: "Senior Product Manager", discipline: "PRODUCT", level: "SENIOR", tags: ["Roadmapping", "Fintech", "Strategy"], base: 100_000 },
+const templates: Array<
+  Omit<SeedJob, "company" | "postedDaysAgo" | "location" | "remote" | "currency" | "salaryMin" | "salaryMax"> & {
+    base: number;
+  }
+> = [
+  {
+    title: "Backend Engineer",
+    discipline: "ENGINEERING",
+    level: "MID",
+    tags: ["Go", "PostgreSQL", "APIs"],
+    base: 75_000,
+  },
+  {
+    title: "Senior Backend Engineer",
+    discipline: "ENGINEERING",
+    level: "SENIOR",
+    tags: ["Rust", "Distributed systems", "gRPC"],
+    base: 95_000,
+  },
+  {
+    title: "Staff Software Engineer",
+    discipline: "ENGINEERING",
+    level: "STAFF",
+    tags: ["Architecture", "Go", "Mentoring"],
+    base: 130_000,
+  },
+  {
+    title: "Senior Frontend Engineer",
+    discipline: "ENGINEERING",
+    level: "SENIOR",
+    tags: ["React", "TypeScript", "Design systems"],
+    base: 90_000,
+  },
+  {
+    title: "Mobile Engineer",
+    discipline: "ENGINEERING",
+    level: "MID",
+    tags: ["Swift", "Kotlin", "Offline-first"],
+    base: 80_000,
+  },
+  {
+    title: "Product Designer",
+    discipline: "DESIGN",
+    level: "MID",
+    tags: ["Figma", "Prototyping", "Research"],
+    base: 65_000,
+  },
+  {
+    title: "Senior Product Designer",
+    discipline: "DESIGN",
+    level: "SENIOR",
+    tags: ["Design systems", "Figma", "B2B"],
+    base: 82_000,
+  },
+  {
+    title: "Product Manager",
+    discipline: "PRODUCT",
+    level: "MID",
+    tags: ["Discovery", "B2B", "Analytics"],
+    base: 80_000,
+  },
+  {
+    title: "Senior Product Manager",
+    discipline: "PRODUCT",
+    level: "SENIOR",
+    tags: ["Roadmapping", "Fintech", "Strategy"],
+    base: 100_000,
+  },
   { title: "Data Engineer", discipline: "DATA", level: "MID", tags: ["dbt", "Airflow", "SQL"], base: 78_000 },
-  { title: "Senior Data Scientist", discipline: "DATA", level: "SENIOR", tags: ["Python", "Forecasting", "Experimentation"], base: 95_000 },
-  { title: "Security Engineer", discipline: "SECURITY", level: "SENIOR", tags: ["AppSec", "Threat modeling", "Go"], base: 100_000 },
-  { title: "Site Reliability Engineer", discipline: "INFRASTRUCTURE", level: "SENIOR", tags: ["Kubernetes", "Observability", "Terraform"], base: 98_000 },
-  { title: "Platform Engineer", discipline: "INFRASTRUCTURE", level: "MID", tags: ["AWS", "Terraform", "Platform"], base: 82_000 },
+  {
+    title: "Senior Data Scientist",
+    discipline: "DATA",
+    level: "SENIOR",
+    tags: ["Python", "Forecasting", "Experimentation"],
+    base: 95_000,
+  },
+  {
+    title: "Security Engineer",
+    discipline: "SECURITY",
+    level: "SENIOR",
+    tags: ["AppSec", "Threat modeling", "Go"],
+    base: 100_000,
+  },
+  {
+    title: "Site Reliability Engineer",
+    discipline: "INFRASTRUCTURE",
+    level: "SENIOR",
+    tags: ["Kubernetes", "Observability", "Terraform"],
+    base: 98_000,
+  },
+  {
+    title: "Platform Engineer",
+    discipline: "INFRASTRUCTURE",
+    level: "MID",
+    tags: ["AWS", "Terraform", "Platform"],
+    base: 82_000,
+  },
 ];
 
 const places: Record<(typeof companies)[number]["slug"], { location: string; currency: Currency; mult: number }> = {
@@ -214,7 +431,7 @@ async function main() {
     created.set(c.slug, row);
   }
 
-  const all = [...mockupJobs, ...generatedJobs()];
+  const all = [...mockupJobs, ...otherShapes, ...generatedJobs()];
   await db.job.createMany({
     data: all.map((job, n) => {
       const company = created.get(job.company)!;
@@ -225,6 +442,7 @@ async function main() {
         companyId: company.id,
         discipline: job.discipline,
         level: job.level,
+        employmentType: job.employmentType ?? "FULL_TIME",
         tags: job.tags,
         location: job.location,
         remote: job.remote,

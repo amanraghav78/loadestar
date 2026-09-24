@@ -20,6 +20,8 @@ describe("parseCsv", () => {
 
 describe("csvToRecords", () => {
   it("keys rows by lowercased header", () => {
-    expect(csvToRecords("Company_Slug, Title\narclight, Engineer ")).toEqual([{ company_slug: "arclight", title: "Engineer" }]);
+    expect(csvToRecords("Company_Slug, Title\narclight, Engineer ")).toEqual([
+      { company_slug: "arclight", title: "Engineer" },
+    ]);
   });
 });

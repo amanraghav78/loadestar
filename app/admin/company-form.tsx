@@ -2,7 +2,8 @@
 
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input, Label, Textarea } from "@/components/ui/field";
+import { Input, Label, Select, Textarea } from "@/components/ui/field";
+import { INDUSTRY_LABEL } from "@/lib/format";
 import { TOKEN_HINT } from "@/lib/ingest/tokens";
 import { saveCompany, type FormState } from "./actions";
 
@@ -14,6 +15,7 @@ export type CompanyFormValues = {
   description?: string | null;
   hq?: string | null;
   size?: string | null;
+  industry?: string | null;
   atsSource?: string | null;
   atsToken?: string | null;
   medianResponseDays?: number | null;
@@ -29,9 +31,9 @@ export function CompanyForm({ company = {} }: { company?: CompanyFormValues }) {
       <Label htmlFor={name}>{label}</Label>
       {input}
       {err(name) ? (
-        <p className="mt-1 text-xs text-danger">{err(name)}</p>
+        <p className="text-danger mt-1 text-xs">{err(name)}</p>
       ) : (
-        hint && <p className="mt-1 text-xs text-subtle">{hint}</p>
+        hint && <p className="text-subtle mt-1 text-xs">{hint}</p>
       )}
     </div>
   );
@@ -40,13 +42,17 @@ export function CompanyForm({ company = {} }: { company?: CompanyFormValues }) {
     <form action={action} className="max-w-2xl space-y-5" noValidate>
       {company.id && <input type="hidden" name="id" value={company.id} />}
       {state.message && (
-        <p role="alert" className="rounded-lg border border-danger/40 px-4 py-2 text-sm text-danger">
+        <p role="alert" className="border-danger/40 text-danger rounded-lg border px-4 py-2 text-sm">
           {state.message}
         </p>
       )}
       {field("name", "Name", <Input id="name" name="name" defaultValue={company.name} required />)}
       <div className="grid gap-5 sm:grid-cols-2">
-        {field("website", "Website", <Input id="website" name="website" type="url" defaultValue={company.website} required />)}
+        {field(
+          "website",
+          "Website",
+          <Input id="website" name="website" type="url" defaultValue={company.website} required />,
+        )}
         {field(
           "logoUrl",
           "Logo URL",
@@ -54,6 +60,19 @@ export function CompanyForm({ company = {} }: { company?: CompanyFormValues }) {
           "Optional, square image. Falls back to a letter tile.",
         )}
       </div>
+      {field(
+        "industry",
+        "Industry",
+        <Select id="industry" name="industry" defaultValue={company.industry ?? ""}>
+          <option value="">Not classified</option>
+          {Object.entries(INDUSTRY_LABEL).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </Select>,
+        "Drives the industry filter on /jobs.",
+      )}
       <div className="grid gap-5 sm:grid-cols-2">
         {field(
           "atsSource",
@@ -62,7 +81,7 @@ export function CompanyForm({ company = {} }: { company?: CompanyFormValues }) {
             id="atsSource"
             name="atsSource"
             defaultValue={company.atsSource ?? ""}
-            className="h-10 w-full rounded-lg border border-line bg-surface px-3 text-sm text-fg"
+            className="border-line bg-surface text-fg h-10 w-full rounded-lg border px-3 text-sm"
           >
             <option value="">None (add roles by hand)</option>
             {Object.entries(TOKEN_HINT).map(([value, hint]) => (
@@ -85,7 +104,11 @@ export function CompanyForm({ company = {} }: { company?: CompanyFormValues }) {
       </div>
       <div className="grid gap-5 sm:grid-cols-3">
         {field("hq", "Headquarters", <Input id="hq" name="hq" defaultValue={company.hq ?? ""} />)}
-        {field("size", "Team size", <Input id="size" name="size" defaultValue={company.size ?? ""} placeholder="51–200" />)}
+        {field(
+          "size",
+          "Team size",
+          <Input id="size" name="size" defaultValue={company.size ?? ""} placeholder="51–200" />,
+        )}
         {field(
           "medianResponseDays",
           "Median reply (days)",
@@ -104,8 +127,8 @@ export function CompanyForm({ company = {} }: { company?: CompanyFormValues }) {
         "Description",
         <Textarea id="description" name="description" rows={5} defaultValue={company.description ?? ""} />,
       )}
-      <label className="flex items-center gap-2 text-sm text-muted">
-        <input type="checkbox" name="featured" defaultChecked={company.featured} className="size-4 accent-[#7c6cf0]" />
+      <label className="text-muted flex items-center gap-2 text-sm">
+        <input type="checkbox" name="featured" defaultChecked={company.featured} className="accent-accent size-4" />
         Show in &ldquo;Hiring on Lodestar&rdquo; on the home page
       </label>
       <Button type="submit" disabled={pending}>

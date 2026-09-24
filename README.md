@@ -6,14 +6,14 @@ Tech job board for India (“Your Next Job Awaits.”): thousands of engineering
 
 `lib/ingest` reads each company's **public careers-site API**: the same listings you see on their careers page. No scraping of other job sites (LinkedIn, Naukri, …), and no aggregator reposts.
 
-| Source | Used by (examples) | Token (`Company.atsToken`) |
-|---|---|---|
-| Workday | NVIDIA, Walmart, Citi, Cisco, Adobe, Mastercard, Genpact (~130 companies) | `host\|tenant\|site` |
-| Amazon Jobs | Amazon | `IND` |
-| Eightfold | Microsoft, Qualcomm, Vodafone, BMS | `host\|domain` |
-| Oracle Recruiting | Oracle, JPMorgan Chase | `host\|siteNumber\|indiaLocationId` |
-| SmartRecruiters | Bosch, Swiggy, LinkedIn, ServiceNow, Freshworks | company identifier |
-| Greenhouse / Lever / Ashby | Stripe, Razorpay, CRED, Meesho, Snowflake, Sarvam | board slug |
+| Source                     | Used by (examples)                                                        | Token (`Company.atsToken`)          |
+| -------------------------- | ------------------------------------------------------------------------- | ----------------------------------- |
+| Workday                    | NVIDIA, Walmart, Citi, Cisco, Adobe, Mastercard, Genpact (~130 companies) | `host\|tenant\|site`                |
+| Amazon Jobs                | Amazon                                                                    | `IND`                               |
+| Eightfold                  | Microsoft, Qualcomm, Vodafone, BMS                                        | `host\|domain`                      |
+| Oracle Recruiting          | Oracle, JPMorgan Chase                                                    | `host\|siteNumber\|indiaLocationId` |
+| SmartRecruiters            | Bosch, Swiggy, LinkedIn, ServiceNow, Freshworks                           | company identifier                  |
+| Greenhouse / Lever / Ashby | Stripe, Razorpay, CRED, Meesho, Snowflake, Sarvam                         | board slug                          |
 
 A company with several career sites lists all its tokens separated by spaces. The starting list (~230 companies) is `lib/ingest/companies.ts`; add more from `/admin/companies/new`. `npm run ingest:preview -- <slug>` dry-runs a feed without touching the database.
 
@@ -30,17 +30,17 @@ Each sync run handles the least recently synced companies that fit in ~200 s (a 
 
 ## Stack
 
-| Concern | Choice |
-|---|---|
-| App | Next.js 16 (App Router, Cache Components), React 19, TypeScript strict |
-| Styling | Tailwind CSS v4, dark slate + violet theme tokens (from the design) in `app/globals.css` |
-| Database | Postgres on Neon, Prisma 7 with the `pg` driver adapter |
-| Search | `pg_trgm` GIN index on a denormalised `searchText` column |
-| Rate limiting | Upstash Redis (optional locally; fails open if Redis is down) |
-| Caching | `'use cache'` + `cacheTag` on every read; admin writes and the cron call `revalidateTag` |
-| Jobs | Vercel Cron → `/api/cron/sync` (8× a day) and `/api/cron/expire` (daily) |
-| Observability | Sentry (enabled when a DSN is set), Vercel Analytics + Speed Insights |
-| Tests | Vitest (unit), Playwright (e2e), GitHub Actions CI |
+| Concern       | Choice                                                                                   |
+| ------------- | ---------------------------------------------------------------------------------------- |
+| App           | Next.js 16 (App Router, Cache Components), React 19, TypeScript strict                   |
+| Styling       | Tailwind CSS v4, dark slate + violet theme tokens (from the design) in `app/globals.css` |
+| Database      | Postgres on Neon, Prisma 7 with the `pg` driver adapter                                  |
+| Search        | `pg_trgm` GIN index on a denormalised `searchText` column                                |
+| Rate limiting | Upstash Redis (optional locally; fails open if Redis is down)                            |
+| Caching       | `'use cache'` + `cacheTag` on every read; admin writes and the cron call `revalidateTag` |
+| Jobs          | Vercel Cron → `/api/cron/sync` (8× a day) and `/api/cron/expire` (daily)                 |
+| Observability | Sentry (enabled when a DSN is set), Vercel Analytics + Speed Insights                    |
+| Tests         | Vitest (unit), Playwright (e2e), GitHub Actions CI                                       |
 
 ## How it fits together
 
@@ -76,30 +76,44 @@ npm run dev              # http://localhost:3000, admin at /admin
 
 You can point `DATABASE_URL` at a Neon branch instead of running `db:local`.
 
-| Script | Does |
-|---|---|
-| `npm run lint` / `typecheck` / `test` | ESLint, `tsc`, Vitest |
-| `npm run test:e2e` | Playwright against `next start` on :3100 (needs `npm run build` + seeded DB) |
-| `npm run db:migrate:dev` | Create a new migration after editing `prisma/schema.prisma` |
-| `npm run db:sync [-- slug]` | Sync job-board feeds into `DATABASE_URL` (all companies, or one) |
-| `npm run ingest:preview` | Dry run: fetch + parse every feed, print what would be listed. No DB |
-| `npm run db:seed:test` | Fictional **test fixtures** for e2e/CI only; never run against production |
+| Script                                | Does                                                                         |
+| ------------------------------------- | ---------------------------------------------------------------------------- |
+| `npm run lint` / `typecheck` / `test` | ESLint, `tsc`, Vitest                                                        |
+| `npm run test:e2e`                    | Playwright against `next start` on :3100 (needs `npm run build` + seeded DB) |
+| `npm run db:migrate:dev`              | Create a new migration after editing `prisma/schema.prisma`                  |
+| `npm run db:sync [-- slug]`           | Sync job-board feeds into `DATABASE_URL` (all companies, or one)             |
+| `npm run ingest:preview`              | Dry run: fetch + parse every feed, print what would be listed. No DB         |
+| `npm run db:seed:test`                | Fictional **test fixtures** for e2e/CI only; never run against production    |
 
 ## Candidate accounts
 
-Optional, and off until configured: with no `BETTER_AUTH_SECRET` / `GOOGLE_CLIENT_*`, sign-in is hidden and the site behaves exactly as it did before. Signed in, a candidate gets a profile, one resume, saved roles that follow them across devices, and a list of roles they opened.
+Optional, and off until configured: with no `BETTER_AUTH_SECRET` / `GOOGLE_CLIENT_*`, sign-in is hidden and the site behaves exactly as it did before. Signed in, a candidate gets a profile, one resume, a resume builder that writes an ATS-readable PDF, saved roles that follow them across devices, and a list of roles they opened.
 
-Lodestar never submits an application: listings come from employers' own careers sites, so "applied" means *you opened the employer's page*. The resume is the candidate's own copy, never sent anywhere.
+Lodestar never submits an application: listings come from employers' own careers sites, so "applied" means _you opened the employer's page_. The resume is the candidate's own copy, never sent anywhere.
 
 **Reading the resume, and matching**
 
-Uploading a PDF extracts its text in the upload request with [`unpdf`](https://github.com/unjs/unpdf) — a serverless build of pdf.js, no native modules and no outside service — and `lib/resume-parse.ts` (pure, heavily unit-tested) reads a name, phone, city, title, years of experience, links, CTC, notice period and skills out of it. The route returns those as *suggestions*: the form fills only the fields the candidate left blank, marks each one, and saves nothing until they press save. A PDF we can't read (a scan) still uploads — parsing never fails the request.
+Uploading a PDF extracts its text in the upload request with [`unpdf`](https://github.com/unjs/unpdf) — a serverless build of pdf.js, no native modules and no outside service — and `lib/resume-parse.ts` (pure, heavily unit-tested) reads a name, phone, city, title, years of experience, links, CTC, notice period and skills out of it. The route returns those as _suggestions_: the form fills only the fields the candidate left blank, marks each one, and saves nothing until they press save. A PDF we can't read (a scan) still uploads — parsing never fails the request.
 
 Skills are extracted with the same `extractTags` vocabulary the job feeds are tagged with (`lib/ingest/classify.ts`), which is the whole trick: a candidate's skills and `Job.tags` are the same strings, so `/account/matches` draws a shortlist through the existing GIN index on `tags` and scores it in memory (`lib/recommendations.ts` — skill overlap, level band from years of experience, city, and whether published pay meets their expectation). Every card shows why it matched, so a candidate who disagrees can fix their profile. Roles they have already opened are left out.
 
+**Writing a resume, and the ATS review**
+
+A candidate with no resume — or one that reads badly to a machine — can write one at `/account/resume`. They fill in a target role, a summary, skills, roles, projects, education and certifications; their name, phone, city and links are not asked for again, because those come off the profile at render time.
+
+Three things read the same document, which is the point:
+
+- **The preview** is a sheet of paper showing the blocks `layoutResume` produces (`lib/resume-builder.ts`), so it cannot drift from the file.
+- **The PDF** (`lib/resume-pdf.ts`) renders those blocks with a small writer of our own (`lib/pdf/`): one column, Helvetica and Helvetica-Bold — built into every reader, so nothing is embedded and a resume is about 3 KB — headings in the words parsers look for, real strings in the content stream, and no table, text box, header region or image. Text is folded to printable ASCII first (`₹` → `Rs`, curly quotes → straight, accents stripped), because the base-14 fonts cannot draw anything else; a unit test builds a resume, reads it back with the same `unpdf` the upload path uses, and fails if the words come out wrong or out of order.
+- **The ATS review** (`lib/ats-check.ts`) scores that document out of 100 against the checks that decide whether a record parses at all: contact block, target role, summary length, dated roles, two or more bullets each, bullets that open with a verb and carry a number, six to fifteen skills spelled the way postings spell them, education, length in pages, and characters the PDF would have to drop. Every check names the field to change. Skills are graded against the same `extractTags` vocabulary the job feeds are tagged with, so "we recognise this" means a posting on Lodestar could be matched on it.
+
+All three are pure functions with no I/O, so the review runs in the browser as the candidate types and the download is built there too — the file always matches what is on screen. **Keep as my resume on file** renders the _saved_ version server-side and stores it through the same path an upload takes (`lib/resume-file.ts`), so it becomes the resume the account holds.
+
+The document itself is one `ResumeDocument` row per candidate, its sections stored as JSON and validated by `resumeContentSchema` on every write. Lodestar still never sends a resume anywhere.
+
 **Setup**
 
-1. Google Cloud Console → **Credentials** → **OAuth client ID** → *Web application*. Authorised redirect URIs: `http://localhost:3000/api/auth/callback/google` and `https://<site>/api/auth/callback/google`. Copy the id and secret into `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`.
+1. Google Cloud Console → **Credentials** → **OAuth client ID** → _Web application_. Authorised redirect URIs: `http://localhost:3000/api/auth/callback/google` and `https://<site>/api/auth/callback/google`. Copy the id and secret into `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`.
 2. `BETTER_AUTH_SECRET` — `openssl rand -base64 32`.
 3. Vercel project → **Storage** → **Create Database** → **Blob**, with access set to **Private** — public would put every resume behind a guessable URL. Connect it to the project and Vercel supplies the credentials itself. Without a store, upload is off in production; locally and in tests an in-process store stands in.
 

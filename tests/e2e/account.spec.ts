@@ -257,4 +257,83 @@ test.describe("accounts", () => {
     await page.goto("/account");
     await expect(page.getByLabel("City")).toHaveValue("");
   });
+
+  test("the resume builder writes a real PDF, and reviews it as you type", async ({ page }) => {
+    await signIn(page, candidate("builder"));
+
+    // The header of the resume is the profile: it is not typed twice.
+    await page.goto("/account");
+    await page.getByLabel("Full name").fill("Ada Tester");
+    await page.getByLabel("City").fill("Bengaluru");
+    await page.getByLabel("Phone").fill("+91 98765 43210");
+    await page.getByLabel("LinkedIn").fill("https://www.linkedin.com/in/ada");
+    await page.getByRole("button", { name: /Save profile/ }).click();
+    await expect(page.getByText("Profile saved.")).toBeVisible();
+
+    await page.goto("/account/resume");
+    // Nothing written yet, and the review says so rather than flattering them.
+    await expect(page.getByText("Not ready yet")).toBeVisible();
+
+    await page.getByLabel("Role you want").fill("Senior Backend Engineer");
+    await page
+      .getByLabel("Summary")
+      .fill(
+        "Backend engineer with six years on payments systems in Python and Go, most recently at Razorpay. " +
+          "Looking for a senior role on a platform team in Bengaluru.",
+      );
+    await page.getByLabel("Skills").fill("Python, Django, PostgreSQL, AWS, Docker, Kubernetes");
+
+    await page.getByRole("button", { name: "Add a role" }).click();
+    await page.getByLabel("Title").fill("Backend Engineer");
+    await page.getByLabel("Employer").fill("Razorpay");
+    await page.getByLabel("Location").fill("Bengaluru");
+    await page.getByLabel("From").fill("2020-03");
+    await page.getByLabel("I still work here").check();
+    await page
+      .getByLabel("What you did")
+      .fill(
+        [
+          "Cut checkout latency 40% by rewriting the settlement job in Go",
+          "Led four engineers through the UPI migration",
+        ].join("\n"),
+      );
+
+    await page.getByRole("button", { name: "Add a qualification" }).click();
+    await page.getByLabel("Degree").fill("B.Tech, Computer Science");
+    await page.getByLabel("Institution").fill("NIT Warangal");
+
+    // The preview is the document, not a description of it.
+    const preview = page.getByLabel("Resume preview");
+    await expect(preview).toContainText("Ada Tester");
+    await expect(preview).toContainText("Senior Backend Engineer · Razorpay");
+    await expect(preview).toContainText("Bengaluru · Mar 2020 – Present");
+    await expect(preview).toContainText("Cut checkout latency 40%");
+
+    // The review moves as they write.
+    await expect(page.getByText("Ready to send")).toBeVisible();
+
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      page.getByRole("button", { name: "Download PDF" }).click(),
+    ]);
+    expect(download.suggestedFilename()).toBe("Ada Tester - Resume.pdf");
+
+    await page.getByRole("button", { name: "Save resume" }).click();
+    await expect(page.getByText("Resume saved.")).toBeVisible();
+    await page.reload();
+    await expect(page.getByLabel("Role you want")).toHaveValue("Senior Backend Engineer");
+    await expect(page.getByLabel("Employer")).toHaveValue("Razorpay");
+
+    // Kept on file, it becomes the resume the account holds.
+    await page.getByRole("button", { name: "Keep as my resume on file" }).click();
+    await expect(page.getByText(/the resume on your account/)).toBeVisible();
+    const file = await page.request.get("/api/resume");
+    expect(file.status()).toBe(200);
+    expect(file.headers()["content-type"]).toContain("application/pdf");
+  });
+
+  test("the resume builder sends signed-out visitors to sign in", async ({ page }) => {
+    await page.goto("/account/resume");
+    await expect(page).toHaveURL(/\/sign-in\?next=/);
+  });
 });

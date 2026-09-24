@@ -54,8 +54,78 @@ enum JobSource {
 }
 
 enum JobStatus {
+  /// Live on the site. The only status the public pages read.
   ACTIVE
+  /// Submitted by a recruiter, waiting for an admin to approve it.
+  PENDING
+  /// Turned down by an admin, with the reason in `moderationNote`.
+  REJECTED
+  /// Filled or withdrawn by the employer. Their own choice, unlike EXPIRED.
+  CLOSED
+  /// Taken down automatically because nobody confirmed it in time.
   EXPIRED
+}
+
+/// Contract shape, in the vocabulary Google for Jobs expects.
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  TEMPORARY
+}
+
+/// Sector, used for the industry filter. Set per company, not per role.
+enum Industry {
+  SAAS
+  FINTECH
+  ECOMMERCE
+  HEALTHTECH
+  EDTECH
+  GAMING
+  AI_ML
+  SECURITY
+  CONSUMER
+  MOBILITY
+  LOGISTICS
+  MEDIA
+  IT_SERVICES
+  HARDWARE
+  ENERGY
+  OTHER
+}
+
+/// Which side of the market an account is on. Admins keep using HTTP Basic
+/// auth for /admin; this is about what a signed-in person may do.
+enum UserRole {
+  SEEKER
+  RECRUITER
+}
+
+/// Review of a company claim or a posted role, by an admin.
+enum ModerationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+/// The candidate's own record of where an application got to. Lodestar never
+/// hears from the employer, so this is only ever what the candidate tells us.
+enum ApplicationStage {
+  APPLIED
+  INTERVIEWING
+  OFFER
+  REJECTED
+  GHOSTED
+}
+
+enum EducationLevel {
+  HIGH_SCHOOL
+  DIPLOMA
+  BACHELORS
+  MASTERS
+  DOCTORATE
+  OTHER
 }
 
 model Company {
@@ -69,6 +139,8 @@ model Company {
   size               String?
   /// Median days from application to first response, shown on company pages.
   medianResponseDays Int?
+  /// Sector, for the industry filter. Null until an admin classifies it.
+  industry           Industry?
   featured           Boolean    @default(false)
   /// Public job-board feed this company publishes (null = listings added by hand).
   atsSource          JobSource?
@@ -82,6 +154,10 @@ model Company {
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
   jobs               Job[]
+  members            CompanyMember[]
+  reviews            CompanyReview[]
+
+  @@index([industry])
 }
 
 model Job {
@@ -93,6 +169,8 @@ model Job {
   company         Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
   discipline      Discipline
   level           Level
+  /// Contract shape. Feeds rarely say, so this is inferred from the title.
+  employmentType  EmploymentType @default(FULL_TIME)
   tags            String[]
   location        String
   remote          RemotePolicy
@@ -112,6 +190,13 @@ model Job {
   /// Where "Apply" sends the candidate: company careers page or a Google Form.
   applyUrl        String
   status          JobStatus    @default(ACTIVE)
+  /// The recruiter who submitted it, when it came from /employers rather than
+  /// a feed or the admin. Their listing survives them leaving the company.
+  postedById      String?
+  postedBy        User?        @relation("PostedJobs", fields: [postedById], references: [id], onDelete: SetNull)
+  /// Why an admin rejected it, shown back to the recruiter.
+  moderationNote  String?
+  reviewedAt      DateTime?
   featured        Boolean      @default(false)
   /// Lowercased title + company + location + tags, kept in sync by lib/jobs.ts.
   /// Trigram-indexed so ILIKE search stays fast.
@@ -128,6 +213,10 @@ model Job {
   @@index([status, postedAt(sort: Desc), id(sort: Desc)])
   @@index([status, salaryDisclosed, postedAt(sort: Desc), id(sort: Desc)])
   @@index([status, discipline])
+  @@index([status, employmentType])
+  /// The moderation queue: oldest submission first.
+  @@index([status, createdAt])
+  @@index([postedById, createdAt(sort: Desc)])
   @@index([companyId, status])
   @@index([status, lastVerifiedAt])
   @@index([tags], type: Gin)
@@ -161,14 +250,21 @@ model User {
   email         String   @unique
   emailVerified Boolean  @default(false)
   image         String?
+  /// Which side of the market they are on. Chosen at sign-up and changeable
+  /// only by asking us, so a recruiter can't quietly become a candidate.
+  role          UserRole @default(SEEKER)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   sessions     Session[]
   accounts     Account[]
   profile      CandidateProfile?
+  resume       ResumeDocument?
   savedJobs    SavedJob[]
   applications JobApplication[]
+  memberships  CompanyMember[]
+  postedJobs   Job[]            @relation("PostedJobs")
+  reviews      CompanyReview[]
 
   @@map("user")
 }
@@ -234,6 +330,12 @@ model CandidateProfile {
   city            String?
   yearsExperience Int?
   currentTitle    String?
+  /// Highest qualification. Indian employers filter on the degree and the
+  /// institution, so both are kept as the candidate writes them.
+  educationLevel  EducationLevel?
+  degree          String?
+  institution     String?
+  graduationYear  Int?
   linkedinUrl     String?
   githubUrl       String?
   portfolioUrl    String?
@@ -259,6 +361,33 @@ model CandidateProfile {
   updatedAt       DateTime  @updatedAt
 }
 
+/// The resume a candidate writes on Lodestar, rendered to an ATS-readable PDF
+/// (lib/resume-pdf.ts). Separate from the PDF they uploaded, which is their own
+/// file and is never edited: this one is ours to render and theirs to keep.
+///
+/// Name, contact details and links are not duplicated here — they come from
+/// CandidateProfile at render time, so one edit fixes the resume too.
+model ResumeDocument {
+  id       String  @id @default(cuid())
+  userId   String  @unique
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// The role being applied for, printed under the name.
+  headline String?
+  summary  String?
+  /// Skills as they appear on the resume. Kept apart from CandidateProfile.skills,
+  /// which is what we match roles against: a resume is written for one audience.
+  skills   String[] @default([])
+  /// Sections, validated on every write by `resumeContentSchema` in lib/validators.ts
+  /// and shaped by the types in lib/resume-builder.ts. JSON because they are a
+  /// list of the candidate's own paragraphs, never queried across users.
+  experience     Json     @default("[]")
+  projects       Json     @default("[]")
+  education      Json     @default("[]")
+  certifications Json     @default("[]")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
 /// A saved role, synced to the account. Signed-out visitors keep theirs in the browser.
 model SavedJob {
   userId    String
@@ -282,7 +411,69 @@ model JobApplication {
   createdAt     DateTime @default(now())
   /// Bumped when they open the same role again, so the list shows the latest visit.
   lastClickedAt DateTime @default(now())
+  /// The candidate's own stage for this application. We only know they opened
+  /// the role; everything past that is what they tell us.
+  stage         ApplicationStage @default(APPLIED)
+  stageUpdatedAt DateTime?
+  /// Their private note, e.g. "call with the hiring manager on Tuesday".
+  note          String?
 
   @@unique([userId, jobId])
   @@index([userId, lastClickedAt(sort: Desc)])
+  @@index([userId, stage])
+}
+
+/// A recruiter's claim on a company. Created when they ask for access and
+/// approved by an admin, so nobody posts under a name that isn't theirs.
+model CompanyMember {
+  id         String           @id @default(cuid())
+  userId     String
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyId  String
+  company    Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  status     ModerationStatus @default(PENDING)
+  /// Their address at the company's own domain — the evidence for the claim.
+  workEmail  String
+  /// What they told us about their role there, for the admin reviewing it.
+  note       String?
+  /// Why the claim was turned down, shown back to them.
+  reviewNote String?
+  reviewedAt DateTime?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@unique([userId, companyId])
+  @@index([status, createdAt])
+  @@index([companyId, status])
+}
+
+/// A candidate's review of a company they worked at. Held back until an admin
+/// approves it: these name real employers, so nothing publishes unseen.
+model CompanyReview {
+  id          String           @id @default(cuid())
+  companyId   String
+  company     Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Whole stars, 1–5.
+  rating      Int
+  title       String
+  pros        String
+  cons        String
+  /// What they did there, shown instead of their name.
+  roleTitle   String?
+  /// Whether they still work there, in their own words.
+  stillThere  Boolean          @default(false)
+  status      ModerationStatus @default(PENDING)
+  /// Why it was turned down, shown back to the author.
+  reviewNote  String?
+  reviewedAt  DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  /// One review per company per person; editing replaces it and re-queues it.
+  @@unique([companyId, userId])
+  @@index([companyId, status, createdAt(sort: Desc)])
+  @@index([status, createdAt])
+  @@index([userId, createdAt(sort: Desc)])
 }

@@ -8,7 +8,7 @@ export default function NewJobPage() {
   return (
     <>
       <h1 className="mb-6 text-xl font-semibold">New job</h1>
-      <Suspense fallback={<p className="text-sm text-muted">Loading…</p>}>
+      <Suspense fallback={<p className="text-muted text-sm">Loading…</p>}>
         <NewJob />
       </Suspense>
     </>
@@ -20,7 +20,7 @@ async function NewJob() {
   const companies = await db.company.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } });
   if (companies.length === 0) {
     return (
-      <p className="text-sm text-muted">
+      <p className="text-muted text-sm">
         Add a company first:{" "}
         <Link href="/admin/companies/new" className="text-fg underline underline-offset-4">
           new company

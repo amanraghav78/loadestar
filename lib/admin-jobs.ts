@@ -32,6 +32,7 @@ function jobData(input: JobInput, name: string) {
     companyId: input.companyId,
     discipline: input.discipline,
     level: input.level,
+    employmentType: input.employmentType,
     tags: input.tags,
     location: input.location,
     remote: input.remote,
