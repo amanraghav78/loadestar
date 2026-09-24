@@ -31,10 +31,9 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#060608" },
-    { media: "(prefers-color-scheme: light)", color: "#f4f4f6" },
-  ],
+  // The dark canvas, matching the default theme. The theme script and
+  // applyTheme move this to the paper canvas for anyone who picks light.
+  themeColor: "#060608",
   colorScheme: "light dark",
 };
 

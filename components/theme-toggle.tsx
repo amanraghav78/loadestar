@@ -5,6 +5,7 @@ import { Monitor, Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/cn";
 import {
   applyTheme,
+  DEFAULT_PREFERENCE,
   readPreference,
   resolveTheme,
   storePreference,
@@ -13,11 +14,11 @@ import {
 } from "@/lib/theme";
 
 /**
- * One button, three states, in the order people go looking for them. A tiny
- * external store — the same shape as saved roles — keeps every tab in step and
- * survives the toggle unmounting.
+ * One button, three states, cycling out from the dark default. A tiny external
+ * store — the same shape as saved roles — keeps every tab in step and survives
+ * the toggle unmounting.
  */
-const NEXT: Record<ThemePreference, ThemePreference> = { system: "light", light: "dark", dark: "system" };
+const NEXT: Record<ThemePreference, ThemePreference> = { dark: "light", light: "system", system: "dark" };
 const ICON = { system: Monitor, light: Sun, dark: Moon };
 const LABEL: Record<ThemePreference, string> = { system: "System", light: "Light", dark: "Dark" };
 
@@ -29,8 +30,8 @@ function getSnapshot(): ThemePreference {
   return cache;
 }
 
-/** The server can't know the choice; the inline script fixes the DOM before paint. */
-const getServerSnapshot = (): ThemePreference => "system";
+/** The server can't know the choice, so it renders the default; the inline script fixes the DOM before paint. */
+const getServerSnapshot = (): ThemePreference => DEFAULT_PREFERENCE;
 
 function paint() {
   applyTheme(resolveTheme(getSnapshot()));
