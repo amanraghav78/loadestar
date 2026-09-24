@@ -16,6 +16,9 @@ import { extractTags, matchIndiaCity } from "@/lib/ingest/classify";
 /** Resumes are two pages. Anything past this is a book, and not worth scanning. */
 const MAX_TEXT = 120_000;
 
+/** Well under the 40 the database allows, so the candidate has room to add their own. */
+const MAX_SKILLS = 30;
+
 export type ResumeSuggestions = {
   fullName?: string;
   phone?: string;
@@ -48,12 +51,13 @@ export function parseResumeText(raw: string, now: Date = new Date()): ResumeSugg
     city: matchIndiaCity(text) ?? undefined,
     currentTitle: findTitle(lines),
     yearsExperience: findYearsExperience(text, now),
-    ...findLinks(text),
+    ...findLinks(text, lines),
     ...findCompensation(text),
     noticePeriod: findNoticePeriod(text),
     // The same vocabulary the job feeds are tagged with, which is what makes
-    // the two directly comparable in lib/recommendations.ts.
-    skills: extractTags("", text, 20),
+    // the two directly comparable in lib/recommendations.ts. A resume lists far
+    // more than a job ad does, so it takes a much higher cap than a job card.
+    skills: extractTags("", text, MAX_SKILLS),
   };
 
   // Drop the keys we found nothing for, so callers can spread this over a
@@ -127,20 +131,67 @@ function findPhone(text: string): string | undefined {
 
 // ------------------------------------------------------------------ links
 
-function findLinks(text: string): Pick<ResumeSuggestions, "linkedinUrl" | "githubUrl" | "portfolioUrl"> {
+/**
+ * How far down the page the contact block reaches. A personal site is written
+ * next to the phone number and the LinkedIn link, at the top. A domain further
+ * down is an employer, a client or a certificate issuer — never the candidate's
+ * own site, and offering one of those as their portfolio is worse than offering
+ * nothing.
+ */
+const HEADER_LINES = 12;
+
+/** A heading means the contact block is over and the résumé proper has started. */
+const SECTION_HEADING =
+  /^\s*(summary|objective|profile|about|experience|work experience|professional experience|employment|education|skills|technical skills|projects|certifications|achievements|awards|publications)\s*:?\s*$/i;
+
+/** The lines above the first section heading: name, location, phone, links. */
+function contactBlock(lines: string[]): string {
+  const header = lines.slice(0, HEADER_LINES);
+  const firstHeading = header.findIndex((line) => SECTION_HEADING.test(line));
+  return (firstHeading === -1 ? header : header.slice(0, firstHeading)).join("\n");
+}
+
+function findLinks(
+  text: string,
+  lines: string[],
+): Pick<ResumeSuggestions, "linkedinUrl" | "githubUrl" | "portfolioUrl"> {
+  let linkedinUrl: string | undefined;
+  let githubUrl: string | undefined;
+
+  // Profile links are worth finding wherever they are: plenty of resumes keep
+  // them in a "Links" section at the bottom.
+  for (const { host, pathname, url } of urlsIn(text)) {
+    // A bare "linkedin.com" with no profile path is the label of a contact
+    // block, not a link to anywhere.
+    if (/(^|\.)linkedin\.com$/.test(host)) {
+      if (!linkedinUrl && pathname.length > 1) linkedinUrl = url;
+    } else if (/(^|\.)github\.com$/.test(host)) {
+      if (!githubUrl && pathname.length > 1) githubUrl = url;
+    }
+  }
+
+  const portfolio = urlsIn(contactBlock(lines)).find(
+    ({ host }) => !KNOWN_HOST.test(host) && !NOT_A_DOMAIN.has(host),
+  );
+
+  return { linkedinUrl, githubUrl, portfolioUrl: portfolio?.url };
+}
+
+type FoundUrl = { url: string; host: string; pathname: string };
+
+function urlsIn(text: string): FoundUrl[] {
   // Email addresses go first: "aman.raghav@gmail.com" contains "aman.raghav",
   // which is shaped exactly like a personal domain.
   const withoutEmails = text.replace(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi, " ");
-  const urls = withoutEmails.match(/\b(?:https?:\/\/)?(?:www\.)?[a-z0-9-]+(?:\.[a-z0-9-]+)+(?:\/[^\s)<>"']*)?/gi) ?? [];
+  const matches = withoutEmails.match(/\b(?:https?:\/\/)?(?:www\.)?[a-z0-9-]+(?:\.[a-z0-9-]+)+(?:\/[^\s)<>"']*)?/gi) ?? [];
 
-  let linkedinUrl: string | undefined;
-  let githubUrl: string | undefined;
-  let portfolioUrl: string | undefined;
-
-  for (const raw of urls) {
+  const found: FoundUrl[] = [];
+  for (const raw of matches) {
     // PDFs love to leave a trailing full stop or bracket on a link.
     const cleaned = raw.replace(/[.,;:)\]}]+$/, "");
     const url = /^https?:\/\//i.test(cleaned) ? cleaned : `https://${cleaned}`;
+    if (url.length > 2000) continue;
+
     let host: string;
     let pathname: string;
     try {
@@ -150,24 +201,37 @@ function findLinks(text: string): Pick<ResumeSuggestions, "linkedinUrl" | "githu
     } catch {
       continue;
     }
-    if (url.length > 2000) continue;
 
-    // A bare "linkedin.com" with no profile path is the header of a contact
-    // block, not a link to anywhere.
-    if (/(^|\.)linkedin\.com$/.test(host)) {
-      if (!linkedinUrl && pathname.length > 1) linkedinUrl = url;
-    } else if (/(^|\.)github\.com$/.test(host)) {
-      if (!githubUrl && pathname.length > 1) githubUrl = url;
-    } else if (!portfolioUrl && !IGNORED_HOST.test(host)) {
-      portfolioUrl = url;
-    }
+    // "Node.js" and "React.js" are shaped exactly like domains. Requiring a
+    // real suffix is what separates a link from a library.
+    const tld = host.slice(host.lastIndexOf(".") + 1);
+    if (!TLDS.has(tld)) continue;
+
+    found.push({ url, host, pathname });
   }
-  return { linkedinUrl, githubUrl, portfolioUrl };
+  return found;
 }
 
-/** Hosts that appear on a resume without being the candidate's own site. */
-const IGNORED_HOST =
-  /(^|\.)(gmail\.com|googlemail\.com|yahoo\.[a-z.]+|outlook\.com|hotmail\.com|protonmail\.com|icloud\.com|example\.com|w3\.org|adobe\.com)$/;
+/**
+ * Suffixes we accept as real. Not the full IANA list — just enough that a
+ * candidate's own site is recognised and a filename or a library name is not.
+ */
+const TLDS = new Set(
+  ("com net org io dev me co in app ai edu gov info xyz tech site online store studio design digital agency " +
+    "solutions works live life world today news blog wiki link one pro name biz tv cc gg sh to ly is am fm " +
+    "cloud page space us uk ca de fr au nl se no fi dk es it ch jp cn br mx ru pl pt gr ie nz sg hk kr tw za ae")
+    .split(" "),
+);
+
+/** Technology names that survive the suffix check because their ending is a real TLD. */
+const NOT_A_DOMAIN = new Set(["asp.net", "vb.net", "ado.net", "socket.io", "ejs.co"]);
+
+/**
+ * Hosts that turn up on resumes without being the candidate's own site: mail
+ * providers, and the badge, course and puzzle sites people link certificates on.
+ */
+const KNOWN_HOST =
+  /(^|\.)(gmail\.com|googlemail\.com|yahoo\.[a-z.]+|outlook\.com|hotmail\.com|protonmail\.com|icloud\.com|example\.com|w3\.org|adobe\.com|linkedin\.com|github\.com|credly\.com|youracclaim\.com|coursera\.org|udemy\.com|edx\.org|leetcode\.com|hackerrank\.com|codechef\.com|geeksforgeeks\.org|stackoverflow\.com|w3schools\.com|microsoft\.com|google\.com|amazon\.com|aws\.amazon\.com|oracle\.com)$/;
 
 // ------------------------------------------------------------------ title
 

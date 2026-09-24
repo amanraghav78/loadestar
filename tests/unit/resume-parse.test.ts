@@ -136,6 +136,51 @@ B.Tech, 2014 - 2018
     expect(parseResumeText("Reach me at someone@gmail.com\n", NOW).portfolioUrl).toBeUndefined();
   });
 
+  it.each([
+    ["a JavaScript library", "Skills\nNode.js, React.js, Express.js"],
+    ["a .NET stack", "Skills\nASP.NET, C#, vb.net"],
+    ["a certificate badge", "Certifications\nAWS Certified - credly.com/badges/123"],
+    ["a puzzle site", "Links\nleetcode.com/u/someone hackerrank.com/someone"],
+    ["an employer mentioned in the work history", "Priya Sharma\nBengaluru\n\nExperience\nEngineer at Acme (acme.com)"],
+  ])("does not mistake %s for the candidate's own site", (_label, text) => {
+    expect(parseResumeText(text, NOW).portfolioUrl).toBeUndefined();
+  });
+
+  it("takes the personal site out of the contact block", () => {
+    const resume = `Priya Sharma
+Bengaluru, India
++91 98765 43210 | priya@gmail.com
+linkedin.com/in/priyas | github.com/priyas | priyasharma.dev
+
+Experience
+Engineer at Acme (acme.com)
+`;
+    expect(parseResumeText(resume, NOW).portfolioUrl).toBe("https://priyasharma.dev");
+  });
+});
+
+describe("skills, on the stacks people actually list", () => {
+  it.each([
+    ["a Java stack", "Skills\nJava, Spring Boot, Hibernate, Jenkins, Maven, JUnit, SQL Server", ["Java", "Spring Boot", "Hibernate", "Jenkins", "Maven", "JUnit", "SQL Server"]],
+    ["a JavaScript stack", "Skills\nNode.js, Express, Angular, Vue.js, Next.js, Redux, Tailwind CSS", ["Node.js", "Express", "Angular", "Vue", "Next.js", "Redux", "Tailwind CSS"]],
+    ["a Python data stack", "Skills\nPython, Pandas, NumPy, scikit-learn, Hadoop, Hive, Tableau, Power BI", ["Python", "Pandas", "NumPy", "scikit-learn", "Hadoop", "Hive", "Tableau", "Power BI"]],
+    ["a .NET stack", "Skills\nC#, ASP.NET, SQL Server, Azure", ["C#", ".NET", "SQL Server", "Azure"]],
+    ["an infrastructure stack", "Skills\nKubernetes, Terraform, Ansible, Grafana, Prometheus, Nginx, Linux", ["Kubernetes", "Terraform", "Ansible", "Grafana", "Prometheus", "Nginx", "Linux"]],
+  ])("reads %s in full", (_label, text, expected) => {
+    expect(parseResumeText(text, NOW).skills).toEqual(expect.arrayContaining(expected));
+  });
+
+  it("reads PostgreSQL however it is spelled", () => {
+    for (const spelling of ["PostgreSQL", "Postgres", "postgresql"]) {
+      expect(parseResumeText(`Skills\n${spelling}`, NOW).skills).toContain("PostgreSQL");
+    }
+  });
+
+  it("keeps the list short enough to stay editable", () => {
+    const everything = "Skills\nJava, Python, Go, Rust, Kotlin, Swift, React, Angular, Vue, Next.js, Redux, Django, Flask, FastAPI, Express, Hibernate, Spring Boot, Laravel, Rails, Jenkins, Ansible, Grafana, Prometheus, Nginx, Linux, Docker, Kubernetes, Terraform, AWS, GCP, Azure, Kafka, Redis, MongoDB, Cassandra, Snowflake, Tableau, Hadoop, Hive, Spark, Airflow, Maven, Gradle, JUnit, Jest, Cypress";
+    expect(parseResumeText(everything, NOW).skills.length).toBeLessThanOrEqual(30);
+  });
+
   it("caps the text it will read, so a huge PDF can't stall the upload", () => {
     const parsed = parseResumeText(`${"filler ".repeat(200_000)}Notice period: 30 days`, NOW);
     expect(parsed.noticePeriod).toBeUndefined();
