@@ -1,7 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { jobCardSelect } from "@/lib/queries";
-import { levelsForExperience, scoreJob, type MatchProfile, type MatchScore } from "@/lib/recommendations";
+import { levelsForExperience, rankJobs, type MatchProfile } from "@/lib/recommendations";
 import { getSessionUser } from "@/lib/session";
 
 /**
@@ -106,14 +106,21 @@ export type MatchedJob = Awaited<ReturnType<typeof getRecommendations>>["jobs"][
  * explained back to them. Uncached like every other per-candidate read: editing
  * a profile has to change this page immediately or the feature feels broken.
  */
-export async function getRecommendations() {
+export async function getRecommendations({ limit = MATCH_RESULTS }: { limit?: number } = {}) {
   const user = await getSessionUser();
   if (!user) return { profile: null, jobs: [] };
 
-  const profile = await db.candidateProfile.findUnique({
-    where: { userId: user.id },
-    select: { skills: true, yearsExperience: true, city: true, expectedSalary: true },
-  });
+  // Independent reads, so they go out together.
+  const [profile, applied] = await Promise.all([
+    db.candidateProfile.findUnique({
+      where: { userId: user.id },
+      select: { skills: true, yearsExperience: true, city: true, expectedSalary: true },
+    }),
+    db.jobApplication.findMany({
+      where: { userId: user.id },
+      select: { jobId: true },
+    }),
+  ]);
   const match: MatchProfile = {
     skills: profile?.skills ?? [],
     yearsExperience: profile?.yearsExperience ?? null,
@@ -123,10 +130,6 @@ export async function getRecommendations() {
   if (match.skills.length === 0) return { profile: match, jobs: [] };
 
   const levels = levelsForExperience(match.yearsExperience);
-  const applied = await db.jobApplication.findMany({
-    where: { userId: user.id },
-    select: { jobId: true },
-  });
 
   const rows = await db.job.findMany({
     where: {
@@ -143,10 +146,5 @@ export async function getRecommendations() {
     take: MATCH_POOL,
   });
 
-  const jobs = rows
-    .map((job) => ({ job, match: scoreJob(job, match) as MatchScore }))
-    .sort((a, b) => b.match.score - a.match.score || b.job.postedAt.getTime() - a.job.postedAt.getTime())
-    .slice(0, MATCH_RESULTS);
-
-  return { profile: match, jobs };
+  return { profile: match, jobs: rankJobs(rows, match, limit) };
 }

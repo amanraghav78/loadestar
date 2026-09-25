@@ -219,6 +219,47 @@ test.describe("accounts", () => {
     await expect(page.getByText("Kubernetes and Terraform match").first()).toBeVisible();
   });
 
+  test("the home page recommends roles to a candidate it can match, and the latest to everyone else", async ({
+    page,
+    browser,
+  }) => {
+    const heading = (name: string) => page.getByRole("heading", { level: 2, name });
+
+    await page.goto("/");
+    await expect(heading("Latest jobs")).toBeVisible();
+    await expect(heading("Recommended for you")).toHaveCount(0);
+
+    // Signed in with nothing to match on: still the latest, plus one line saying how to change that.
+    await signIn(page, candidate("home"));
+    await page.goto("/");
+    await expect(page.getByRole("link", { name: "Add your skills or upload your resume" })).toBeVisible();
+    await expect(heading("Latest jobs")).toBeVisible();
+    await expect(heading("Recommended for you")).toHaveCount(0);
+
+    await page.goto("/account");
+    await page.getByLabel("Full name").fill("Ada Tester");
+    await page.getByLabel("Years of experience").fill("8");
+    await page.getByLabel("Skills").fill("Kubernetes, Terraform");
+    await page.getByRole("button", { name: /Save profile/ }).click();
+    await expect(page.getByText("Profile saved.")).toBeVisible();
+
+    // The very next visit picks roles for them.
+    await page.goto("/");
+    await expect(heading("Recommended for you")).toBeVisible();
+    await expect(heading("Latest jobs")).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "See all matches" })).toHaveAttribute("href", "/account/matches");
+    await expect(page.getByRole("article").filter({ hasText: "Staff Platform Engineer" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Add your skills or upload your resume" })).toHaveCount(0);
+
+    // Their picks are theirs alone: a fresh visitor in another browser gets the latest roles.
+    const stranger = await browser.newContext();
+    const other = await stranger.newPage();
+    await other.goto("/");
+    await expect(other.getByRole("heading", { level: 2, name: "Latest jobs" })).toBeVisible();
+    await expect(other.getByRole("heading", { level: 2, name: "Recommended for you" })).toHaveCount(0);
+    await stranger.close();
+  });
+
   test("applying while signed in lists the role under Applied", async ({ page }) => {
     await signIn(page, candidate("applied"));
     await page.goto("/jobs?q=ingest");

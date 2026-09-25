@@ -102,6 +102,43 @@ function skillReason(matched: string[]): string {
 }
 
 /**
+ * Scores a shortlist and keeps the best `limit`, strongest first. On a tie the
+ * newer role wins: an older listing that scores the same is worth less than one
+ * posted this week. The input is left untouched.
+ */
+export function rankJobs<J extends ScorableJob & { postedAt: Date }>(
+  jobs: readonly J[],
+  profile: MatchProfile,
+  limit: number,
+): { job: J; match: MatchScore }[] {
+  return jobs
+    .map((job) => ({ job, match: scoreJob(job, profile) }))
+    .sort((a, b) => b.match.score - a.match.score || b.job.postedAt.getTime() - a.job.postedAt.getTime())
+    .slice(0, Math.max(0, limit));
+}
+
+/**
+ * What the home page's job section shows.
+ *
+ * - `recommended`: a signed-in candidate we have matches for.
+ * - `latest-nudge`: signed in, but nothing to match on yet, so the latest roles
+ *   plus one line pointing at the profile.
+ * - `latest`: everyone else, including a candidate whose skills match nothing
+ *   open today (their profile is fine; a nudge would be noise).
+ */
+export type HomeJobsView = "recommended" | "latest" | "latest-nudge";
+
+export function homeJobsView(input: {
+  signedIn: boolean;
+  profile: MatchProfile | null;
+  matches: number;
+}): HomeJobsView {
+  if (!input.signedIn) return "latest";
+  if (!input.profile || !matchingReadiness(input.profile).ready) return "latest-nudge";
+  return input.matches > 0 ? "recommended" : "latest";
+}
+
+/**
  * What the candidate still has to fill in before matching means anything.
  * Skills carry the ranking, so without them there is nothing to rank on.
  */
