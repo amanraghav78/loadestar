@@ -5,10 +5,12 @@ import { cacheLife, cacheTag } from "next/cache";
 import { Suspense } from "react";
 import {
   ArrowLeft,
+  ArrowRight,
   ArrowUpRight,
   BriefcaseBusiness,
   CalendarDays,
   Clock,
+  FileText,
   Globe,
   Laptop,
   MapPin,
@@ -30,6 +32,7 @@ import {
   LEVEL_LABEL,
   REMOTE_LABEL,
 } from "@/lib/format";
+import { authEnabled } from "@/lib/auth";
 import { getJobBySlug, getSimilarJobs, TAGS } from "@/lib/queries";
 import { listingExpiresAt } from "@/lib/listing-age";
 import { companyLogo } from "@/lib/logos";
@@ -185,6 +188,39 @@ async function JobDetail({ slug }: { slug: string }) {
               </a>
               <SaveButton jobId={job.id} jobTitle={job.title} variant="full" className="mt-2 w-full" />
               <p className="text-subtle mt-3 text-center text-xs">You apply on {job.company.name}&apos;s own site.</p>
+              {authEnabled && (
+                <Link
+                  href="/account/resume"
+                  className="group border-line text-muted hover:text-fg mt-4 flex items-center justify-center gap-1.5 border-t pt-4 text-xs transition-colors"
+                >
+                  <FileText className="size-3.5" aria-hidden />
+                  Need a resume? <span className="text-fg font-medium">Build one free</span>
+                  <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" aria-hidden />
+                </Link>
+              )}
+            </section>
+          )}
+          {/* Below desktop the apply card is hidden, so the nudge gets a card of its own. */}
+          {active && authEnabled && (
+            <section className="metal flex items-start gap-3 rounded-3xl p-5 lg:hidden" aria-labelledby="need-resume">
+              <span className="metal flex size-9 shrink-0 items-center justify-center rounded-xl" aria-hidden>
+                <FileText className="text-muted size-4" />
+              </span>
+              <div className="min-w-0">
+                <h2 id="need-resume" className="text-fg text-[15px] font-semibold">
+                  Need a resume?
+                </h2>
+                <p className="text-muted mt-1 text-sm">
+                  Build one that an ATS can read, and download it as a PDF. Free.
+                </p>
+                <Link
+                  href="/account/resume"
+                  className="group text-fg mt-3 inline-flex items-center gap-1 text-sm font-medium"
+                >
+                  Open the resume builder
+                  <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
+                </Link>
+              </div>
             </section>
           )}
           <section className="metal rounded-3xl p-5" aria-labelledby="about-company">

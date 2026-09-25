@@ -6,7 +6,7 @@ import { SavedCount } from "@/components/saved-count";
 import { SavedJobsSync } from "@/components/saved-jobs-sync";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LinkButton } from "@/components/ui/button";
-import { postJobHref } from "@/lib/auth";
+import { authEnabled, postJobHref } from "@/lib/auth";
 
 export function SiteHeader() {
   return (
@@ -14,9 +14,9 @@ export function SiteHeader() {
       <header className="border-line bg-bg/75 supports-[backdrop-filter]:bg-bg/60 sticky top-0 z-40 border-b backdrop-blur-xl">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center gap-3 px-4 sm:px-6">
           <Logo />
-          <nav aria-label="Main" className="metal ml-6 hidden items-center gap-0.5 rounded-full p-1 md:flex">
-            <Suspense fallback={<NavLinksStatic />}>
-              <NavLinks />
+          <nav aria-label="Main" className="metal ml-6 hidden items-center gap-0.5 rounded-full p-1 lg:flex">
+            <Suspense fallback={<NavLinksStatic resume={authEnabled} />}>
+              <NavLinks resume={authEnabled} />
             </Suspense>
           </nav>
           <div className="ml-auto flex items-center gap-2">
@@ -38,10 +38,13 @@ export function SiteHeader() {
           </div>
         </div>
       </header>
-      {/* Phones: the section links sit under the bar and scroll away with the page, so only one row stays pinned. */}
-      <nav aria-label="Main mobile" className="border-line flex gap-1 border-b px-3 py-2 md:hidden">
-        <Suspense fallback={<NavLinksStatic />}>
-          <NavLinks />
+      {/* Phones and tablets: the section links sit under the bar and scroll away with the page, so only one row stays pinned. */}
+      <nav
+        aria-label="Main mobile"
+        className="border-line flex scrollbar-none gap-1 overflow-x-auto border-b px-3 py-2 lg:hidden"
+      >
+        <Suspense fallback={<NavLinksStatic resume={authEnabled} />}>
+          <NavLinks resume={authEnabled} />
         </Suspense>
       </nav>
     </>

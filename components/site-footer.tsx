@@ -2,7 +2,7 @@ import Link from "next/link";
 import { cacheLife } from "next/cache";
 import { ShieldCheck } from "lucide-react";
 import { Logo } from "@/components/logo";
-import { postJobHref } from "@/lib/auth";
+import { authEnabled, postJobHref } from "@/lib/auth";
 import { site } from "@/lib/site";
 
 const groups = [
@@ -13,6 +13,8 @@ const groups = [
       { href: "/companies", label: "Companies" },
       { href: "/salaries", label: "Salaries" },
       { href: "/saved", label: "Saved jobs" },
+      // The builder lives in the account, which only exists when accounts are on.
+      ...(authEnabled ? [{ href: "/account/resume", label: "Resume builder" }] : []),
     ],
   },
   {
