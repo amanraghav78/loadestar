@@ -48,7 +48,11 @@ export default async function HomePage() {
 
       <section data-hero className="relative isolate overflow-hidden">
         <HeroLight />
-        <Container wide className="flex flex-col items-center pt-20 text-center sm:pt-28">
+        {/* The hero fills the first screen (less the header); the companies wait just below the fold. */}
+        <Container
+          wide
+          className="relative flex min-h-[calc(100svh-4rem)] flex-col items-center justify-center pt-14 pb-24 text-center sm:pt-16 sm:pb-28"
+        >
           <p className="animate-fade-up metal text-muted inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-medium [animation-delay:150ms]">
             <span className="relative flex size-1.5" aria-hidden>
               <span className="animate-ping-slow bg-ok absolute inline-flex size-full rounded-full opacity-75" />
@@ -91,12 +95,14 @@ export default async function HomePage() {
               </li>
             ))}
           </ul>
+
+          <a href="#hiring-now" className="scroll-cue" aria-label="Scroll to companies hiring now">
+            <span />
+          </a>
         </Container>
 
-        <div className="mt-14 pb-10 sm:mt-16">
-          <div className="animate-fade-up [animation-delay:900ms]">
-            <LogoMarquee companies={hiringCompanies} />
-          </div>
+        <div className="pt-6 pb-10" data-reveal>
+          <LogoMarquee companies={hiringCompanies} />
         </div>
       </section>
 

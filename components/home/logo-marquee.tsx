@@ -30,7 +30,10 @@ export function LogoMarquee({ companies }: { companies: MarqueeCompany[] }) {
 
   return (
     <section aria-labelledby="hiring-now" className="relative pb-6">
-      <h2 id="hiring-now" className="text-subtle text-center text-[11px] font-medium tracking-[0.2em] uppercase">
+      <h2
+        id="hiring-now"
+        className="text-subtle scroll-mt-40 text-center text-[11px] font-medium tracking-[0.2em] uppercase"
+      >
         Hiring now on Lodestar
       </h2>
       <div className="marquee mt-6">

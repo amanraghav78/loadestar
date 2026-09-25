@@ -449,6 +449,68 @@ body {
   transition: opacity 0.6s ease;
 }
 
+/*
+ * The hero fills the first screen, so a thin line at its foot hints at what is
+ * below: a bead of light keeps running down it. Only on screens tall enough to
+ * have room for it, and it fades away as the page scrolls.
+ */
+.scroll-cue {
+  position: absolute;
+  bottom: 1.25rem;
+  left: 50%;
+  translate: -50% 0;
+  display: none;
+  padding: 0.75rem;
+  border-radius: 999px;
+}
+.scroll-cue > span {
+  position: relative;
+  display: block;
+  width: 1px;
+  height: 2.75rem;
+  overflow: hidden;
+  background: linear-gradient(var(--color-line-strong), transparent);
+  animation: fade-in 1.2s ease 1.4s both;
+}
+.scroll-cue > span::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 40%;
+  background: linear-gradient(transparent, var(--color-silver), transparent);
+  animation: cue-run 2.4s cubic-bezier(0.55, 0, 0.35, 1) 2s infinite;
+  translate: 0 -100%;
+}
+@media (min-width: 640px) and (min-height: 640px) {
+  .scroll-cue {
+    display: block;
+  }
+}
+@supports (animation-timeline: scroll()) {
+  .scroll-cue {
+    animation: cue-fade linear both;
+    animation-timeline: scroll();
+    animation-range: 0 12rem;
+  }
+}
+@keyframes cue-run {
+  to {
+    translate: 0 260%;
+  }
+}
+@keyframes cue-fade {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
 /* The headline's changing word, in holographic foil (see RotatingWord). */
 .rotating-word {
   position: relative;
@@ -856,6 +918,7 @@ body {
   /* The pictures hold still, drawn in their resting state. */
   .foil-text,
   .marquee-track,
+  .scroll-cue > span::after,
   .beam::before,
   .why-flow,
   .why-node-glow,
