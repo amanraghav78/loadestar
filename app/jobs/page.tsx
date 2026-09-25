@@ -5,6 +5,7 @@ import { ArrowRight, SearchX, SlidersHorizontal, X } from "lucide-react";
 import { JobCardSkeleton, JobList } from "@/components/job-card";
 import { JobFilters } from "@/components/job-filters";
 import { SearchBar } from "@/components/search-bar";
+import { SortControl } from "@/components/sort-control";
 import { buttonClass } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -17,6 +18,7 @@ import {
   numberFormat,
   REMOTE_LABEL,
 } from "@/lib/format";
+import { resolveSort } from "@/lib/job-sort";
 import { searchJobs } from "@/lib/queries";
 import { parseSearchParams, toQueryString, type JobSearchParams } from "@/lib/validators";
 
@@ -89,25 +91,37 @@ async function Results({ params }: { params: JobSearchParams }) {
             </div>
           </details>
 
-          <div className="mb-5 flex flex-wrap items-center gap-2">
-            <h2 id="results-heading" className="text-fg mr-2 text-lg font-semibold" aria-live="polite">
-              <span className="tabular-nums">{numberFormat.format(total)}</span> {total === 1 ? "job" : "jobs"}
-            </h2>
-            {active.map((f) => (
-              <Link
-                key={f.label}
-                href={f.href}
-                className="chip h-7 gap-1 px-2.5 text-xs"
-                aria-label={`Remove filter ${f.label}`}
-              >
-                {f.label}
-                <X className="size-3" aria-hidden />
-              </Link>
-            ))}
-            {active.length > 1 && (
-              <Link href="/jobs" className="text-muted hover:text-fg text-xs underline-offset-4 hover:underline">
-                Clear all
-              </Link>
+          <div className="mb-5 flex flex-wrap items-center gap-x-4 gap-y-3">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <h2 id="results-heading" className="text-fg mr-2 text-lg font-semibold" aria-live="polite">
+                <span className="tabular-nums">{numberFormat.format(total)}</span> {total === 1 ? "job" : "jobs"}
+              </h2>
+              {active.map((f) => (
+                <Link
+                  key={f.label}
+                  href={f.href}
+                  className="chip h-7 gap-1 px-2.5 text-xs"
+                  aria-label={`Remove filter ${f.label}`}
+                >
+                  {f.label}
+                  <X className="size-3" aria-hidden />
+                </Link>
+              ))}
+              {active.length > 1 && (
+                <Link
+                  href={`/jobs${toQueryString({ sort: params.sort })}`}
+                  className="text-muted hover:text-fg text-xs underline-offset-4 hover:underline"
+                >
+                  Clear all
+                </Link>
+              )}
+            </div>
+            {total > 1 && (
+              <SortControl
+                current={resolveSort(params.sort)}
+                href={(sort) => `/jobs${toQueryString({ ...params, sort, cursor: undefined })}`}
+                className="sm:ml-auto"
+              />
             )}
           </div>
 
@@ -133,7 +147,7 @@ async function Results({ params }: { params: JobSearchParams }) {
                 href={`/jobs${toQueryString({ ...params, cursor: undefined })}`}
                 className="text-muted hover:text-fg text-sm"
               >
-                Back to newest
+                Back to the start
               </Link>
             ) : (
               <span />

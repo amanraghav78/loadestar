@@ -3,6 +3,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { db } from "@/lib/db";
 import type { Prisma } from "@/lib/generated/prisma/client";
 import type { Currency, Discipline, Level } from "@/lib/generated/prisma/enums";
+import { afterCursor, DEFAULT_SORT, orderByFor, resolveSort, sortRowSelect, type JobSort } from "@/lib/job-sort";
 import type { JobSearchParams } from "@/lib/validators";
 
 /**
@@ -87,7 +88,7 @@ const HOME_CITIES = ["Bengaluru", "Hyderabad", "Pune", "Gurugram", "Chennai", "M
 
 // ---------------------------------------------------------------- search
 
-type SearchFilters = Omit<JobSearchParams, "cursor">;
+type SearchFilters = Omit<JobSearchParams, "cursor" | "sort">;
 
 function buildWhere(f: SearchFilters): Prisma.JobWhereInput {
   const and: Prisma.JobWhereInput[] = [ACTIVE];
@@ -130,16 +131,21 @@ export async function searchJobs(params: JobSearchParams) {
   cacheLife("minutes");
   cacheTag(TAGS.jobs);
 
-  const { cursor, ...filters } = params;
+  // `sort` arrives as part of `params`, so each order is its own cache entry.
+  const { cursor, sort: requested, ...filters } = params;
+  const sort = resolveSort(requested);
   const where = buildWhere(filters);
+
+  // Keyset pagination: the cursor is the last job of the previous page, and
+  // this page is everything after it in the chosen order.
+  const from = cursor ? await db.job.findUnique({ where: { id: cursor }, select: sortRowSelect }) : null;
 
   const [rows, total] = await Promise.all([
     db.job.findMany({
-      where,
+      where: from ? { AND: [where, afterCursor(sort, from)] } : where,
       select: jobCardSelect,
-      orderBy: [{ salaryDisclosed: "desc" }, { postedAt: "desc" }, { id: "desc" }],
+      orderBy: orderByFor(sort),
       take: PAGE_SIZE + 1,
-      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     }),
     db.job.count({ where }),
   ]);
@@ -227,7 +233,8 @@ export async function getCompanies() {
     .sort((a, b) => b.openRoles - a.openRoles || a.name.localeCompare(b.name));
 }
 
-export async function getCompanyBySlug(slug: string) {
+/** A company and its open jobs; `sort` (part of the cache key) orders the jobs. */
+export async function getCompanyBySlug(slug: string, sort: JobSort = DEFAULT_SORT) {
   "use cache";
   cacheLife("hours");
   cacheTag(TAGS.companies, TAGS.company(slug), TAGS.jobs);
@@ -238,7 +245,7 @@ export async function getCompanyBySlug(slug: string) {
       jobs: {
         where: ACTIVE,
         select: jobCardSelect,
-        orderBy: [{ salaryDisclosed: "desc" }, { postedAt: "desc" }],
+        orderBy: orderByFor(sort),
         take: 200,
       },
     },
