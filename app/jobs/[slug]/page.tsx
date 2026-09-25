@@ -3,7 +3,17 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cacheLife, cacheTag } from "next/cache";
 import { Suspense } from "react";
-import { ArrowLeft, ArrowUpRight, BriefcaseBusiness, CalendarDays, Globe, MapPin, type LucideIcon } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  BriefcaseBusiness,
+  CalendarDays,
+  Clock,
+  Globe,
+  Laptop,
+  MapPin,
+  type LucideIcon,
+} from "lucide-react";
 import { CompanyAvatar } from "@/components/company-avatar";
 import { descriptionToPlainText, JobDescription } from "@/components/job-description";
 import { JobGrid, SalaryPill } from "@/components/job-card";
@@ -120,9 +130,11 @@ async function JobDetail({ slug }: { slug: string }) {
                 </li>
               )}
               <Fact icon={MapPin}>{job.location}</Fact>
-              {job.remote !== "ONSITE" && <Fact>{REMOTE_LABEL[job.remote]}</Fact>}
+              {job.remote !== "ONSITE" && <Fact icon={Laptop}>{REMOTE_LABEL[job.remote]}</Fact>}
               <Fact icon={BriefcaseBusiness}>{LEVEL_LABEL[job.level]}</Fact>
-              {job.employmentType !== "FULL_TIME" && <Fact>{EMPLOYMENT_TYPE_LABEL[job.employmentType]}</Fact>}
+              {job.employmentType !== "FULL_TIME" && (
+                <Fact icon={Clock}>{EMPLOYMENT_TYPE_LABEL[job.employmentType]}</Fact>
+              )}
               <Fact icon={CalendarDays}>{formatPostedAgo(job.postedAt)}</Fact>
             </ul>
 
@@ -228,10 +240,10 @@ async function JobDetail({ slug }: { slug: string }) {
   );
 }
 
-function Fact({ icon: Icon, children }: { icon?: LucideIcon; children: React.ReactNode }) {
+function Fact({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) {
   return (
     <li className="border-line bg-surface/60 inline-flex items-center gap-1.5 rounded-full border px-3 py-1">
-      {Icon && <Icon className="text-subtle size-3.5" aria-hidden />}
+      <Icon className="text-subtle size-3.5" aria-hidden />
       {children}
     </li>
   );

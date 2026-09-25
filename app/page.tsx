@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { cacheLife, cacheTag } from "next/cache";
-import { ArrowRight, ShieldCheck } from "lucide-react";
+import { ArrowRight, BriefcaseBusiness, ShieldCheck } from "lucide-react";
 import { CompanyAvatar } from "@/components/company-avatar";
 import { DisciplineGrid } from "@/components/discipline-grid";
 import { JobGrid } from "@/components/job-card";
 import { SearchBar } from "@/components/search-bar";
 import { Container } from "@/components/ui/container";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Chip } from "@/components/ui/tag";
 import { numberFormat } from "@/lib/format";
 import { getHomeData, TAGS } from "@/lib/queries";
@@ -74,19 +75,19 @@ export default async function HomePage() {
         <div className="hairline mx-auto max-w-5xl" aria-hidden />
       </section>
 
-      <Container wide className="reveal pt-16">
+      <Container wide className="pt-16">
         <SectionHeading title="Latest jobs" href="/jobs" link={`View all ${total}`} />
         {recommended.length > 0 ? (
           <JobGrid jobs={recommended} />
         ) : (
-          <p className="border-line text-muted rounded-2xl border border-dashed p-10 text-center text-sm">
-            Fresh jobs are on their way. Check back shortly.
-          </p>
+          <EmptyState icon={BriefcaseBusiness} title="Fresh jobs are on their way">
+            Check back shortly.
+          </EmptyState>
         )}
       </Container>
 
       {cities.length > 0 && (
-        <Container wide className="reveal pt-20">
+        <Container wide className="pt-20">
           <SectionHeading title="Jobs by city" />
           <ul className="flex flex-wrap gap-2">
             {cities.map(({ city, count }) => (
@@ -109,13 +110,13 @@ export default async function HomePage() {
         </Container>
       )}
 
-      <Container wide className="reveal pt-20">
+      <Container wide className="pt-20">
         <SectionHeading title="Browse by category" />
         <DisciplineGrid counts={disciplineCounts} />
       </Container>
 
       {hiringCompanies.length > 0 && (
-        <Container wide className="reveal pt-20">
+        <Container wide className="pt-20">
           <SectionHeading title="Top companies hiring" href="/companies" link="All companies" />
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {hiringCompanies.map((c) => (

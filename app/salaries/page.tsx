@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { cacheLife, cacheTag } from "next/cache";
+import { IndianRupee } from "lucide-react";
 import { buttonClass } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
+import { EmptyState } from "@/components/ui/empty-state";
 import { DISCIPLINE_LABEL, formatMoney, LEVEL_LABEL, numberFormat } from "@/lib/format";
 import type { Discipline } from "@/lib/generated/prisma/enums";
 import { getSalaryStats, TAGS, type SalaryRow } from "@/lib/queries";
@@ -32,13 +34,18 @@ export default async function SalariesPage() {
       <p className="text-muted mt-2 text-sm">Published pay for live jobs, by level.</p>
 
       {rows.length === 0 ? (
-        <div className="metal mt-10 rounded-3xl p-10 text-center">
-          <p className="text-fg text-base font-medium">Not enough salary data yet</p>
-          <p className="text-muted mt-1 text-sm">Browse jobs that show pay while this fills in.</p>
-          <Link href="/jobs?salary=1" className={buttonClass("secondary", "md", "mt-5")}>
-            Jobs with salary
-          </Link>
-        </div>
+        <EmptyState
+          icon={IndianRupee}
+          title="Not enough salary data yet"
+          action={
+            <Link href="/jobs?salary=1" className={buttonClass("secondary", "md")}>
+              Jobs with salary
+            </Link>
+          }
+          className="mt-10"
+        >
+          Browse jobs that show pay while this fills in.
+        </EmptyState>
       ) : (
         <div className="mt-10 space-y-12">
           {[...byDiscipline].map(([discipline, list]) => (

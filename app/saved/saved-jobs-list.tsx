@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Bookmark } from "lucide-react";
 import { JobCardSkeleton, JobList } from "@/components/job-card";
 import { buttonClass } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import type { JobCardData } from "@/lib/queries";
 import { useSavedJobs } from "@/lib/saved-jobs";
 
@@ -32,13 +34,17 @@ export function SavedJobsList() {
 
   if (ids.length === 0) {
     return (
-      <div className="metal rounded-3xl p-12 text-center">
-        <p className="text-fg text-base font-medium">No saved roles yet.</p>
-        <p className="text-muted mt-1 text-sm">Tap the bookmark on any job to keep it here.</p>
-        <Link href="/jobs" className={buttonClass("primary", "md", "mt-5")}>
-          Browse jobs
-        </Link>
-      </div>
+      <EmptyState
+        icon={Bookmark}
+        title="No saved jobs yet"
+        action={
+          <Link href="/jobs" className={buttonClass("primary", "md")}>
+            Browse jobs
+          </Link>
+        }
+      >
+        Tap the bookmark on any job to keep it here.
+      </EmptyState>
     );
   }
 

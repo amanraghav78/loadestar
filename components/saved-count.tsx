@@ -13,12 +13,15 @@ export function SavedCount() {
     >
       <Bookmark className="size-3.5" aria-hidden />
       Saved
-      <span
-        className="text-fg min-w-4 rounded-full bg-tint-strong px-1.5 text-center text-[11px] tabular-nums"
-        aria-label={`${ids.length} saved roles`}
-      >
-        {ids.length}
-      </span>
+      {/* A count only once there is something to count; "0" reads as noise. */}
+      {ids.length > 0 && (
+        <span
+          className="text-fg bg-tint-strong min-w-4 rounded-full px-1.5 text-center text-[11px] tabular-nums"
+          aria-label={`${ids.length} saved roles`}
+        >
+          {ids.length}
+        </span>
+      )}
     </Link>
   );
 }

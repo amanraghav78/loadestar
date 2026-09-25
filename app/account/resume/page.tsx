@@ -7,6 +7,7 @@ import { readResume } from "@/lib/resume-document";
 import { requireUserPage } from "@/lib/session";
 import { resumeUploadEnabled } from "@/lib/storage";
 import { Container } from "@/components/ui/container";
+import { AccountTabs } from "../account-tabs";
 import { ResumeBuilder } from "./resume-builder";
 
 export const metadata: Metadata = {
@@ -18,7 +19,8 @@ export default function ResumeBuilderPage() {
   if (!authEnabled) notFound();
 
   return (
-    <Container wide className="py-12">
+    <Container wide className="py-10">
+      <AccountTabs current="/account/resume" />
       <h1 className="steel-text text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">Build your resume</h1>
       <p className="text-muted mt-2 max-w-2xl text-sm">
         One column, real text, headings a parser recognises &mdash; the shape that survives an applicant tracking

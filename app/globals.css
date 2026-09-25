@@ -83,18 +83,14 @@
   --sheen: rgb(255 255 255 / 0.07);
 
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.5);
-  --shadow-lift:
-    0 18px 40px -20px rgb(0 0 0 / 0.9),
-    0 0 0 1px rgb(255 255 255 / 0.03);
+  --shadow-lift: 0 18px 40px -20px rgb(0 0 0 / 0.9), 0 0 0 1px rgb(255 255 255 / 0.03);
   --shadow-panel: 0 24px 60px -30px rgb(0 0 0 / 0.9);
 
   --chrome-fg: #0b0b0e;
   --chrome-fill: linear-gradient(180deg, #ffffff 0%, #e6e6ea 52%, #c3c3cb 100%);
   --chrome-fill-flat: linear-gradient(180deg, #ffffff 0%, #dcdce1 100%);
   --chrome-border: rgb(255 255 255 / 0.9);
-  --chrome-inset:
-    inset 0 1px 0 #ffffff,
-    inset 0 -1px 0 rgb(0 0 0 / 0.18);
+  --chrome-inset: inset 0 1px 0 #ffffff, inset 0 -1px 0 rgb(0 0 0 / 0.18);
   --chrome-glow: 0 10px 28px -12px rgb(255 255 255 / 0.28);
   --chrome-glow-hover: 0 14px 36px -12px rgb(255 255 255 / 0.4);
   --chrome-sheen: rgb(255 255 255 / 0.95);
@@ -141,18 +137,14 @@
   --sheen: rgb(9 9 11 / 0.035);
 
   --shadow-sm: 0 1px 2px rgb(9 9 11 / 0.06);
-  --shadow-lift:
-    0 18px 40px -22px rgb(9 9 11 / 0.35),
-    0 0 0 1px rgb(9 9 11 / 0.03);
+  --shadow-lift: 0 18px 40px -22px rgb(9 9 11 / 0.35), 0 0 0 1px rgb(9 9 11 / 0.03);
   --shadow-panel: 0 24px 60px -32px rgb(9 9 11 / 0.3);
 
   --chrome-fg: #fafafa;
   --chrome-fill: linear-gradient(180deg, #33333d 0%, #1c1c22 52%, #0c0c10 100%);
   --chrome-fill-flat: linear-gradient(180deg, #2c2c35 0%, #131318 100%);
   --chrome-border: rgb(9 9 11 / 0.9);
-  --chrome-inset:
-    inset 0 1px 0 rgb(255 255 255 / 0.16),
-    inset 0 -1px 0 rgb(0 0 0 / 0.3);
+  --chrome-inset: inset 0 1px 0 rgb(255 255 255 / 0.16), inset 0 -1px 0 rgb(0 0 0 / 0.3);
   --chrome-glow: 0 10px 28px -12px rgb(9 9 11 / 0.35);
   --chrome-glow-hover: 0 14px 34px -12px rgb(9 9 11 / 0.45);
   --chrome-sheen: rgb(255 255 255 / 0.3);
@@ -193,13 +185,17 @@ body {
   outline-offset: 2px;
 }
 
+/* A link inside a card hands its ring to the card (see metal-card). Unlayered, like the rule above. */
+.metal-card a:focus-visible {
+  outline: none;
+}
+
 /* ------------------------------------------------------------------ metal */
 
 /* Polished lettering with a travelling glint. */
 @utility chrome-text {
   background-image:
-    linear-gradient(105deg, transparent 42%, var(--chrome-text-glint) 50%, transparent 58%),
-    var(--chrome-text-fill);
+    linear-gradient(105deg, transparent 42%, var(--chrome-text-glint) 50%, transparent 58%), var(--chrome-text-fill);
   background-size:
     250% 100%,
     100% 100%;
@@ -212,9 +208,14 @@ body {
   color: transparent;
 }
 
-/* Brushed steel for smaller headings: static, no glint. */
+/*
+ * Brushed steel for smaller headings: static, no glint. The fill repeats once
+ * per line, so the second line of a long job title is as bright as the first
+ * (browsers without `lh` keep a single fill over the whole heading).
+ */
 @utility steel-text {
   background-image: var(--steel-text-fill);
+  background-size: 100% 1lh;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -269,6 +270,15 @@ body {
   &:hover::before {
     transform: translateX(100%);
   }
+
+  /*
+   * Keyboard focus on a link inside the card (the stretched title link) rings
+   * the whole card, instead of an outline broken around wrapped title text.
+   */
+  &:has(a:focus-visible) {
+    outline: 2px solid var(--color-accent-fg);
+    outline-offset: 2px;
+  }
 }
 
 /* Input shell (search): steel with a violet ring when focused. */
@@ -299,10 +309,7 @@ body {
   color: var(--chrome-fg);
   background-image: var(--chrome-fill);
   border: 1px solid var(--chrome-border);
-  box-shadow:
-    var(--chrome-inset),
-    var(--shadow-sm),
-    var(--chrome-glow);
+  box-shadow: var(--chrome-inset), var(--shadow-sm), var(--chrome-glow);
   transition:
     box-shadow 0.25s ease,
     transform 0.15s ease,
@@ -320,10 +327,7 @@ body {
 
   &:hover {
     filter: brightness(1.04);
-    box-shadow:
-      var(--chrome-inset),
-      var(--shadow-sm),
-      var(--chrome-glow-hover);
+    box-shadow: var(--chrome-inset), var(--shadow-sm), var(--chrome-glow-hover);
   }
 
   &:hover::after {
@@ -417,19 +421,7 @@ body {
   }
 }
 
-/* Sections fade up as they scroll into view, where scroll timelines exist. */
-@supports (animation-timeline: view()) {
-  .reveal {
-    animation: fade-up linear both;
-    animation-timeline: view();
-    animation-range: entry 0% cover 22%;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .reveal {
-    animation: none !important;
-  }
   *,
   *::before,
   *::after {

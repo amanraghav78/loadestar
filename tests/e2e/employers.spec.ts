@@ -16,6 +16,12 @@ const PASSWORD = "e2e-password-1234";
 /** A fresh account per test and per run, so no test inherits a claim. */
 const RUN = Date.now().toString(36);
 const recruiter = (label: string) => `e2e-rec-${label}-${RUN}@example.test`;
+/**
+ * A display name per account. The moderation queue lists every pending claim,
+ * oldest first, and an earlier test leaves one of its own for Vellum, so the
+ * admin step has to pick this account's claim out by name.
+ */
+const claimant = (email: string) => `Riya ${email.split("@")[0]}`;
 
 async function signIn(page: Page, email: string, name = "Riya Recruiter") {
   const res = await page.request.post("/api/test/sign-in", { data: { email, name, password: PASSWORD } });
@@ -24,7 +30,7 @@ async function signIn(page: Page, email: string, name = "Riya Recruiter") {
 
 /** Signed in → employer account → claim submitted for Vellum. */
 async function claimVellum(page: Page, email: string) {
-  await signIn(page, email);
+  await signIn(page, email, claimant(email));
   await page.goto("/employers");
   await page.getByRole("button", { name: "Continue as an employer" }).click();
 
@@ -67,7 +73,7 @@ test.describe("employers", () => {
     const admin = await browser.newContext({ httpCredentials: { username: ADMIN_USER, password: ADMIN_PASS } });
     const adminPage = await admin.newPage();
     await adminPage.goto("/admin/moderation");
-    const claim = adminPage.locator("li", { hasText: "wants to post as Vellum" }).first();
+    const claim = adminPage.locator("li", { hasText: `${claimant(email)} wants to post as Vellum` }).first();
     await claim.getByRole("button", { name: "Approve" }).click();
     await expect(claim.getByRole("status")).toContainText("Verified.");
 
@@ -121,7 +127,7 @@ test.describe("employers", () => {
     const admin = await browser.newContext({ httpCredentials: { username: ADMIN_USER, password: ADMIN_PASS } });
     const adminPage = await admin.newPage();
     await adminPage.goto("/admin/moderation");
-    const claim = adminPage.locator("li", { hasText: "wants to post as Vellum" }).first();
+    const claim = adminPage.locator("li", { hasText: `${claimant(email)} wants to post as Vellum` }).first();
     await claim.getByRole("button", { name: "Approve" }).click();
     await expect(claim.getByRole("status")).toContainText("Verified.");
 
@@ -145,7 +151,8 @@ test.describe("employers", () => {
 
     await page.goto("/employers");
     const row = page.locator("article", { hasText: title }).first();
-    await expect(row.getByText("Not published")).toBeVisible();
+    // The status badge; the reason below it starts "Not published:" too.
+    await expect(row.getByText("Not published", { exact: true })).toBeVisible();
     await expect(row.getByText(/below market/)).toBeVisible();
 
     await admin.close();

@@ -18,7 +18,8 @@ test("Apply redirects to the employer's own application page", async ({ page, re
 test("saved roles persist across reloads without an account", async ({ page }) => {
   await page.goto("/");
   const header = page.getByRole("banner");
-  await expect(header.getByRole("link", { name: /Saved/ })).toContainText("0");
+  // No count is shown until something is saved.
+  await expect(header.getByRole("link", { name: /Saved/ })).not.toContainText(/\d/);
 
   const card = page.getByRole("article").first();
   const title = (await card.getByRole("heading").textContent())!;
@@ -33,7 +34,7 @@ test("saved roles persist across reloads without an account", async ({ page }) =
   await expect(page.getByRole("article").getByRole("heading")).toHaveText(title);
 
   await page.getByRole("button", { name: `Remove ${title} from saved roles` }).click();
-  await expect(page.getByText("No saved roles yet.")).toBeVisible();
+  await expect(page.getByText("No saved jobs yet")).toBeVisible();
 });
 
 // With Cache Components the static shell streams first (status 200), so a

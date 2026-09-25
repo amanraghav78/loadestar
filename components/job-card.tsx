@@ -6,17 +6,18 @@ import { formatAge, formatPostedAgo, formatSalaryBand, REMOTE_LABEL } from "@/li
 import type { JobCardData } from "@/lib/queries";
 import { cn } from "@/lib/cn";
 
-export function JobCard({ job }: { job: JobCardData }) {
+/** `showCompany={false}` on a company's own page, where every card would repeat its name and logo. */
+export function JobCard({ job, showCompany = true }: { job: JobCardData; showCompany?: boolean }) {
   const band = formatSalaryBand(job.salaryMin, job.salaryMax, job.currency);
   const place = job.remote === "REMOTE" && job.location === "India" ? "Anywhere in India" : job.location;
 
   return (
     <article className="metal-card group flex min-w-0 flex-1 flex-col rounded-2xl p-5">
       <div className="flex items-start gap-3.5">
-        <CompanyAvatar company={job.company} />
+        {showCompany && <CompanyAvatar company={job.company} />}
         <div className="min-w-0 flex-1">
-          <p className="text-muted truncate text-xs font-medium">{job.company.name}</p>
-          <h3 className="text-fg mt-1 line-clamp-2 text-[15px] leading-snug font-semibold">
+          {showCompany && <p className="text-muted mb-1 truncate text-xs font-medium">{job.company.name}</p>}
+          <h3 className="text-fg line-clamp-2 text-[15px] leading-snug font-semibold">
             <Link href={`/jobs/${job.slug}`} className="after:absolute after:inset-0 after:rounded-2xl">
               {job.title}
             </Link>
@@ -51,7 +52,7 @@ export function SalaryPill({ band, large = false }: { band: string; large?: bool
   return (
     <span
       className={cn(
-        "text-fg inline-flex items-center gap-1.5 rounded-full border-line-hover bg-tint-strong border font-semibold tabular-nums shadow-[inset_0_1px_0_var(--edge-strong)]",
+        "text-fg border-line-hover bg-tint-strong inline-flex items-center gap-1.5 rounded-full border font-semibold tabular-nums shadow-[inset_0_1px_0_var(--edge-strong)]",
         large ? "px-3 py-1 text-sm" : "px-2.5 py-0.5 text-xs",
       )}
     >
@@ -79,12 +80,12 @@ export function JobGrid({ jobs }: { jobs: JobCardData[] }) {
 }
 
 /** Cards in one or two columns next to a sidebar (search results, company pages, saved). */
-export function JobList({ jobs }: { jobs: JobCardData[] }) {
+export function JobList({ jobs, showCompany }: { jobs: JobCardData[]; showCompany?: boolean }) {
   return (
     <ul className="grid gap-3 md:grid-cols-2">
       {jobs.map((job) => (
         <li key={job.id} className="flex min-w-0">
-          <JobCard job={job} />
+          <JobCard job={job} showCompany={showCompany} />
         </li>
       ))}
     </ul>

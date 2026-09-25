@@ -7,8 +7,12 @@ import { authEnabled } from "@/lib/auth";
 import { LEVEL_LABEL } from "@/lib/format";
 import { levelsForExperience } from "@/lib/recommendations";
 import { requireUserPage } from "@/lib/session";
+import { Sparkles } from "lucide-react";
 import { JobCard, JobCardSkeleton } from "@/components/job-card";
+import { buttonClass } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
+import { EmptyState } from "@/components/ui/empty-state";
+import { AccountTabs } from "../account-tabs";
 
 export const metadata: Metadata = {
   title: "Roles that match you",
@@ -19,7 +23,8 @@ export default function MatchesPage() {
   if (!authEnabled) notFound();
 
   return (
-    <Container className="py-12">
+    <Container className="py-10">
+      <AccountTabs current="/account/matches" />
       <h1 className="steel-text text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">Matches</h1>
       <p className="text-muted mt-2 max-w-xl text-sm">
         Open roles ranked against the skills and experience on your profile.{" "}
@@ -51,26 +56,35 @@ async function Matches() {
 
   if (!profile || profile.skills.length === 0) {
     return (
-      <p className="text-muted mt-10 max-w-xl text-sm">
-        We match on skills, so there is nothing to go on yet. Upload your resume and we&rsquo;ll read them out of it, or
-        type them in yourself on{" "}
-        <Link href="/account" className="underline underline-offset-2">
-          your profile
-        </Link>
-        .
-      </p>
+      <EmptyState
+        icon={Sparkles}
+        title="Add your skills to see matches"
+        action={
+          <Link href="/account" className={buttonClass("primary", "md")}>
+            Go to your profile
+          </Link>
+        }
+        className="mt-10"
+      >
+        We match on skills. Upload your resume and we&rsquo;ll read them out of it, or type them in yourself.
+      </EmptyState>
     );
   }
 
   if (jobs.length === 0) {
     return (
-      <p className="text-muted mt-10 max-w-xl text-sm">
-        Nothing open matches your skills today. Listings change daily, so it is worth checking back &mdash; or{" "}
-        <Link href="/jobs" className="underline underline-offset-2">
-          browse everything
-        </Link>
-        .
-      </p>
+      <EmptyState
+        icon={Sparkles}
+        title="No matches today"
+        action={
+          <Link href="/jobs" className={buttonClass("secondary", "md")}>
+            Browse all jobs
+          </Link>
+        }
+        className="mt-10"
+      >
+        Nothing open matches your skills right now. Listings change daily, so it is worth checking back.
+      </EmptyState>
     );
   }
 

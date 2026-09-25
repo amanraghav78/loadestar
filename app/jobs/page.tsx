@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { ArrowRight, SlidersHorizontal, X } from "lucide-react";
+import { ArrowRight, SearchX, SlidersHorizontal, X } from "lucide-react";
 import { JobCardSkeleton, JobList } from "@/components/job-card";
 import { JobFilters } from "@/components/job-filters";
 import { SearchBar } from "@/components/search-bar";
 import { buttonClass } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   DISCIPLINE_LABEL,
   EMPLOYMENT_TYPE_LABEL,
@@ -113,13 +114,17 @@ async function Results({ params }: { params: JobSearchParams }) {
           {jobs.length > 0 ? (
             <JobList jobs={jobs} />
           ) : (
-            <div className="border-line rounded-2xl border border-dashed p-12 text-center">
-              <p className="text-fg text-base font-medium">No jobs match that search</p>
-              <p className="text-muted mt-1 text-sm">Try fewer filters or a broader keyword.</p>
-              <Link href="/jobs" className={buttonClass("secondary", "md", "mt-5")}>
-                Show all jobs
-              </Link>
-            </div>
+            <EmptyState
+              icon={SearchX}
+              title="No jobs match that search"
+              action={
+                <Link href="/jobs" className={buttonClass("secondary", "md")}>
+                  Show all jobs
+                </Link>
+              }
+            >
+              Try fewer filters or a broader keyword.
+            </EmptyState>
           )}
 
           <nav aria-label="Pagination" className="mt-8 flex items-center justify-between gap-4">

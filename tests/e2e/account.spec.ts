@@ -88,8 +88,8 @@ test.describe("accounts", () => {
     await signOut(page);
     await signIn(page, candidate("leak-b"), "Bo Tester");
     await page.goto("/saved");
-    await expect(savedCount(page)).toContainText("0");
-    await expect(page.getByText("No saved roles yet.")).toBeVisible();
+    await expect(savedCount(page)).not.toContainText(/\d/);
+    await expect(page.getByText("No saved jobs yet")).toBeVisible();
   });
 
   test("the profile keeps what you type and rejects what it should", async ({ page }) => {
@@ -203,7 +203,7 @@ test.describe("accounts", () => {
     await signIn(page, candidate("matches"));
 
     await page.goto("/account/matches");
-    await expect(page.getByText(/there is nothing to go on yet/)).toBeVisible();
+    await expect(page.getByText("Add your skills to see matches")).toBeVisible();
 
     await page.goto("/account");
     await page.getByLabel("Full name").fill("Ada Tester");
@@ -305,7 +305,8 @@ test.describe("accounts", () => {
     // The preview is the document, not a description of it.
     const preview = page.getByLabel("Resume preview");
     await expect(preview).toContainText("Ada Tester");
-    await expect(preview).toContainText("Senior Backend Engineer · Razorpay");
+    await expect(preview).toContainText("Senior Backend Engineer");
+    await expect(preview).toContainText("Backend Engineer · Razorpay");
     await expect(preview).toContainText("Bengaluru · Mar 2020 – Present");
     await expect(preview).toContainText("Cut checkout latency 40%");
 

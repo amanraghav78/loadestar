@@ -3,10 +3,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cacheLife, cacheTag } from "next/cache";
 import { Suspense } from "react";
-import { ArrowLeft, Globe, MapPin, Users } from "lucide-react";
+import { ArrowLeft, BriefcaseBusiness, Globe, MapPin, Users } from "lucide-react";
 import { CompanyAvatar } from "@/components/company-avatar";
 import { JobCardSkeleton, JobList } from "@/components/job-card";
 import { Container } from "@/components/ui/container";
+import { EmptyState } from "@/components/ui/empty-state";
 import { numberFormat } from "@/lib/format";
 import { getCompanyBySlug, TAGS } from "@/lib/queries";
 import { ReviewsSection } from "./reviews-section";
@@ -120,11 +121,11 @@ async function CompanyDetail({ slug }: { slug: string }) {
           Open jobs
         </h2>
         {count > 0 ? (
-          <JobList jobs={company.jobs} />
+          <JobList jobs={company.jobs} showCompany={false} />
         ) : (
-          <p className="border-line text-muted rounded-2xl border border-dashed p-10 text-center text-sm">
-            {company.name} has no open jobs right now.
-          </p>
+          <EmptyState icon={BriefcaseBusiness} title="No open jobs right now">
+            New roles at {company.name} show up here as soon as they are posted.
+          </EmptyState>
         )}
       </section>
     </>

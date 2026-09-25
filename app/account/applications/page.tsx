@@ -6,8 +6,12 @@ import { getApplications } from "@/lib/account-queries";
 import { authEnabled } from "@/lib/auth";
 import { APPLICATION_STAGE_LABEL, formatAge } from "@/lib/format";
 import { requireUserPage } from "@/lib/session";
+import { ListChecks } from "lucide-react";
 import { CompanyAvatar } from "@/components/company-avatar";
+import { buttonClass } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
+import { EmptyState } from "@/components/ui/empty-state";
+import { AccountTabs } from "../account-tabs";
 import { StagePicker } from "./stage-picker";
 
 export const metadata: Metadata = {
@@ -19,14 +23,12 @@ export default function ApplicationsPage() {
   if (!authEnabled) notFound();
 
   return (
-    <Container className="py-12">
+    <Container className="py-10">
+      <AccountTabs current="/account/applications" />
       <h1 className="steel-text text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">Applied</h1>
       <p className="text-muted mt-2 max-w-xl text-sm">
         Roles you opened from Lodestar. You apply on the employer&rsquo;s own site, so we never hear their decision
-        &mdash; move a role along yourself to keep track of where it got to.{" "}
-        <Link href="/account" className="underline underline-offset-2">
-          Back to your account
-        </Link>
+        &mdash; move a role along yourself to keep track of where it got to.
       </p>
 
       <Suspense fallback={<div className="bg-tint mt-10 h-40 animate-pulse rounded-3xl" />}>
@@ -42,12 +44,18 @@ async function AppliedList() {
 
   if (applications.length === 0) {
     return (
-      <p className="text-muted mt-10 text-sm">
-        Nothing yet.{" "}
-        <Link href="/jobs" className="underline underline-offset-2">
-          Browse roles
-        </Link>
-      </p>
+      <EmptyState
+        icon={ListChecks}
+        title="No applications yet"
+        action={
+          <Link href="/jobs" className={buttonClass("primary", "md")}>
+            Browse jobs
+          </Link>
+        }
+        className="mt-10"
+      >
+        When you press Apply on a role, it lands here so you can track where it got to.
+      </EmptyState>
     );
   }
 

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { getProfile } from "@/lib/account-queries";
@@ -8,6 +7,7 @@ import { requireUserPage } from "@/lib/session";
 import { resumeUploadEnabled } from "@/lib/storage";
 import { SignOutButton } from "@/components/sign-out-button";
 import { Container } from "@/components/ui/container";
+import { AccountTabs } from "./account-tabs";
 import { DeleteAccount } from "./delete-account";
 import { ProfileSection } from "./profile-section";
 
@@ -20,22 +20,10 @@ export default function AccountPage() {
   if (!authEnabled) notFound();
 
   return (
-    <Container className="py-12">
+    <Container className="py-10">
+      <AccountTabs current="/account" />
       <h1 className="steel-text text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">Your account</h1>
-      <p className="text-muted mt-2 text-sm">
-        Your details and resume, kept private.{" "}
-        <Link href="/account/resume" className="underline underline-offset-2">
-          Build a resume
-        </Link>
-        {" · "}
-        <Link href="/account/matches" className="underline underline-offset-2">
-          Roles that match you
-        </Link>
-        {" · "}
-        <Link href="/account/applications" className="underline underline-offset-2">
-          Roles you applied to
-        </Link>
-      </p>
+      <p className="text-muted mt-2 text-sm">Your details and resume, kept private.</p>
 
       {/* Everything below reads the session, so it streams in behind the boundary. */}
       <Suspense fallback={<div className="bg-tint mt-10 h-96 animate-pulse rounded-3xl" />}>
