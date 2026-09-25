@@ -22,6 +22,14 @@ export type RawPosting = {
   /** Structured pay when the board provides it (Lever, Ashby). */
   pay: { min: number; max: number; currency: string; interval: string } | null;
   /**
+   * The employer's own job or requisition id, when the board exposes one that
+   * every posting of a role shares (Greenhouse publishes one post per office
+   * under a single job). Never the posting id itself.
+   */
+  requisitionId?: string | null;
+  /** How the board classifies the role beyond its title ("Full-time", "Mid-Senior Level"), when it says. */
+  classification?: string | null;
+  /**
    * Search-style APIs (Workday, SmartRecruiters, …) list roles without their
    * description. The sync calls this only for new roles that pass the filters.
    */
@@ -160,6 +168,8 @@ type GhJob = {
   offices?: { name?: string; location?: string }[];
   departments?: { name?: string }[];
   content?: string;
+  /** The job behind this post; a job posted to several offices has one post per office. */
+  internal_job_id?: number | null;
 };
 
 async function greenhouse(token: string): Promise<RawPosting[]> {
@@ -180,6 +190,7 @@ async function greenhouse(token: string): Promise<RawPosting[]> {
       applyUrl: j.absolute_url,
       postedAt: date(j.first_published ?? j.updated_at),
       pay: null,
+      requisitionId: j.internal_job_id != null ? String(j.internal_job_id) : null,
     })),
   );
 }
@@ -193,7 +204,7 @@ type LeverJob = {
   hostedUrl: string;
   createdAt: number;
   workplaceType?: string;
-  categories?: { location?: string; allLocations?: string[]; team?: string; department?: string };
+  categories?: { location?: string; allLocations?: string[]; team?: string; department?: string; commitment?: string };
   description?: string;
   lists?: { text: string; content: string }[];
   additional?: string;
@@ -219,6 +230,7 @@ async function lever(token: string): Promise<RawPosting[]> {
         applyUrl: j.hostedUrl,
         postedAt: date(j.createdAt),
         pay: j.salaryRange ?? null,
+        classification: j.categories?.commitment ?? null,
       };
     }),
   );
@@ -236,6 +248,7 @@ type AshbyJob = {
   isRemote?: boolean;
   workplaceType?: string;
   department?: string;
+  employmentType?: string;
   location?: string;
   secondaryLocations?: { location?: string }[];
   address?: { postalAddress?: { addressCountry?: string; addressLocality?: string } };
@@ -284,6 +297,7 @@ async function ashby(token: string): Promise<RawPosting[]> {
                 interval: salary.interval,
               }
             : null,
+          classification: j.employmentType ?? null,
         };
       }),
   );
@@ -309,6 +323,7 @@ type WdList = {
     externalPath: string;
     locationsText?: string;
     postedOn?: string;
+    /** Usually starts with the requisition id ("JR1990523", "R-12345"). */
     bulletFields?: string[];
   }[];
 };
@@ -349,6 +364,14 @@ export function workdayIndiaFacet(facets: WdFacet[]): Record<string, string[]> |
   if (country) return { [country[0]]: [country[1]] };
   const best = [...partial.entries()].sort((a, b) => b[1].length - a[1].length)[0];
   return best ? { [best[0]]: best[1] } : null;
+}
+
+/**
+ * The requisition id among a Workday posting's bullet fields. One requisition
+ * can be posted to several of a company's career sites, under different paths.
+ */
+export function workdayRequisition(bulletFields?: string[]): string | null {
+  return bulletFields?.map((f) => f.trim()).find((f) => /^[A-Z]{0,4}[-_]?\d{4,}(?:[-_][A-Z0-9]+)*$/i.test(f)) ?? null;
 }
 
 /** "Posted Today" → 0, "Posted 3 Days Ago" → 3, "Posted 30+ Days Ago" → null (too old to list). */
@@ -416,6 +439,7 @@ async function workday(token: string, { since }: FetchOptions): Promise<RawPosti
         applyUrl: `${publicBase}${p.externalPath}`,
         postedAt: new Date(Date.now() - age * 86_400_000),
         pay: null,
+        requisitionId: workdayRequisition(p.bulletFields),
         detail: async () => {
           const d = (await getJson<WdDetail>(detailUrl)).jobPostingInfo ?? {};
           return {
@@ -444,6 +468,10 @@ type SrList = {
     location?: { city?: string; region?: string; fullLocation?: string; remote?: boolean; hybrid?: boolean };
     department?: { label?: string };
     function?: { label?: string };
+    /** The employer's reference for the job, shared by its postings. */
+    refNumber?: string;
+    typeOfEmployment?: { label?: string };
+    experienceLevel?: { label?: string };
   }[];
 };
 type SrDetail = {
@@ -469,6 +497,8 @@ async function smartrecruiters(token: string, { since }: FetchOptions): Promise<
         applyUrl: `https://jobs.smartrecruiters.com/${encodeURIComponent(token)}/${p.id}`,
         postedAt,
         pay: null,
+        requisitionId: p.refNumber || null,
+        classification: [p.typeOfEmployment?.label, p.experienceLevel?.label].filter(Boolean).join(" / ") || null,
         detail: async () => {
           const d = await getJson<SrDetail>(`${api}/${p.id}`);
           const sections = Object.values(d.jobAd?.sections ?? {});
