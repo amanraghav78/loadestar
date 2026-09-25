@@ -8,7 +8,10 @@ import { CompanyAvatar } from "@/components/company-avatar";
 import { JobCardSkeleton, JobList } from "@/components/job-card";
 import { Container } from "@/components/ui/container";
 import { EmptyState } from "@/components/ui/empty-state";
+import { SortControl } from "@/components/sort-control";
 import { numberFormat } from "@/lib/format";
+import { resolveSort, type JobSort } from "@/lib/job-sort";
+import { parseSort, toQueryString } from "@/lib/validators";
 import { getCompanyBySlug, TAGS } from "@/lib/queries";
 import { ReviewsSection } from "./reviews-section";
 
@@ -23,7 +26,7 @@ export async function generateMetadata({ params }: PageProps<"/companies/[slug]"
   };
 }
 
-export default function CompanyPage({ params }: PageProps<"/companies/[slug]">) {
+export default function CompanyPage({ params, searchParams }: PageProps<"/companies/[slug]">) {
   return (
     <Container wide className="py-8">
       <Link
@@ -41,9 +44,9 @@ export default function CompanyPage({ params }: PageProps<"/companies/[slug]">) 
           </div>
         }
       >
-        {params.then(({ slug }) => (
+        {Promise.all([params, searchParams]).then(([{ slug }, raw]) => (
           <>
-            <CompanyDetail slug={slug} />
+            <CompanyDetail slug={slug} sort={parseSort(raw)} />
             {/*
              * Reviews sit outside CompanyDetail because part of them is
              * per-person ("your review"), which must never be written to the
@@ -66,12 +69,13 @@ async function CompanyReviews({ slug }: { slug: string }) {
   return <ReviewsSection companyId={company.id} slug={slug} companyName={company.name} />;
 }
 
-async function CompanyDetail({ slug }: { slug: string }) {
+/** `sort` is undefined for the default order; as a prop it is part of the cache key. */
+async function CompanyDetail({ slug, sort }: { slug: string; sort: JobSort | undefined }) {
   "use cache";
   cacheLife("hours");
   cacheTag(TAGS.companies, TAGS.company(slug), TAGS.jobs);
 
-  const company = await getCompanyBySlug(slug);
+  const company = await getCompanyBySlug(slug, resolveSort(sort));
   if (!company) notFound();
   const count = company.jobs.length;
 
@@ -120,6 +124,13 @@ async function CompanyDetail({ slug }: { slug: string }) {
         <h2 id="open-roles" className="sr-only">
           Open jobs
         </h2>
+        {count > 1 && (
+          <SortControl
+            current={resolveSort(sort)}
+            href={(s) => `/companies/${company.slug}${toQueryString({ sort: s })}`}
+            className="mb-5 sm:justify-end"
+          />
+        )}
         {count > 0 ? (
           <JobList jobs={company.jobs} showCompany={false} />
         ) : (

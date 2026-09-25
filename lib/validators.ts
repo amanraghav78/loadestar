@@ -11,6 +11,7 @@ import {
   RemotePolicy,
 } from "@/lib/generated/prisma/enums";
 import { INDIA_CITIES } from "@/lib/ingest/classify";
+import { DEFAULT_SORT, JOB_SORTS } from "@/lib/job-sort";
 import { splitTokens, TOKEN_HINT } from "@/lib/ingest/tokens";
 import { parseInrAmount } from "@/lib/resume-parse";
 
@@ -45,8 +46,18 @@ export const searchParamsSchema = z.object({
   city: lenient(z.enum(INDIA_CITIES as [string, ...string[]])),
   /** "1" = only roles that publish a salary. */
   salary: lenient(z.literal("1")),
+  /**
+   * Order of the results. The default is kept as undefined, so it never
+   * reaches a link and `?sort=recommended` shares a cache entry with no sort.
+   */
+  sort: lenient(z.enum(JOB_SORTS)).transform((s) => (s === DEFAULT_SORT ? undefined : s)),
   cursor: lenient(z.string().regex(/^[a-z0-9]{10,40}$/i)),
 });
+
+/** Just the sort, for listing pages that take no other filters (a company's jobs). */
+export function parseSort(raw: Record<string, string | string[] | undefined>) {
+  return searchParamsSchema.shape.sort.parse(raw.sort);
+}
 
 export type JobSearchParams = z.infer<typeof searchParamsSchema>;
 
