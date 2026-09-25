@@ -106,6 +106,17 @@
   --hairline-color: rgb(255 255 255 / 0.22);
   --selection-bg: rgb(196 188 255 / 0.3);
   --selection-fg: #ffffff;
+
+  /* Home page sky: the horizon's light and the pointer's glow. */
+  --hero-light: rgb(139 124 246 / 0.13);
+  --horizon-rim: rgb(232 229 255 / 1);
+  --horizon-glow: rgb(139 124 246 / 0.42);
+  --horizon-glow-2: rgb(96 140 255 / 0.16);
+  --horizon-surface: rgb(139 124 246 / 0.1);
+  --horizon-edge: rgb(255 255 255 / 0.12);
+  --beam: rgb(214 208 255 / 0.95);
+  --glow: rgb(196 188 255 / 0.09);
+  --foil: linear-gradient(100deg, #f4f2ff 0%, #c9c1ff 22%, #ffffff 40%, #a99df8 58%, #efeaff 76%, #bdb3ff 100%);
 }
 
 /* Light: brushed aluminium on paper. Set on <html> by the pre-paint script. */
@@ -160,6 +171,17 @@
   --hairline-color: rgb(9 9 11 / 0.18);
   --selection-bg: rgb(139 124 246 / 0.22);
   --selection-fg: #0b0b0e;
+
+  /* On paper the sky becomes a dawn-coloured horizon. */
+  --hero-light: rgb(139 124 246 / 0.12);
+  --horizon-rim: rgb(109 92 228 / 0.85);
+  --horizon-glow: rgb(139 124 246 / 0.3);
+  --horizon-glow-2: rgb(96 140 255 / 0.14);
+  --horizon-surface: rgb(109 92 228 / 0.06);
+  --horizon-edge: rgb(9 9 11 / 0.06);
+  --beam: rgb(109 92 228 / 0.85);
+  --glow: rgb(109 92 228 / 0.07);
+  --foil: linear-gradient(100deg, #2a2466 0%, #5b4bd6 25%, #1c1830 45%, #6d5ce4 65%, #33296f 85%, #4c3fc0 100%);
 }
 
 html {
@@ -421,7 +443,533 @@ body {
   }
 }
 
+/* ------------------------------------------------------------- home page */
+
+/* A soft light that follows the pointer across the hero (see HeroLight). */
+.hero-light {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(420px circle at var(--hx, 50%) var(--hy, 30%), var(--hero-light), transparent 70%);
+  opacity: var(--hero-lit, 0);
+  transition: opacity 0.6s ease;
+}
+
+/*
+ * The planet's horizon at the foot of the hero (see Horizon). A circle far wider
+ * than the screen, so only the top of its arc shows: the body is the page
+ * background, a hairline of light traces the rim, and a glow breaks over it.
+ */
+.horizon {
+  --d: clamp(1100px, 170vw, 2800px);
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.horizon > * {
+  position: absolute;
+  left: 50%;
+  z-index: -1;
+  translate: -50% 0;
+}
+.horizon-bloom {
+  top: -300px;
+  width: min(1700px, 160vw);
+  height: 600px;
+  background:
+    radial-gradient(ellipse 34% 42% at 50% 50%, var(--horizon-glow) 0%, transparent 70%),
+    radial-gradient(ellipse 22% 30% at 36% 56%, var(--horizon-glow-2) 0%, transparent 70%),
+    radial-gradient(ellipse 22% 30% at 66% 56%, var(--horizon-glow-2) 0%, transparent 70%);
+  animation:
+    fade-in 2.2s ease 0.6s both,
+    bloom-breathe 9s ease-in-out 2.8s infinite;
+}
+.horizon-rim,
+.horizon-body {
+  border-radius: 50%;
+  animation: horizon-rise 1.8s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
+}
+.horizon-rim {
+  top: -1.5px;
+  width: calc(var(--d) + 3px);
+  height: calc(var(--d) + 3px);
+  background: radial-gradient(ellipse 22% 3% at 50% 0%, var(--horizon-rim) 0%, transparent 100%);
+}
+.horizon-body {
+  top: 0;
+  width: var(--d);
+  height: var(--d);
+  background: radial-gradient(ellipse 30% 5% at 50% 0%, var(--horizon-surface), transparent 100%), var(--color-bg);
+}
+/* The planet's outline beyond the lit rim, fading out as it curves away down the sides. */
+.horizon-line {
+  top: 0;
+  width: var(--d);
+  height: var(--d);
+  border-radius: 50%;
+  box-shadow: inset 0 1px 0 var(--horizon-edge);
+  mask-image: linear-gradient(#000 0, #000 60px, transparent 260px);
+  animation: horizon-rise 1.8s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
+}
+@keyframes horizon-rise {
+  from {
+    opacity: 0;
+    transform: translateY(90px);
+  }
+}
+@keyframes bloom-breathe {
+  0%,
+  100% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* The headline's changing word, in holographic foil (see RotatingWord). */
+.rotating-word {
+  position: relative;
+  display: inline-block;
+  text-align: center;
+  transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.rotating-word-strut {
+  visibility: hidden;
+  white-space: nowrap;
+}
+.rotating-word-item {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  padding-bottom: 0.14em;
+  white-space: nowrap;
+  translate: -50% 0;
+  transition:
+    transform 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.6s ease,
+    filter 0.6s ease;
+}
+.rotating-word-item[data-state="next"] {
+  opacity: 0;
+  transform: translateY(0.45em);
+  filter: blur(5px);
+}
+/* The old word clears out quicker than the new one arrives, so the two never smear together. */
+.rotating-word-item[data-state="out"] {
+  opacity: 0;
+  transform: translateY(-0.45em);
+  filter: blur(5px);
+  transition-duration: 0.55s, 0.3s, 0.35s;
+}
+.foil-text {
+  background-image: var(--foil);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: foil-shift 6s ease-in-out infinite alternate;
+}
+@keyframes foil-shift {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 100% 50%;
+  }
+}
+
+/* A band of light running around the home page search box. */
+@property --beam-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+.beam::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  padding: 1.5px;
+  pointer-events: none;
+  border-radius: inherit;
+  background: conic-gradient(from var(--beam-angle), transparent 0deg 260deg, var(--beam) 320deg, transparent 350deg);
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  animation: beam-spin 6s linear infinite;
+  transition: opacity 0.3s ease;
+}
+.beam:focus-within::before {
+  opacity: 0;
+}
+@keyframes beam-spin {
+  to {
+    --beam-angle: 360deg;
+  }
+}
+
+/* The endless row of hiring companies (see LogoMarquee). */
+.marquee {
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 48s linear infinite;
+}
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+.marquee-group {
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+  padding-right: 3rem;
+}
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* A soft light that follows the pointer across the home page's cards. */
+.spotlight .metal-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(280px circle at var(--mx, 50%) var(--my, 50%), var(--glow), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+.spotlight .metal-card:hover::after {
+  opacity: 1;
+}
+
+/* Sections rise into place once, the first time they scroll into view (see HomeEffects). */
+[data-reveal].reveal-pending {
+  opacity: 0;
+  transform: translateY(28px);
+}
+[data-reveal].reveal-in {
+  transition:
+    opacity 0.9s ease,
+    transform 1s cubic-bezier(0.22, 1, 0.36, 1);
+}
+[data-reveal-stagger].reveal-pending :is(h2, ul > li) {
+  opacity: 0;
+  transform: translateY(24px);
+}
+[data-reveal-stagger].reveal-in :is(h2, ul > li) {
+  transition:
+    opacity 0.7s ease,
+    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: calc(var(--i, 0) * 70ms + 60ms);
+}
+@media print {
+  .reveal-pending,
+  .reveal-pending :is(h2, ul > li) {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* "Why Lodestar": the small moving pictures (see WhyLodestar). */
+.why-art {
+  height: 8.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-line);
+  border-radius: 1rem;
+  /* The same light as the hero's horizon, rising from the bottom edge. */
+  background:
+    radial-gradient(ellipse 75% 70% at 50% 120%, var(--horizon-surface), transparent 75%), var(--color-surface);
+}
+.why-wire {
+  fill: none;
+  stroke: var(--color-line-strong);
+  stroke-width: 1.2;
+}
+.why-flow {
+  fill: none;
+  stroke: var(--beam);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-dasharray: 9 91;
+  animation: why-flow 2.1s linear infinite;
+}
+.why-tile {
+  fill: var(--color-card);
+  stroke: var(--color-line-strong);
+}
+.why-initial {
+  fill: var(--color-silver);
+  font-size: 13px;
+  font-weight: 600;
+}
+.why-node {
+  fill: var(--color-fg);
+}
+.why-node-ring {
+  fill: none;
+  stroke: var(--beam);
+  stroke-width: 1.2;
+  opacity: 0.7;
+}
+.why-node-glow {
+  fill: var(--horizon-glow);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: node-pulse 2.1s ease-in-out infinite;
+}
+.why-dial-track {
+  fill: none;
+  stroke: var(--color-line-strong);
+  stroke-width: 5;
+}
+.why-dial {
+  fill: none;
+  stroke: var(--beam);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 22;
+  animation: dial-wind 6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+@keyframes why-flow {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes node-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(1.1);
+  }
+}
+/* "No spam jobs": a scan passes down three listings and drops the spam one (see SpamArt). */
+.spam-list {
+  position: relative;
+  display: flex;
+  width: 13.5rem;
+  flex-direction: column;
+  gap: 7px;
+  overflow: hidden;
+  padding: 2px 0;
+}
+.spam-row {
+  position: relative;
+  display: flex;
+  height: 28px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 9px;
+  border: 1px solid var(--color-line-strong);
+  border-radius: 9px;
+  background: var(--color-card);
+}
+.spam-logo {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  border-radius: 4px;
+  background: var(--color-tint-strong);
+}
+.spam-lines {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+}
+.spam-lines > span {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--color-tint-strong);
+}
+.spam-lines > span:first-child {
+  width: 80%;
+}
+.spam-lines > span:last-child {
+  width: 50%;
+}
+.spam-row[data-kind="spam"] {
+  border-color: color-mix(in srgb, var(--color-danger) 40%, transparent);
+  background: color-mix(in srgb, var(--color-danger) 7%, var(--color-card));
+  animation: spam-drop 4.8s ease-in-out infinite;
+}
+.spam-row[data-kind="spam"] :is(.spam-logo, .spam-lines > span) {
+  background: color-mix(in srgb, var(--color-danger) 30%, transparent);
+}
+.spam-flag {
+  color: var(--color-danger);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.spam-strike {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  left: 8px;
+  height: 1.5px;
+  background: var(--color-danger);
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: spam-strike 4.8s ease-in-out infinite;
+}
+.spam-ok {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  color: var(--color-ok);
+  animation: ok-pop 4.8s ease infinite both;
+}
+.spam-scan {
+  position: absolute;
+  top: 0;
+  right: -10%;
+  left: -10%;
+  height: 26px;
+  pointer-events: none;
+  background: linear-gradient(transparent, color-mix(in srgb, var(--beam) 35%, transparent), transparent);
+  animation: spam-scan 4.8s linear infinite;
+}
+@keyframes spam-scan {
+  0% {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  5% {
+    opacity: 1;
+  }
+  45% {
+    opacity: 1;
+    transform: translateY(100px);
+  }
+  50%,
+  100% {
+    opacity: 0;
+    transform: translateY(100px);
+  }
+}
+@keyframes ok-pop {
+  0%,
+  10% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  16% {
+    opacity: 1;
+    transform: scale(1.25);
+  }
+  22%,
+  88% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  96%,
+  100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+@keyframes spam-strike {
+  0%,
+  20% {
+    transform: scaleX(0);
+  }
+  30%,
+  86% {
+    transform: scaleX(1);
+  }
+  94%,
+  100% {
+    transform: scaleX(0);
+  }
+}
+@keyframes spam-drop {
+  0%,
+  30% {
+    opacity: 1;
+    transform: none;
+  }
+  40%,
+  86% {
+    opacity: 0.3;
+    transform: scale(0.95);
+  }
+  96%,
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes dial-wind {
+  0% {
+    stroke-dashoffset: 100;
+    opacity: 1;
+  }
+  80% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  /* The sky and the pictures hold still, drawn in their resting state. */
+  .horizon-bloom,
+  .horizon-rim,
+  .horizon-body,
+  .horizon-line,
+  .foil-text,
+  .marquee-track,
+  .beam::before,
+  .why-flow,
+  .why-node-glow,
+  .why-dial,
+  .spam-row,
+  .spam-strike,
+  .spam-ok {
+    animation: none !important;
+  }
+  .spam-scan {
+    display: none;
+  }
+  .spam-row[data-kind="spam"] {
+    opacity: 0.45;
+  }
+  .spam-strike {
+    transform: none;
+  }
+  .beam::before {
+    display: none;
+  }
+  .marquee {
+    overflow-x: auto;
+  }
   *,
   *::before,
   *::after {

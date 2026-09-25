@@ -9,8 +9,20 @@ import { cn } from "@/lib/cn";
  * `lg` is the home-page hero. The compact `md` bar is a single row on phones
  * (keyword + button); the city field appears from `sm` up, and the results
  * page has city filters for small screens.
+ *
+ * `glow` (the home page) runs a band of light around the edge.
  */
-export function SearchBar({ q, location, size = "md" }: { q?: string; location?: string; size?: "md" | "lg" }) {
+export function SearchBar({
+  q,
+  location,
+  size = "md",
+  glow = false,
+}: {
+  q?: string;
+  location?: string;
+  size?: "md" | "lg";
+  glow?: boolean;
+}) {
   const lg = size === "lg";
   const field = cn(
     "w-full min-w-0 bg-transparent text-fg placeholder:text-subtle focus:outline-none",
@@ -22,7 +34,8 @@ export function SearchBar({ q, location, size = "md" }: { q?: string; location?:
       action="/jobs"
       role="search"
       className={cn(
-        "metal-panel flex p-1.5 sm:items-center",
+        "metal-panel relative flex p-1.5 sm:items-center",
+        glow && "beam",
         lg ? "flex-col gap-1 rounded-3xl sm:flex-row sm:gap-0 sm:rounded-full" : "items-center rounded-full",
       )}
     >
