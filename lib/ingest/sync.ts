@@ -136,6 +136,8 @@ export async function syncCompany(company: CompanyRow, deadline = Infinity): Pro
       const r = normalizePosting(p, since);
       return "job" in r ? [r.job] : [];
     }),
+    // When per-city copies merge, the one already listed stays the listing, run after run.
+    new Map(existing.flatMap((j) => (j.externalId ? [[j.externalId, j.status === "ACTIVE"] as const] : []))),
   );
 
   const byExternalId = new Map(existing.map((j) => [j.externalId, j]));
