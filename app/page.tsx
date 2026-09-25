@@ -4,7 +4,7 @@ import { ArrowRight, BriefcaseBusiness, ShieldCheck } from "lucide-react";
 import { CompanyAvatar } from "@/components/company-avatar";
 import { DisciplineGrid } from "@/components/discipline-grid";
 import { CountUp } from "@/components/home/count-up";
-import { HeroLight, Horizon } from "@/components/home/hero-sky";
+import { HeroLight } from "@/components/home/hero-sky";
 import { HomeEffects } from "@/components/home/home-effects";
 import { LogoMarquee } from "@/components/home/logo-marquee";
 import { RotatingWord } from "@/components/home/rotating-word";
@@ -93,9 +93,7 @@ export default async function HomePage() {
           </ul>
         </Container>
 
-        {/* The horizon rises behind the shortcuts; the companies ride along the planet below it. */}
-        <div className="relative mt-16 pt-14 pb-10 sm:mt-20 sm:pt-16">
-          <Horizon />
+        <div className="mt-14 pb-10 sm:mt-16">
           <div className="animate-fade-up [animation-delay:900ms]">
             <LogoMarquee companies={hiringCompanies} />
           </div>

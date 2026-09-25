@@ -22,7 +22,7 @@ export function WhyLodestar({ companies }: { companies: SourceCompany[] }) {
       >
         <SpamArt />
       </Tile>
-      <Tile title="Always fresh" text="Listings refresh eight times a day, and nothing stays past 30 days.">
+      <Tile title="Always fresh" text="Listings refresh throughout the day, and nothing stays past 30 days.">
         <FreshArt />
       </Tile>
     </ul>
