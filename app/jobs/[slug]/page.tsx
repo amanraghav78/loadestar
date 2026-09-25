@@ -126,8 +126,9 @@ async function JobDetail({ slug }: { slug: string }) {
               <Fact icon={CalendarDays}>{formatPostedAgo(job.postedAt)}</Fact>
             </ul>
 
+            {/* Tablets. Desktops get the sticky apply card in the sidebar, phones the bottom bar. */}
             {active && (
-              <div className="mt-7 hidden flex-wrap gap-2 sm:flex">
+              <div className="mt-7 hidden flex-wrap gap-2 sm:flex lg:hidden">
                 <a {...applyProps} className={buttonClass("primary", "lg")}>
                   Apply now <ArrowUpRight className="size-4" aria-hidden />
                 </a>
@@ -158,6 +159,22 @@ async function JobDetail({ slug }: { slug: string }) {
         </article>
 
         <aside className="space-y-3 lg:sticky lg:top-24 lg:self-start">
+          {/* Stays in view on desktop, so a long description never hides Apply. */}
+          {active && (
+            <section className="metal hidden rounded-3xl p-5 lg:block" aria-label="Apply">
+              <p className="text-subtle text-xs font-medium">Salary</p>
+              {band ? (
+                <p className="text-fg mt-1 text-xl font-semibold tracking-tight tabular-nums">{band}</p>
+              ) : (
+                <p className="text-muted mt-1 text-sm">Not disclosed</p>
+              )}
+              <a {...applyProps} className={buttonClass("primary", "lg", "mt-5 w-full")}>
+                Apply now <ArrowUpRight className="size-4" aria-hidden />
+              </a>
+              <SaveButton jobId={job.id} jobTitle={job.title} variant="full" className="mt-2 w-full" />
+              <p className="text-subtle mt-3 text-center text-xs">You apply on {job.company.name}&apos;s own site.</p>
+            </section>
+          )}
           <section className="metal rounded-3xl p-5" aria-labelledby="about-company">
             <div className="flex items-center gap-3">
               <CompanyAvatar company={job.company} />

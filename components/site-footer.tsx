@@ -2,6 +2,7 @@ import Link from "next/link";
 import { cacheLife } from "next/cache";
 import { ShieldCheck } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { postJobHref } from "@/lib/auth";
 import { site } from "@/lib/site";
 
 const links = [
@@ -9,7 +10,7 @@ const links = [
   { href: "/companies", label: "Companies" },
   { href: "/salaries", label: "Salaries" },
   { href: "/saved", label: "Saved" },
-  { href: "/employers/post", label: "Post a job" },
+  { href: postJobHref, label: "Post a job" },
   { href: "/about", label: "About" },
   { href: "/privacy", label: "Privacy" },
   { href: "/terms", label: "Terms" },

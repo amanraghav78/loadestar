@@ -6,6 +6,7 @@ import { SavedCount } from "@/components/saved-count";
 import { SavedJobsSync } from "@/components/saved-jobs-sync";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LinkButton } from "@/components/ui/button";
+import { postJobHref } from "@/lib/auth";
 
 export function SiteHeader() {
   return (
@@ -29,7 +30,7 @@ export function SiteHeader() {
             <SavedJobsSync />
           </Suspense>
           <span className="hidden sm:block">
-            <LinkButton href="/employers/post" variant="secondary" size="sm">
+            <LinkButton href={postJobHref} variant="secondary" size="sm">
               Post a job
             </LinkButton>
           </span>

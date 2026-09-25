@@ -447,9 +447,13 @@ body {
 }
 .prose-job h3 {
   margin: 2rem 0 0.75rem;
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 600;
+  letter-spacing: -0.01em;
   color: var(--color-fg);
+}
+.prose-job > :first-child {
+  margin-top: 0;
 }
 .prose-job ul {
   margin: 0 0 1rem;

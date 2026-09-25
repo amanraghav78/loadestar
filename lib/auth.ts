@@ -22,6 +22,12 @@ export const testAuthEnabled = testModeEnabled && Boolean(env.BETTER_AUTH_SECRET
 /** Whether there is a working auth instance at all (sign-in UI, or the test hook). */
 export const authEnabled = accountsEnabled || testAuthEnabled;
 
+/**
+ * Where "Post a job" goes. The /employers pages 404 without accounts, so until
+ * they are switched on employers are sent to the submission form instead.
+ */
+export const postJobHref = authEnabled ? "/employers/post" : site.postRoleFormUrl;
+
 function createAuth() {
   return betterAuth({
     database: prismaAdapter(db, { provider: "postgresql" }),

@@ -1,6 +1,23 @@
 import type { ReactNode } from "react";
 
 /**
+ * The heading a line stands for, or null when it is ordinary text.
+ *
+ * "## " is ours. Most careers sites don't use real headings, though: they bold
+ * a short label ending in a colon ("What you'll do:"), which reaches us as a
+ * plain line. Treating those as headings too is what makes a long posting
+ * scannable. The limits keep a sentence that happens to end in a colon, or a
+ * bullet, from being promoted.
+ */
+export function headingText(line: string): string | null {
+  if (line.startsWith("## ")) return line.slice(3).trim() || null;
+  if (line.startsWith("- ") || line.length > 60 || !line.endsWith(":")) return null;
+  const label = line.slice(0, -1).trim();
+  if (!label || label.split(/\s+/).length > 8 || /[.!?]/.test(label)) return null;
+  return label;
+}
+
+/**
  * Renders the lightweight description format used in the admin editor:
  * blank-line separated paragraphs, "## " headings and "- " bullet lists.
  * Builds React elements directly, so there is no HTML injection path.
@@ -16,8 +33,9 @@ export function JobDescription({ text }: { text: string }) {
       .filter(Boolean);
     if (lines.length === 0) return;
 
-    if (lines[0]!.startsWith("## ")) {
-      out.push(<h3 key={`h${i}`}>{lines[0]!.slice(3)}</h3>);
+    const heading = headingText(lines[0]!);
+    if (heading) {
+      out.push(<h3 key={`h${i}`}>{heading}</h3>);
       lines.shift();
       if (lines.length === 0) return;
     }
