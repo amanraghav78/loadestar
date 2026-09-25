@@ -17,6 +17,15 @@ function safeNext(value: string | string[] | undefined) {
   return next && /^\/(?!\/)[\w\-./?=&%]*$/.test(next) ? next : "/account";
 }
 
+const INTRO = "Keep your saved roles, your profile and your resume in one place.";
+
+/** Says what signing in is for when they came from the resume builder. */
+function intro(next: string) {
+  return next.startsWith("/account/resume")
+    ? "Sign in to build your resume. It’s free, and it stays private to you."
+    : INTRO;
+}
+
 export default function SignInPage({ searchParams }: PageProps<"/sign-in">) {
   if (!accountsEnabled) notFound();
 
@@ -24,7 +33,9 @@ export default function SignInPage({ searchParams }: PageProps<"/sign-in">) {
     <Container className="py-16 sm:py-24">
       <div className="metal mx-auto max-w-md rounded-3xl p-8">
         <h1 className="steel-text text-2xl font-semibold tracking-[-0.03em]">Sign in</h1>
-        <p className="text-muted mt-2 text-sm">Keep your saved roles, your profile and your resume in one place.</p>
+        <p className="text-muted mt-2 text-sm">
+          <Suspense fallback={INTRO}>{searchParams.then((params) => intro(safeNext(params.next)))}</Suspense>
+        </p>
 
         <div className="mt-7">
           <Suspense fallback={<div className="bg-tint h-12 rounded-full" />}>

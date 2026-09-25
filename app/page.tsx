@@ -7,6 +7,7 @@ import { CountUp } from "@/components/home/count-up";
 import { HeroLight } from "@/components/home/hero-sky";
 import { HomeEffects } from "@/components/home/home-effects";
 import { LogoMarquee } from "@/components/home/logo-marquee";
+import { ResumeBuilderPromo } from "@/components/home/resume-builder-promo";
 import { RotatingWord } from "@/components/home/rotating-word";
 import { WhyLodestar } from "@/components/home/why-lodestar";
 import { JobGrid } from "@/components/job-card";
@@ -121,6 +122,8 @@ export default async function HomePage() {
         <SectionHeading title="Why Lodestar" />
         <WhyLodestar companies={hiringCompanies} />
       </Container>
+
+      <ResumeBuilderPromo />
 
       {cities.length > 0 && (
         <Container wide className="pt-20" data-reveal-stagger>

@@ -48,9 +48,14 @@ async function AppliedList() {
         icon={ListChecks}
         title="No applications yet"
         action={
-          <Link href="/jobs" className={buttonClass("primary", "md")}>
-            Browse jobs
-          </Link>
+          <>
+            <Link href="/jobs" className={buttonClass("primary", "md")}>
+              Browse jobs
+            </Link>
+            <Link href="/account/resume" className={buttonClass("secondary", "md")}>
+              Build your resume
+            </Link>
+          </>
         }
         className="mt-10"
       >

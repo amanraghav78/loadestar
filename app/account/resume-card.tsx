@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Download, FileText, Trash2, Upload } from "lucide-react";
+import { Download, FilePen, FileText, Trash2, Upload } from "lucide-react";
 import { buttonClass } from "@/components/ui/button";
 import { MAX_RESUME_BYTES, RESUME_ACCEPT, RESUME_ERROR } from "@/lib/resume";
 import type { ResumeSuggestions } from "@/lib/resume-parse";
@@ -78,11 +78,8 @@ export function ResumeCard({
       </h2>
       <p className="text-muted mt-1 text-sm">
         PDF, up to 4 MB. Only you can download it — we never send it to employers. We read it once to fill in your
-        profile below, which you can then edit. Nothing to upload?{" "}
-        <Link href="/account/resume" className="underline underline-offset-2">
-          write one here
-        </Link>{" "}
-        and we&rsquo;ll check it reads properly to an ATS.
+        profile below, which you can then edit. Nothing to upload? Write one in the resume builder and we&rsquo;ll check
+        it reads properly to an ATS.
       </p>
 
       {current ? (
@@ -111,31 +108,37 @@ export function ResumeCard({
         <p className="text-subtle mt-5 text-sm">No resume yet.</p>
       )}
 
-      {uploadEnabled && (
-        <div className="mt-5">
-          <input
-            ref={input}
-            type="file"
-            accept={RESUME_ACCEPT}
-            className="sr-only"
-            aria-label="Choose a resume PDF"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) void upload(file);
-              e.target.value = "";
-            }}
-          />
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => input.current?.click()}
-            className={buttonClass("primary", "md", "gap-2")}
-          >
-            <Upload className="size-4" aria-hidden />
-            {busy ? "Uploading…" : current ? "Replace resume" : "Upload resume"}
-          </button>
-        </div>
-      )}
+      <div className="mt-5 flex flex-wrap gap-2">
+        {uploadEnabled && (
+          <>
+            <input
+              ref={input}
+              type="file"
+              accept={RESUME_ACCEPT}
+              className="sr-only"
+              aria-label="Choose a resume PDF"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void upload(file);
+                e.target.value = "";
+              }}
+            />
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => input.current?.click()}
+              className={buttonClass("primary", "md", "gap-2")}
+            >
+              <Upload className="size-4" aria-hidden />
+              {busy ? "Uploading…" : current ? "Replace resume" : "Upload resume"}
+            </button>
+          </>
+        )}
+        <Link href="/account/resume" className={buttonClass(uploadEnabled ? "secondary" : "primary", "md", "gap-2")}>
+          <FilePen className="size-4" aria-hidden />
+          Open resume builder
+        </Link>
+      </div>
 
       {error && (
         <p role="alert" className="text-danger mt-3 text-sm">
