@@ -27,6 +27,18 @@ describe("the shared job cache stays free of per-user data", () => {
     expect(exportedWithUserId).toBe(false);
   });
 
+  it("the home page's recommendations stay out of its shared cache entry", () => {
+    // The page is a plain "use cache"; the personal list is passed into it as a
+    // slot and renders on its own, uncached, per request.
+    const homeJobs = source("components/home/home-jobs.tsx");
+    expect(homeJobs).not.toMatch(/"use cache/);
+    // The cached pieces around it never learn who is looking.
+    for (const cached of ["app/page.tsx", "components/home/latest-jobs.tsx"]) {
+      expect(source(cached)).not.toContain("@/lib/session");
+      expect(source(cached)).not.toContain("@/lib/account-queries");
+    }
+  });
+
   it("the private session read never becomes a shared cache entry", () => {
     const session = source("lib/session.ts");
     expect(session).toContain('"use cache: private"');

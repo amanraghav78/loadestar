@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  homeJobsView,
   levelsForExperience,
   matchingReadiness,
+  rankJobs,
   scoreJob,
   type MatchProfile,
   type ScorableJob,
@@ -103,6 +105,63 @@ describe("scoreJob", () => {
   it("explains itself in plain words", () => {
     const { reasons } = scoreJob(job({ tags: ["Python", "AWS", "Kubernetes"] }), profile());
     expect(reasons[0]).toBe("Python, AWS and 1 more match");
+  });
+});
+
+describe("rankJobs", () => {
+  const dated = (id: string, postedAt: string, over: Partial<ScorableJob> = {}) => ({
+    id,
+    postedAt: new Date(postedAt),
+    ...job(over),
+  });
+
+  it("puts the strongest match first and keeps only the limit", () => {
+    const jobs = [
+      dated("weak", "2026-09-20", { tags: ["Scala"] }),
+      dated("strong", "2026-09-01", { tags: ["Python", "AWS", "Kubernetes"] }),
+      dated("middling", "2026-09-10", { tags: ["Python"] }),
+    ];
+    const ranked = rankJobs(jobs, profile(), 2);
+    expect(ranked.map((r) => r.job.id)).toEqual(["strong", "middling"]);
+    expect(ranked[0]!.match.matchedSkills).toEqual(["Python", "AWS", "Kubernetes"]);
+  });
+
+  it("breaks a tie in favour of the newer role", () => {
+    const jobs = [dated("older", "2026-09-01"), dated("newer", "2026-09-20")];
+    expect(rankJobs(jobs, profile(), 5).map((r) => r.job.id)).toEqual(["newer", "older"]);
+  });
+
+  it("hands back the rows it was given, so a job card can render them", () => {
+    const row = dated("card", "2026-09-20");
+    expect(rankJobs([row], profile(), 1)[0]!.job).toBe(row);
+  });
+
+  it("leaves the input alone, and copes with an empty shortlist or no room", () => {
+    const jobs = [dated("a", "2026-09-01", { tags: ["Scala"] }), dated("b", "2026-09-20")];
+    const before = jobs.map((j) => j.id);
+    rankJobs(jobs, profile(), 5);
+    expect(jobs.map((j) => j.id)).toEqual(before);
+    expect(rankJobs([], profile(), 6)).toEqual([]);
+    expect(rankJobs(jobs, profile(), 0)).toEqual([]);
+  });
+});
+
+describe("homeJobsView", () => {
+  it("shows a signed-out visitor the latest roles", () => {
+    expect(homeJobsView({ signedIn: false, profile: null, matches: 0 })).toBe("latest");
+  });
+
+  it("shows a signed-in candidate their matches", () => {
+    expect(homeJobsView({ signedIn: true, profile: profile(), matches: 6 })).toBe("recommended");
+  });
+
+  it("nudges a signed-in candidate with nothing to match on", () => {
+    expect(homeJobsView({ signedIn: true, profile: profile({ skills: [] }), matches: 0 })).toBe("latest-nudge");
+    expect(homeJobsView({ signedIn: true, profile: null, matches: 0 })).toBe("latest-nudge");
+  });
+
+  it("falls back to the latest roles, without nagging, when their skills match nothing open", () => {
+    expect(homeJobsView({ signedIn: true, profile: profile(), matches: 0 })).toBe("latest");
   });
 });
 
