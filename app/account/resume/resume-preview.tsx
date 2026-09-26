@@ -43,9 +43,14 @@ export function ResumePreview({ blocks }: { blocks: ResumeBlock[] }) {
     >
       {group(blocks).map((entry, i) =>
         entry.kind === "bullets" ? (
-          <ul key={i} className="mt-1.5 list-outside list-disc space-y-1 pl-4">
+          // The PDF marks bullets with a plain hyphen (the one glyph every
+          // parser reads), hung so wrapped lines align under the text; so does this.
+          <ul key={i} className="mt-1.5 space-y-1">
             {entry.items.map((item, j) => (
-              <li key={j} className="text-[11.5px] leading-[1.45] marker:text-[#71717a]">
+              <li key={j} className="relative pl-3 text-[11.5px] leading-[1.45]">
+                <span className="absolute left-0 text-[#3f3f46]" aria-hidden>
+                  -
+                </span>
                 {item}
               </li>
             ))}

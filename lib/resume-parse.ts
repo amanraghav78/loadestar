@@ -83,12 +83,52 @@ export function findEducation(
  * both a B.Tech and an M.Tech reports the master's.
  */
 const DEGREES: Array<[RegExp, EducationLevel, number]> = [
-  [/\b(class 12|12th|higher secondary|hsc|intermediate|cbse|icse)\b/i, "HIGH_SCHOOL", 0],
+  [/\b(class 12|class xii|12th|higher secondary|senior secondary|hsc|puc|intermediate|cbse|icse)\b/i, "HIGH_SCHOOL", 0],
   [/\b(diploma|polytechnic)\b/i, "DIPLOMA", 1],
   [/\b(b\.?\s?tech|b\.?\s?e\b|bachelor(?:'s)?|b\.?\s?sc|b\.?\s?c\.?a|b\.?\s?com|b\.?\s?a\b|bs\b)/i, "BACHELORS", 2],
   [/\b(m\.?\s?tech|m\.?\s?e\b|master(?:'s)?|m\.?\s?sc|m\.?\s?c\.?a|m\.?\s?com|mba|pgdm|ms\b)/i, "MASTERS", 3],
   [/\b(ph\.?\s?d|doctorate|doctoral)\b/i, "DOCTORATE", 4],
 ];
+
+/** Whether this line names a qualification we recognise (a degree, a diploma, class 12). */
+export const namesDegree = (line: string) => line.length <= 200 && DEGREES.some(([re]) => re.test(line));
+
+/**
+ * One qualification, read from its own line and the one after it: the course,
+ * the institution, the years and the result (CGPA or percentage), which is
+ * what an Indian resume's education section carries for each entry.
+ */
+export function readEducationLine(line: string, next = "", now: Date = new Date()) {
+  const both = `${line} ${next}`;
+  const max = now.getFullYear() + 8;
+  const years = [...both.matchAll(/\b(19[5-9]\d|20\d\d)\b/g)].map((m) => Number(m[1])).filter((y) => y <= max);
+  const score =
+    /\b(?:cgpa|gpa|cpi|sgpa)\s*[:\-–]?\s*(\d{1,2}(?:\.\d{1,2})?)(\s*\/\s*10)?/i.exec(both) ??
+    /\b(\d{2}(?:\.\d{1,2})?)\s*%/.exec(both);
+  const detail = score ? (/%/.test(score[0]) ? `${score[1]}%` : `CGPA ${score[1]}${score[2] ? "/10" : ""}`) : "";
+  const institution = findInstitution(line) ?? findInstitution(next) ?? "";
+  // The course in full ("B.Tech, Computer Science"), not just the degree's
+  // name: on a resume the branch matters as much as the letters.
+  const degree = line
+    .replace(institution, " ")
+    .replace(/\b(?:cgpa|gpa|cpi|sgpa|percentage|marks)\b.*$/i, " ")
+    .replace(/\b\d{2}(?:\.\d{1,2})?\s*%.*$/, " ")
+    .replace(/\(?\b(19|20)\d{2}\b\s*(?:-|to|–)?\s*(?:(?:19|20)\d{2}|present)?\)?/gi, " ")
+    .replace(/^(education|academic details|qualification)\s*:?\s*/i, "")
+    .replace(/\s+/g, " ")
+    .replace(/(?:\s*[,|•·:;\-–]\s*)+$/g, "")
+    .replace(/^(?:\s*[,|•·:;\-–]\s*)+/g, "")
+    .replace(/\s+,/g, ",")
+    .replace(/\s+(?:from|at)$/i, "")
+    .trim();
+  return {
+    degree: degree.slice(0, 100),
+    institution: institution.slice(0, 120),
+    start: years.length > 1 ? String(Math.min(...years)) : "",
+    end: years.length > 0 ? String(Math.max(...years)) : "",
+    detail,
+  };
+}
 
 /** Phrases that mark a line as naming a place of study rather than a course. */
 const INSTITUTION =
