@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   EMPTY_RESUME,
   formatDateRange,
+  formatPhone,
   formatResumeDate,
   layoutResume,
   type ResumeContact,
@@ -74,7 +75,7 @@ describe("laying a resume out", () => {
   it("opens with the name, the target role and one contact line", () => {
     expect(blocks[0]).toEqual({ kind: "name", text: "Priya Sharma" });
     expect(blocks[1]).toEqual({ kind: "headline", text: "Senior Data Engineer" });
-    expect(text("contact")[0]).toBe("Hyderabad · +919811122333 · priya@example.com");
+    expect(text("contact")[0]).toBe("Hyderabad · +91 98111 22333 · priya@example.com");
   });
 
   it("writes links without their scheme, and skips the ones nobody gave us", () => {
@@ -143,5 +144,19 @@ describe("what a saved document accepts", () => {
   it("reads a row it can't make sense of as an empty resume, rather than throwing", () => {
     expect(parseResumeContent(null)).toEqual(EMPTY_RESUME);
     expect(parseResumeContent({ experience: [{ role: "x".repeat(500) }] })).toEqual(EMPTY_RESUME);
+  });
+});
+
+describe("formatPhone", () => {
+  it("prints an Indian mobile the way it is read out, however it was saved", () => {
+    for (const raw of ["9876543210", "+919876543210", "091-98765-43210", "+91 98765 43210", "09876543210"]) {
+      expect(formatPhone(raw)).toBe("+91 98765 43210");
+    }
+  });
+
+  it("leaves landlines, foreign numbers and blanks as they were", () => {
+    expect(formatPhone("011 2345 6789")).toBe("011 2345 6789");
+    expect(formatPhone("+1 415 555 0100")).toBe("+1 415 555 0100");
+    expect(formatPhone(null)).toBe("");
   });
 });

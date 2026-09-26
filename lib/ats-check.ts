@@ -8,6 +8,7 @@ import {
   type ResumeContact,
   type ResumeContent,
 } from "@/lib/resume-builder";
+import { hasNumber, startsWithVerb } from "@/lib/resume-suggestions";
 
 /**
  * Reviews a resume the way an applicant tracking system reads one, and says
@@ -32,6 +33,10 @@ export type AtsCheck = {
   /** What is wrong and what to do about it, in one sentence. */
   detail: string;
   weight: number;
+  /** The id of the input to fix it in, when there is one on the builder. */
+  field?: string;
+  /** Where to fix it when it is not on the builder (contact details live on the profile). */
+  href?: string;
 };
 
 export type AtsReport = {
@@ -45,28 +50,6 @@ export type AtsReport = {
 
 /** A warning is half credit: the resume parses, it just reads worse than it could. */
 const CREDIT: Record<AtsStatus, number> = { pass: 1, warn: 0.5, fail: 0 };
-
-/**
- * Openers that describe what someone did. Not a style rule for its own sake:
- * "Responsible for the payments service" and "Rebuilt the payments service" are
- * the difference between a line a recruiter skims past and one they read.
- */
-const ACTION_VERBS = new Set(
-  (
-    "achieved added analysed analyzed architected automated built centralised consolidated converted created cut " +
-    "debugged decreased delivered deployed designed developed diagnosed doubled drove eliminated engineered " +
-    "established expanded extended fixed founded generated grew halved implemented improved increased initiated " +
-    "integrated introduced launched led maintained managed mentored migrated modelled modernised negotiated " +
-    "onboarded optimised optimized orchestrated owned partnered ported prototyped published ran rearchitected " +
-    "rebuilt reduced refactored released removed replaced resolved restructured rewrote rolled saved scaled " +
-    "secured shipped simplified solved sped standardised streamlined supported tested tracked trained tripled " +
-    "unified upgraded wrote"
-  ).split(" "),
-);
-
-const firstWord = (text: string) => (text.toLowerCase().match(/[a-z]+/) ?? [""])[0];
-
-const hasNumber = (text: string) => /\d|\b(?:half|double|doubled|tripled)\b/i.test(text);
 
 const share = (part: number, whole: number) => (whole === 0 ? 0 : part / whole);
 
@@ -176,7 +159,7 @@ export function reviewResume(content: ResumeContent, contact: ResumeContact): At
           : `${thin.length} role${thin.length === 1 ? " has" : "s have"} fewer than two bullets. Three to five each is the shape recruiters read fastest.`,
   });
 
-  const withVerb = bullets.filter((b) => ACTION_VERBS.has(firstWord(b))).length;
+  const withVerb = bullets.filter((b) => startsWithVerb(b)).length;
   const verbShare = share(withVerb, bullets.length);
   add({
     id: "verbs",
@@ -266,6 +249,11 @@ export function reviewResume(content: ResumeContent, contact: ResumeContact): At
         : `We can't print these, so they would be dropped: ${lost.slice(0, 8).join(" ")}. Write them in plain English.`,
   });
 
+  // Each check points at the field that fixes it, so the panel can take the
+  // candidate straight there instead of leaving them to find it.
+  const targets = fixTargets(content);
+  for (const check of checks) Object.assign(check, targets[check.id]);
+
   const total = checks.reduce((sum, check) => sum + check.weight, 0);
   const earned = checks.reduce((sum, check) => sum + check.weight * CREDIT[check.status], 0);
 
@@ -278,4 +266,38 @@ export function scoreVerdict(score: number) {
   if (score >= 70) return "Nearly there";
   if (score >= 45) return "Needs work";
   return "Not ready yet";
+}
+
+type Target = Pick<AtsCheck, "field" | "href">;
+
+/** The first place each check can be fixed: an input on the builder, or the profile. */
+function fixTargets(content: ResumeContent): Record<string, Target> {
+  const started = (e: { role: string; company: string }) => Boolean(e.role.trim() || e.company.trim());
+  const firstRole = (test: (e: ResumeContent["experience"][number]) => boolean) =>
+    content.experience.findIndex((e) => started(e) && test(e));
+  /** The first bullets box, among roles then projects, with a line that fails `test`. */
+  const firstBullets = (test: (bullet: string) => boolean): string | undefined => {
+    const role = content.experience.findIndex((e) => e.bullets.some((b) => b.trim() && test(b.trim())));
+    if (role >= 0) return `experience-${role}-bullets`;
+    const project = content.projects.findIndex((p) => p.bullets.some((b) => b.trim() && test(b.trim())));
+    return project >= 0 ? `project-${project}-bullets` : undefined;
+  };
+
+  const undated = firstRole((e) => !(e.start.trim() && (e.current || e.end.trim())));
+  const thin = firstRole((e) => e.bullets.filter((b) => b.trim()).length < 2);
+  const anyRole = content.experience.some(started);
+
+  return {
+    contact: { href: "/account" },
+    links: { href: "/account" },
+    headline: { field: "headline" },
+    summary: { field: "summary" },
+    experience: { field: !anyRole ? "add-experience" : undated >= 0 ? `experience-${undated}-start` : undefined },
+    bullets: { field: !anyRole ? "add-experience" : thin >= 0 ? `experience-${thin}-bullets` : undefined },
+    verbs: { field: firstBullets((b) => !startsWithVerb(b)) },
+    metrics: { field: firstBullets((b) => !hasNumber(b)) },
+    "bullet-length": { field: firstBullets((b) => b.length > 220) },
+    skills: { field: "skills" },
+    education: { field: "add-education" },
+  };
 }

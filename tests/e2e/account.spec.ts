@@ -360,8 +360,9 @@ test.describe("accounts", () => {
     ]);
     expect(download.suggestedFilename()).toBe("Ada Tester - Resume.pdf");
 
+    // It saves itself a moment after the typing stops; the button just saves now.
     await page.getByRole("button", { name: "Save resume" }).click();
-    await expect(page.getByText("Resume saved.")).toBeVisible();
+    await expect(page.getByText(/All changes saved/)).toBeVisible();
     await page.reload();
     await expect(page.getByLabel("Role you want")).toHaveValue("Senior Backend Engineer");
     await expect(page.getByLabel("Employer")).toHaveValue("Razorpay");
@@ -372,6 +373,28 @@ test.describe("accounts", () => {
     const file = await page.request.get("/api/resume");
     expect(file.status()).toBe(200);
     expect(file.headers()["content-type"]).toContain("application/pdf");
+  });
+
+  test("a job page tailors the resume to its keywords, and the resume saves itself", async ({ page }) => {
+    await signIn(page, candidate("tailor"));
+
+    await page.goto("/jobs?q=ingest");
+    await page.getByRole("article").first().getByRole("link").first().click();
+    await page.getByRole("link", { name: "Tailor my resume for this role" }).first().click();
+    await expect(page).toHaveURL(/\/account\/resume\?job=/);
+
+    const panel = page.getByRole("region", { name: "Tailoring for this role" });
+    await expect(panel).toBeVisible();
+    await expect(panel.getByText("Missing from your resume")).toBeVisible();
+
+    // One click puts a missing keyword on the skills line, and autosave keeps it.
+    await panel.getByRole("button", { name: /Kafka/ }).click();
+    await expect(page.getByLabel("Skills")).toHaveValue(/Kafka/);
+    await expect(panel.getByText("Already covered")).toBeVisible();
+    await expect(page.getByText(/All changes saved/)).toBeVisible();
+
+    await page.reload();
+    await expect(page.getByLabel("Skills")).toHaveValue(/Kafka/);
   });
 
   test("the resume builder sends signed-out visitors to sign in", async ({ page }) => {

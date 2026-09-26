@@ -1,4 +1,5 @@
-import { AlertTriangle, Check, X } from "lucide-react";
+import Link from "next/link";
+import { AlertTriangle, ArrowRight, Check, X } from "lucide-react";
 import { scoreVerdict, type AtsReport, type AtsStatus } from "@/lib/ats-check";
 
 /**
@@ -6,13 +7,15 @@ import { scoreVerdict, type AtsReport, type AtsStatus } from "@/lib/ats-check";
  *
  * Every line is an instruction, not a grade: the score is only there to say
  * whether the instructions are worth reading today. See lib/ats-check.ts for
- * what each check actually measures.
+ * what each check actually measures. A check that can be fixed on this page
+ * takes the candidate to the field (`onFix`); contact details live on the
+ * profile, so those link there.
  */
 
 const ICON: Record<AtsStatus, typeof Check> = { pass: Check, warn: AlertTriangle, fail: X };
 const TONE: Record<AtsStatus, string> = { pass: "text-ok", warn: "text-accent-fg", fail: "text-danger" };
 
-export function AtsReportPanel({ report }: { report: AtsReport }) {
+export function AtsReportPanel({ report, onFix }: { report: AtsReport; onFix: (field: string) => void }) {
   const todo = report.checks.filter((check) => check.status !== "pass");
 
   return (
@@ -63,6 +66,25 @@ export function AtsReportPanel({ report }: { report: AtsReport }) {
                   </span>
                 </p>
                 <p className="text-muted text-xs leading-relaxed">{check.detail}</p>
+                {check.status !== "pass" && check.field && (
+                  <button
+                    type="button"
+                    onClick={() => onFix(check.field!)}
+                    className="text-fg mt-1 inline-flex items-center gap-1 text-xs font-medium underline-offset-2 hover:underline"
+                  >
+                    Fix this<span className="sr-only">: {check.label}</span>
+                    <ArrowRight className="size-3" aria-hidden />
+                  </button>
+                )}
+                {check.status !== "pass" && !check.field && check.href && (
+                  <Link
+                    href={check.href}
+                    className="text-fg mt-1 inline-flex items-center gap-1 text-xs font-medium underline-offset-2 hover:underline"
+                  >
+                    Edit on your profile<span className="sr-only">: {check.label}</span>
+                    <ArrowRight className="size-3" aria-hidden />
+                  </Link>
+                )}
               </div>
             </li>
           );

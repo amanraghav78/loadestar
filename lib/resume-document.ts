@@ -1,6 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
-import { EMPTY_RESUME, type ResumeContact, type ResumeContent } from "@/lib/resume-builder";
+import type { ResumeContact, ResumeContent } from "@/lib/resume-builder";
+import { starterResume } from "@/lib/resume-prefill";
 import { parseResumeContent } from "@/lib/validators";
 
 /**
@@ -18,6 +19,8 @@ export type ResumeWorkspace = {
   contact: ResumeContact;
   /** Null until they save for the first time; the form starts from their profile. */
   updatedAt: Date | null;
+  /** The PDF they uploaded to their profile, if any: the builder offers to start from it. */
+  uploadedFilename: string | null;
 };
 
 export async function readResume(userId: string, fallbackName: string, email: string): Promise<ResumeWorkspace> {
@@ -30,9 +33,14 @@ export async function readResume(userId: string, fallbackName: string, email: st
         city: true,
         currentTitle: true,
         skills: true,
+        degree: true,
+        institution: true,
+        graduationYear: true,
         linkedinUrl: true,
         githubUrl: true,
         portfolioUrl: true,
+        resumeKey: true,
+        resumeFilename: true,
       },
     }),
     db.resumeDocument.findUnique({ where: { userId } }),
@@ -49,15 +57,15 @@ export async function readResume(userId: string, fallbackName: string, email: st
   };
 
   // A first visit opens on what we already know rather than on an empty page:
-  // the title and skills off their profile, which is usually what a resume's
-  // header and skills line say anyway. Nothing is stored until they save.
-  const content = document
-    ? parseResumeContent(document)
-    : {
-        ...EMPTY_RESUME,
-        headline: profile?.currentTitle ?? "",
-        skills: profile?.skills ?? [],
-      };
+  // the title, skills and highest qualification off their profile, which is
+  // what a resume's header, skills line and education say anyway. Nothing is
+  // stored until they change something.
+  const content = document ? parseResumeContent(document) : starterResume(profile);
 
-  return { content, contact, updatedAt: document?.updatedAt ?? null };
+  return {
+    content,
+    contact,
+    updatedAt: document?.updatedAt ?? null,
+    uploadedFilename: profile?.resumeKey ? (profile.resumeFilename ?? "resume.pdf") : null,
+  };
 }

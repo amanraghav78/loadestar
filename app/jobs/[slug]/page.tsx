@@ -177,11 +177,11 @@ async function JobDetail({ slug }: { slug: string }) {
               <p className="text-subtle mt-3 text-center text-xs">You apply on {job.company.name}&apos;s own site.</p>
               {authEnabled && (
                 <Link
-                  href="/account/resume"
+                  href={`/account/resume?job=${encodeURIComponent(job.slug)}`}
                   className="group border-line text-muted hover:text-fg mt-4 flex items-center justify-center gap-1.5 border-t pt-4 text-xs transition-colors"
                 >
                   <FileText className="size-3.5" aria-hidden />
-                  Need a resume? <span className="text-fg font-medium">Build one free</span>
+                  <span className="text-fg font-medium">Tailor my resume for this role</span>
                   <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" aria-hidden />
                 </Link>
               )}
@@ -195,16 +195,17 @@ async function JobDetail({ slug }: { slug: string }) {
               </span>
               <div className="min-w-0">
                 <h2 id="need-resume" className="text-fg text-[15px] font-semibold">
-                  Need a resume?
+                  Tailor your resume
                 </h2>
                 <p className="text-muted mt-1 text-sm">
-                  Build one that an ATS can read, and download it as a PDF. Free.
+                  See which of this role&apos;s skills your resume is missing, then download it as a PDF an ATS can
+                  read. Free.
                 </p>
                 <Link
-                  href="/account/resume"
+                  href={`/account/resume?job=${encodeURIComponent(job.slug)}`}
                   className="group text-fg mt-3 inline-flex items-center gap-1 text-sm font-medium"
                 >
-                  Open the resume builder
+                  Tailor my resume for this role
                   <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
                 </Link>
               </div>

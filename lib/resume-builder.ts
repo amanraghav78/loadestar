@@ -155,6 +155,18 @@ function shortLink(url: string | null) {
 }
 
 /**
+ * An Indian mobile the way people read it out: "+91 98765 43210", whether it was
+ * saved as "9876543210", "+919876543210" or "091-98765-43210". Anything else —
+ * a landline, a number abroad — is printed as it was written.
+ */
+export function formatPhone(phone: string | null | undefined) {
+  const text = clean(phone);
+  const digits = text.replace(/\D/g, "");
+  const local = /^(?:0?91|0)?([6-9]\d{9})$/.exec(digits)?.[1];
+  return local ? `+91 ${local.slice(0, 5)} ${local.slice(5)}` : text;
+}
+
+/**
  * The document, in reading order.
  *
  * Section headings are the plain words an ATS is looking for — Summary, Skills,
@@ -171,7 +183,7 @@ export function layoutResume(content: ResumeContent, contact: ResumeContact): Re
   push("name", contact.fullName);
   push("headline", content.headline);
 
-  push("contact", metaLine(contact.city, contact.phone, contact.email));
+  push("contact", metaLine(contact.city, formatPhone(contact.phone), contact.email));
   push(
     "contact",
     metaLine(shortLink(contact.linkedinUrl), shortLink(contact.githubUrl), shortLink(contact.portfolioUrl)),

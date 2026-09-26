@@ -148,4 +148,25 @@ describe("reviewing a resume", () => {
     expect(report.pages).toBeGreaterThan(2);
     expect(statusOf(sprawling, "length")).toBe("warn");
   });
+
+  it("points each problem at the field that fixes it", () => {
+    const at = (content: ResumeContent, id: string) =>
+      reviewResume(content, contact).checks.find((check) => check.id === id)!;
+
+    const weak: ResumeContent = {
+      ...good,
+      experience: [
+        good.experience[0]!,
+        { ...good.experience[0]!, company: "Beta", start: "", bullets: ["Responsible for reports"] },
+      ],
+    };
+    expect(at(weak, "experience").field).toBe("experience-1-start");
+    expect(at(weak, "verbs").field).toBe("experience-1-bullets");
+    expect(at(EMPTY_RESUME, "experience").field).toBe("add-experience");
+    expect(at(EMPTY_RESUME, "summary").field).toBe("summary");
+
+    // Contact details are edited on the profile, not here.
+    expect(at(good, "contact")).toMatchObject({ href: "/account" });
+    expect(at(good, "contact").field).toBeUndefined();
+  });
 });
