@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { classifyDiscipline, classifyLevel, extractTags, indiaLocation } from "@/lib/ingest/classify";
+import { BOOTSTRAP_COMPANIES } from "@/lib/ingest/companies";
 import { htmlToText } from "@/lib/ingest/html";
 import { dedupe, mergeLocations, normalizePosting, titleKey, yearsOfExperience } from "@/lib/ingest/normalize";
 import { parseInrSalary } from "@/lib/ingest/salary";
 import { workdayAgeDays, workdayIndiaFacet, workdayRequisition, type RawPosting } from "@/lib/ingest/sources";
+import { splitTokens } from "@/lib/ingest/tokens";
 import { companyInputSchema } from "@/lib/validators";
 
 describe("parseInrSalary", () => {
@@ -413,5 +415,33 @@ describe("company feed tokens", () => {
     expect(ok("WORKDAY", "nvidia")).toBe(false);
     expect(ok("GREENHOUSE", "")).toBe(false);
     expect(ok("GREENHOUSE", "https://evil.example")).toBe(false);
+  });
+});
+
+describe("bootstrap companies", () => {
+  it("have unique slugs, names and feeds", () => {
+    const unique = (values: string[]) => new Set(values).size === values.length;
+    expect(unique(BOOTSTRAP_COMPANIES.map((c) => c.slug))).toBe(true);
+    expect(unique(BOOTSTRAP_COMPANIES.map((c) => c.name.toLowerCase()))).toBe(true);
+    expect(
+      unique(
+        BOOTSTRAP_COMPANIES.flatMap((c) => splitTokens(c.atsToken).map((t) => `${c.atsSource}:${t.toLowerCase()}`)),
+      ),
+    ).toBe(true);
+  });
+
+  it("pass the same validation as the admin form", () => {
+    const invalid = BOOTSTRAP_COMPANIES.filter(
+      (c) =>
+        !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(c.slug) ||
+        !companyInputSchema.safeParse({
+          name: c.name,
+          website: c.website,
+          featured: "",
+          atsSource: c.atsSource,
+          atsToken: c.atsToken,
+        }).success,
+    );
+    expect(invalid.map((c) => c.slug)).toEqual([]);
   });
 });
