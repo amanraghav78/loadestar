@@ -67,6 +67,8 @@ async function EditForm({ id }: { id: string }) {
             salaryMin: job.salaryMin,
             salaryMax: job.salaryMax,
             currency: job.currency,
+            experienceMin: job.experienceMin,
+            experienceMax: job.experienceMax,
             applyUrl: job.applyUrl,
           }}
         />

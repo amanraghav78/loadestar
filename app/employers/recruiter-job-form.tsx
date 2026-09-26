@@ -21,6 +21,8 @@ export type RecruiterJobValues = {
   salaryMin?: number | null;
   salaryMax?: number | null;
   currency?: string | null;
+  experienceMin?: number | null;
+  experienceMax?: number | null;
   applyUrl?: string;
 };
 
@@ -122,6 +124,41 @@ export function RecruiterJobForm({ job = {}, companyName }: { job?: RecruiterJob
             <option value="EUR">EUR</option>
             <option value="GBP">GBP</option>
           </Select>
+        </Field>
+      </div>
+
+      <div className="grid gap-5 sm:grid-cols-3">
+        <Field
+          label="Experience from (years)"
+          name="experienceMin"
+          error={err("experienceMin")}
+          hint="Optional. 0 for freshers"
+        >
+          <Input
+            id="experienceMin"
+            name="experienceMin"
+            type="number"
+            min={0}
+            max={40}
+            step={1}
+            defaultValue={job.experienceMin ?? ""}
+          />
+        </Field>
+        <Field
+          label="Experience to (years)"
+          name="experienceMax"
+          error={err("experienceMax")}
+          hint="Leave empty for “3+ years”"
+        >
+          <Input
+            id="experienceMax"
+            name="experienceMax"
+            type="number"
+            min={0}
+            max={40}
+            step={1}
+            defaultValue={job.experienceMax ?? ""}
+          />
         </Field>
       </div>
 

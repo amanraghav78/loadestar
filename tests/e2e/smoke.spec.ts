@@ -60,6 +60,35 @@ test("sorting keeps the search and filters, and starts from the first page", asy
   await expect(page).toHaveURL(/\/jobs$/);
 });
 
+test("the experience filter narrows the results and keeps the search, filters and order", async ({ page }) => {
+  await page.goto("/jobs?q=engineer&discipline=ENGINEERING&sort=salary");
+  const heading = page.locator("#results-heading");
+  const before = Number((await heading.locator("span").textContent())!.replace(/\D/g, ""));
+
+  if ((page.viewportSize()?.width ?? 1280) < 1024) await page.locator("summary", { hasText: "Filters" }).click();
+  await page.getByRole("link", { name: "3–5 yrs", exact: true }).click();
+  await expect(page).toHaveURL(/exp=3-5/);
+  await expect(page).toHaveURL(/q=engineer/);
+  await expect(page).toHaveURL(/discipline=ENGINEERING/);
+  await expect(page).toHaveURL(/sort=salary/);
+  await expect(page.getByRole("link", { name: "Remove filter 3–5 yrs" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Remove filter Engineering" })).toBeVisible();
+
+  // Fewer roles, and none that asks for 8+ years.
+  const after = Number((await heading.locator("span").textContent())!.replace(/\D/g, ""));
+  expect(after).toBeGreaterThan(0);
+  expect(after).toBeLessThan(before);
+  await expect(page.getByRole("article").first()).toBeVisible();
+  await expect(page.getByRole("article").filter({ hasText: "8+ yrs" })).toHaveCount(0);
+
+  // Removing it keeps everything else.
+  await page.getByRole("link", { name: "Remove filter 3–5 yrs" }).click();
+  await expect(page).not.toHaveURL(/exp=/);
+  await expect(page).toHaveURL(/q=engineer/);
+  await expect(page).toHaveURL(/discipline=ENGINEERING/);
+  await expect(page).toHaveURL(/sort=salary/);
+});
+
 test("search, filter and open a role", async ({ page }) => {
   await page.goto("/");
   await page.getByPlaceholder("Job title, skill or company").fill("engineer");

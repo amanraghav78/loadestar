@@ -21,6 +21,8 @@ export type JobFormValues = {
   salaryMin?: number | null;
   salaryMax?: number | null;
   currency?: string | null;
+  experienceMin?: number | null;
+  experienceMax?: number | null;
   applyUrl?: string;
   featured?: boolean;
 };
@@ -123,6 +125,41 @@ export function JobForm({ job = {}, companies }: { job?: JobFormValues; companie
             <option value="GBP">GBP</option>
             <option value="USD">USD</option>
           </Select>
+        </Field>
+      </div>
+
+      <div className="grid gap-5 sm:grid-cols-3">
+        <Field
+          label="Experience from (years, optional)"
+          name="experienceMin"
+          error={err("experienceMin")}
+          hint="0 for freshers"
+        >
+          <Input
+            id="experienceMin"
+            name="experienceMin"
+            type="number"
+            min={0}
+            max={40}
+            step={1}
+            defaultValue={job.experienceMin ?? ""}
+          />
+        </Field>
+        <Field
+          label="Experience to (years, optional)"
+          name="experienceMax"
+          error={err("experienceMax")}
+          hint="Empty for “3+ years”"
+        >
+          <Input
+            id="experienceMax"
+            name="experienceMax"
+            type="number"
+            min={0}
+            max={40}
+            step={1}
+            defaultValue={job.experienceMax ?? ""}
+          />
         </Field>
       </div>
 

@@ -10,6 +10,7 @@ import {
   Level,
   RemotePolicy,
 } from "@/lib/generated/prisma/enums";
+import { EXPERIENCE_BUCKET_KEYS } from "@/lib/experience";
 import { INDIA_CITIES } from "@/lib/ingest/classify";
 import { DEFAULT_SORT, JOB_SORTS } from "@/lib/job-sort";
 import { splitTokens, TOKEN_HINT } from "@/lib/ingest/tokens";
@@ -37,6 +38,8 @@ export const searchParamsSchema = z.object({
   remote: lenient(z.enum(RemotePolicy)),
   discipline: lenient(z.enum(Discipline)),
   level: lenient(z.enum(Level)),
+  /** Years of experience, one of the buckets in lib/experience.ts: "0-1", "1-3", "3-5", "5-8" or "8-plus". */
+  exp: lenient(z.enum(EXPERIENCE_BUCKET_KEYS)),
   employmentType: lenient(z.enum(EmploymentType)),
   /** Sector, matched against the hiring company. */
   industry: lenient(z.enum(Industry)),
@@ -82,6 +85,17 @@ const optionalMoney = z.preprocess(
   z.coerce.number().int().min(1).max(200_000_000).optional(),
 );
 
+/** Years of experience a role asks for, from a form field; empty means the listing doesn't say. */
+const optionalYears = z.preprocess(
+  (v) => (v === "" || v == null ? undefined : v),
+  z.coerce
+    .number("Enter a number of years")
+    .int("Use whole years")
+    .min(0, "Years can't be negative")
+    .max(40, "That looks too high")
+    .optional(),
+);
+
 const tagsField = z
   .string()
   .max(300)
@@ -116,6 +130,9 @@ const jobFieldsSchema = z.object({
   salaryMin: optionalMoney,
   salaryMax: optionalMoney,
   currency: z.enum(Currency).default("INR"),
+  // Optional, in whole years. A minimum alone reads as "3+ years".
+  experienceMin: optionalYears,
+  experienceMax: optionalYears,
   applyUrl: httpsUrl,
   featured: z.preprocess((v) => v === "on" || v === "true" || v === true, z.boolean()),
 });
@@ -133,7 +150,23 @@ function checkSalaryBand<T extends z.ZodType<{ salaryMin?: number; salaryMax?: n
     });
 }
 
-export const jobInputSchema = checkSalaryBand(jobFieldsSchema);
+/**
+ * Experience is a minimum, with a maximum at or above it or none ("3+ years");
+ * never a maximum alone. The database enforces the same (Job_experience_check).
+ */
+function checkExperience<T extends z.ZodType<{ experienceMin?: number; experienceMax?: number }>>(schema: T) {
+  return schema
+    .refine((v) => v.experienceMax == null || v.experienceMin != null, {
+      path: ["experienceMin"],
+      message: "Give a minimum too (0 for freshers)",
+    })
+    .refine((v) => v.experienceMin == null || v.experienceMax == null || v.experienceMax >= v.experienceMin, {
+      path: ["experienceMax"],
+      message: "Maximum must be at least the minimum",
+    });
+}
+
+export const jobInputSchema = checkExperience(checkSalaryBand(jobFieldsSchema));
 
 export type JobInput = z.infer<typeof jobInputSchema>;
 
@@ -316,7 +349,7 @@ const FREE_EMAIL_DOMAINS = new Set([
  * a recruiter picks neither the company (it comes from their approved claim)
  * nor `featured` (that is ours to grant).
  */
-export const recruiterJobSchema = checkSalaryBand(jobFieldsSchema.omit({ featured: true })).refine(
+export const recruiterJobSchema = checkExperience(checkSalaryBand(jobFieldsSchema.omit({ featured: true }))).refine(
   (v) => v.salaryMin != null && v.salaryMax != null,
   {
     path: ["salaryMin"],

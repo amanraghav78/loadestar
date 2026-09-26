@@ -182,6 +182,11 @@ model Job {
   currency        Currency?
   /// Denormalised "salaryMin is not null" so salary-first sorting stays indexed.
   salaryDisclosed Boolean      @default(false)
+  /// Years of experience the role asks for, when the posting says: "3-5 years"
+  /// is 3 and 5, "3+ years" is 3 and null. Both null when unknown; the search
+  /// then falls back to `level` (lib/experience.ts).
+  experienceMin   Int?
+  experienceMax   Int?
   source          JobSource    @default(MANUAL)
   /// ID of the posting in the source system; unique per source.
   externalId      String?
@@ -214,6 +219,8 @@ model Job {
   @@index([status, salaryDisclosed, postedAt(sort: Desc), id(sort: Desc)])
   @@index([status, discipline])
   @@index([status, employmentType])
+  /// The experience filter: a range on experienceMin, or null for the level fallback.
+  @@index([status, experienceMin])
   /// The moderation queue: oldest submission first.
   @@index([status, createdAt])
   @@index([postedById, createdAt(sort: Desc)])

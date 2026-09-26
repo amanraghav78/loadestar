@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { classifyDiscipline, classifyLevel, extractTags, indiaLocation } from "@/lib/ingest/classify";
 import { htmlToText } from "@/lib/ingest/html";
-import { dedupe, mergeLocations, normalizePosting, titleKey, yearsOfExperience } from "@/lib/ingest/normalize";
+import { dedupe, mergeLocations, normalizePosting, parseExperience, titleKey } from "@/lib/ingest/normalize";
 import { parseInrSalary } from "@/lib/ingest/salary";
 import { workdayAgeDays, workdayIndiaFacet, workdayRequisition, type RawPosting } from "@/lib/ingest/sources";
 import { companyInputSchema } from "@/lib/validators";
@@ -216,10 +216,10 @@ describe("dedupe", () => {
       job({ externalId: "a2", locations: ["Pune, India"], description: text("5+") }),
     ]);
     expect(merged).toHaveLength(2);
-    expect(yearsOfExperience("Software Engineer", text("0-2"))).toBe("0-2");
-    expect(yearsOfExperience("Software Engineer", text("5+"))).toBe("5+");
-    expect(yearsOfExperience("Backend Engineer (2-4 yrs)", "")).toBe("2-4");
-    expect(yearsOfExperience("Engineer", "Founded 10 years ago.")).toBeNull();
+    expect(parseExperience("Software Engineer", text("0-2"))).toEqual({ min: 0, max: 2 });
+    expect(parseExperience("Software Engineer", text("5+"))).toEqual({ min: 5, max: null });
+    expect(parseExperience("Backend Engineer (2-4 yrs)", "")).toEqual({ min: 2, max: 4 });
+    expect(parseExperience("Engineer", "Founded 10 years ago.")).toBeNull();
   });
 
   it("keeps different departments, employment terms and teams apart", () => {

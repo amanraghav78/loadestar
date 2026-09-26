@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { MapPin } from "lucide-react";
+import { History, MapPin } from "lucide-react";
 import { CompanyAvatar } from "@/components/company-avatar";
 import { SaveButton } from "@/components/save-button";
+import { formatExperience } from "@/lib/experience";
 import { formatAge, formatPostedAgo, formatSalaryBand, REMOTE_LABEL } from "@/lib/format";
 import type { JobCardData } from "@/lib/queries";
 import { cn } from "@/lib/cn";
@@ -10,6 +11,8 @@ import { cn } from "@/lib/cn";
 export function JobCard({ job, showCompany = true }: { job: JobCardData; showCompany?: boolean }) {
   const band = formatSalaryBand(job.salaryMin, job.salaryMax, job.currency);
   const place = job.remote === "REMOTE" && job.location === "India" ? "Anywhere in India" : job.location;
+  // Only when the posting says; a guess from the level isn't shown.
+  const years = formatExperience(job.experienceMin, job.experienceMax);
 
   return (
     <article className="metal-card group flex min-w-0 flex-1 flex-col rounded-2xl p-5">
@@ -32,6 +35,13 @@ export function JobCard({ job, showCompany = true }: { job: JobCardData; showCom
           <MapPin className="text-subtle size-3 shrink-0" aria-hidden />
           <span className="truncate">{place}</span>
         </span>
+        {years && (
+          <span className="inline-flex shrink-0 items-center gap-1">
+            <History className="text-subtle size-3 shrink-0" aria-hidden />
+            <span className="sr-only">Experience:</span>
+            {years}
+          </span>
+        )}
         {job.remote !== "ONSITE" && (
           <span className="border-line rounded-full border px-2 py-0.5 text-[11px]">{REMOTE_LABEL[job.remote]}</span>
         )}

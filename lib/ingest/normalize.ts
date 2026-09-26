@@ -25,6 +25,9 @@ export type NormalizedJob = {
   remoteRegion: string | null;
   salaryMin: number | null;
   salaryMax: number | null;
+  /** Years of experience asked for (parseExperience); null when the posting doesn't say. */
+  experienceMin: number | null;
+  experienceMax: number | null;
   applyUrl: string;
   postedAt: Date;
   contentHash: string;
@@ -84,6 +87,7 @@ export function normalizePosting(
     if (min >= 100_000 && max <= 200_000_000) band = { min, max };
   }
   band ??= parseInrSalary(p.description);
+  const experience = parseExperience(p.title, p.description);
 
   const job: Omit<NormalizedJob, "contentHash"> = {
     externalId: p.externalId,
@@ -98,6 +102,8 @@ export function normalizePosting(
     remoteRegion: remote === "REMOTE" ? "India" : null,
     salaryMin: band?.min ?? null,
     salaryMax: band?.max ?? null,
+    experienceMin: experience?.min ?? null,
+    experienceMax: experience?.max ?? null,
     applyUrl,
     postedAt: p.postedAt,
     role: {
@@ -113,10 +119,15 @@ export function normalizePosting(
 /** Fingerprint of everything we display, so the sync only rewrites changed rows. */
 function hashJob(job: Omit<NormalizedJob, "contentHash"> & { contentHash?: string }) {
   // postedAt, the role signals and the previous hash are excluded: none changes what we display.
+  // Experience is read from the title and description, which are hashed already;
+  // leaving it out keeps the hashes of rows stored before it existed, so adding
+  // it didn't rewrite every row (scripts/backfill-experience.ts fills those).
   const rest: Partial<NormalizedJob> = { ...job };
   delete rest.postedAt;
   delete rest.contentHash;
   delete rest.role;
+  delete rest.experienceMin;
+  delete rest.experienceMax;
   return createHash("sha1").update(JSON.stringify(rest)).digest("hex");
 }
 
@@ -219,7 +230,8 @@ function roleFacts(job: NormalizedJob) {
       job.salaryMax ?? "",
       job.role.department ?? "",
       job.role.classification ?? "",
-      yearsOfExperience(job.title, job.description) ?? "",
+      // What parseExperience read, as normalizePosting stored it.
+      job.experienceMin === null ? "" : `${job.experienceMin}-${job.experienceMax ?? "+"}`,
     ].join("|"),
     // Only built for postings that share every other fact, which is few of them.
     words: () => (words ??= wordSet(job.description)),
@@ -241,21 +253,148 @@ export function titleKey(title: string) {
     .join(" ");
 }
 
-const YEARS = /(\d{1,2})\s*(?:(?:-|–|—|to)\s*(\d{1,2})\s*)?\+?\s*(?:years?|yrs?)\b/gi;
+// ------------------------------------------------------------------ experience
 
 /**
- * The experience a posting asks for, as "3-5" or "5+": from the title when it
- * says, else from the first figure in the description that sits next to the
- * word "experience" (so "founded 10 years ago" doesn't count).
+ * Years of experience a role asks for: "3-5 years" is { min: 3, max: 5 },
+ * "3+ years" is { min: 3, max: null }, a fresher role is { min: 0, max: 1 }.
  */
-export function yearsOfExperience(title: string, description: string): string | null {
-  const read = (m: RegExpMatchArray) => (m[2] ? `${m[1]}-${m[2]}` : `${m[1]}+`);
-  const inTitle = [...title.matchAll(YEARS)][0];
-  if (inTitle) return read(inTitle);
-  for (const m of description.matchAll(YEARS)) {
-    const around = description.slice(Math.max(0, m.index - 40), m.index + m[0].length + 40);
-    if (/experience|\bexp\b/i.test(around)) return read(m);
+export type ExperienceRange = { min: number; max: number | null };
+
+const WORD_NUMBERS: Record<string, number> = {
+  zero: 0,
+  one: 1,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  six: 6,
+  seven: 7,
+  eight: 8,
+  nine: 9,
+  ten: 10,
+  eleven: 11,
+  twelve: 12,
+  fifteen: 15,
+};
+const NUM = String.raw`(?:\d{1,2}(?:\.\d)?(?!\d)|${Object.keys(WORD_NUMBERS).join("|")})`;
+
+/** An amount of years, with what qualifies it: "at least two years", "3 – 5 yrs", "10+ yrs", "5 or more years". */
+const YEARS = new RegExp(
+  String.raw`(?<lead>\b(?:minimum(?:\s+of)?|min\.?|at\s*least|over|more\s+than|up\s*to|between)\s+)?` +
+    String.raw`\b(?<a>${NUM})(?:\s*(?<sep>-|–|—|to|and)\s*(?<b>${NUM}))?` +
+    String.raw`(?<plus>\s*\+|\s+or\s+(?:more|above))?\s*-?\s*(?:years?|yrs?)\b\.?['’]?(?<plus2>\s*\+)?`,
+  "gi",
+);
+
+/** Says the figure is about the candidate's experience. */
+const EXPERIENCE = /\b(?:experience[ds]?|exp)\b/i;
+/** Right after the figure, says it is experience even without the word: "4+ years building …". */
+const EXPERIENCE_LIKE =
+  /^\s*(?:of\s+)?(?:(?:relevant|professional|industry|hands-on|proven|prior|post-qualification|full-time|work|working)\b|(?:as|in)\s+(?:a|an)\s|(?:building|developing|designing|leading|managing|shipping)\b)/i;
+/** Between the figure and "experience", these make it about something else: "2 years of warranty". */
+const NOT_EXPERIENCE =
+  /\b(?:ago|old|warranty|guarantee|bond|agreement|contract|commitment|lock-?in|tenure|degree|diploma|course|program(?:me)?|bachelor'?s?|college|university|graduation|study|studies|schooling|business|operations|history|anniversary|visa|vesting|cliff|stay)\b/i;
+/** Just before the figure: "founded 10 years", "age 21-28 years". */
+const NOT_EXPERIENCE_BEFORE =
+  /\b(?:founded|established|incorporated|since|age(?:\s+(?:limit|group|range|between))?|aged|anniversary|celebrating)\W*$/i;
+/** A sentence about the employer rather than the candidate: "With over 20 years of experience, we …". */
+const ABOUT_US = /\b(?:we|we've|we're|our|us|combined|collective)\b/i;
+const ABOUT_YOU =
+  /\b(?:you|your|you'll|candidates?|applicants?|looking\s+for|seeking|must|should|required|requirements?|ideal(?:ly)?|preferred|minimum|at\s+least|need)\b/i;
+/** A label line such as "Experience:" or "## Required experience" with the figure on the next line. */
+const EXPERIENCE_LABEL = /^[\W_]*(?:(?:total|work|relevant|required|years\s+of)\s+)?(?:experience|exp)\b[\W_]*$/i;
+
+const FRESHER_TITLE = /\bfreshers?\b/i;
+const FRESHER_TEXT = [
+  /\bfreshers?\s+(?:are\s+|can\s+(?:also\s+)?|may\s+)?(?:welcome|encouraged|eligible|apply|preferred|only)\b/i,
+  /\b(?:open\s+to|suitable\s+for|ideal\s+for|only|hiring)\s+freshers?\b/i,
+  /\b(?:experience|exp)(?:\s+(?:level|required))?\s*[:\-–]\s*freshers?\b/i,
+];
+const FRESHER_REFUSED =
+  /\b(?:no|not|non|nor)\b(?:\W+\w+){0,2}\W+freshers?\b|\bfreshers?\b(?:\W+\w+){0,2}\W+(?:not|don['’]?t)\b/i;
+
+const FRESHER: ExperienceRange = { min: 0, max: 1 };
+
+const toNumber = (s: string) => WORD_NUMBERS[s.toLowerCase()] ?? Number(s);
+
+/** The range one match describes, or null when it isn't a plausible ask ("5-3 years", "0-25 years"). */
+function readYears(m: RegExpMatchArray): ExperienceRange | null {
+  const g = m.groups!;
+  const lead = g.lead?.toLowerCase().replace(/\s+/g, " ").trim() ?? "";
+  const a = toNumber(g.a!);
+  let range: ExperienceRange;
+  if (g.b) {
+    if (g.sep === "and" && lead !== "between") return null;
+    range = { min: Math.floor(a), max: Math.ceil(toNumber(g.b)) };
+  } else if (lead === "up to" || lead === "upto") {
+    range = { min: 0, max: Math.ceil(a) };
+  } else {
+    range = { min: Math.floor(a), max: null };
   }
+  if (range.min > 30) return null;
+  if (range.max !== null && (range.max < range.min || range.max > 40 || range.max - range.min > 15)) return null;
+  if (range.max === range.min && range.min > 0) range.max = null;
+  return range;
+}
+
+/** The sentence around a match: split on new lines, semicolons, bullets and full stops. */
+function clauseAround(text: string, start: number, end: number) {
+  const before = text.slice(0, start);
+  const cut = Math.max(before.search(/[^\n;•]*$/), ...[...before.matchAll(/[.!?]\s/g)].map((x) => x.index + 2));
+  const after = text.slice(end);
+  const stop = after.search(/[\n;•]|[.!?](?:\s|$)/);
+  return {
+    head: text.slice(Math.max(cut, start - 120), start),
+    tail: after.slice(0, stop === -1 ? 120 : Math.min(stop, 120)),
+    /** The current line up to the match. */
+    line: before.slice(before.lastIndexOf("\n") + 1),
+    /** The nearest non-blank line above it. */
+    previousLine:
+      before
+        .slice(0, before.lastIndexOf("\n") + 1)
+        .trimEnd()
+        .split("\n")
+        .pop() ?? "",
+  };
+}
+
+function isExperienceAsk(text: string, m: RegExpMatchArray) {
+  const { head, tail, line, previousLine } = clauseAround(text, m.index!, m.index! + m[0].length);
+  // Only what sits between the figure and the word "experience" can change its meaning.
+  const upToKeyword = tail.slice(0, tail.search(EXPERIENCE) === -1 ? 40 : tail.search(EXPERIENCE));
+  if (NOT_EXPERIENCE.test(upToKeyword) || NOT_EXPERIENCE_BEFORE.test(head)) return false;
+  const clause = `${head}${m[0]}${tail}`;
+  if (ABOUT_US.test(clause) && !ABOUT_YOU.test(clause)) return false;
+  if (EXPERIENCE.test(head) || EXPERIENCE.test(tail) || EXPERIENCE_LIKE.test(tail)) return true;
+  // "Experience:" on a line of its own, and the figure opening the next.
+  return EXPERIENCE_LABEL.test(previousLine) && /^[\s\-*–•]*$/.test(line);
+}
+
+/**
+ * The experience a posting asks for, or null when it doesn't say.
+ *
+ * The title is trusted with any figure in years ("Backend Engineer (2-4
+ * yrs)"). In the description a figure only counts when its sentence is about
+ * experience ("3+ years of experience", "Experience: 5 to 8 yrs", "at least
+ * two years building …"), so "founded 10 years ago", "a 4-year degree" and
+ * "2 years of warranty" don't. The first such figure wins. A role that asks
+ * for no figure but welcomes freshers is { min: 0, max: 1 }.
+ */
+export function parseExperience(title: string, description: string): ExperienceRange | null {
+  for (const m of title.matchAll(YEARS)) {
+    const tail = title.slice(m.index + m[0].length);
+    if (NOT_EXPERIENCE.test(tail.slice(0, 30))) continue;
+    const range = readYears(m);
+    if (range) return range;
+  }
+  for (const m of description.matchAll(YEARS)) {
+    if (!isExperienceAsk(description, m)) continue;
+    const range = readYears(m);
+    if (range) return range;
+  }
+  if (FRESHER_TITLE.test(title) && !FRESHER_REFUSED.test(title)) return FRESHER;
+  if (!FRESHER_REFUSED.test(description) && FRESHER_TEXT.some((re) => re.test(description))) return FRESHER;
   return null;
 }
 

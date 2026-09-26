@@ -1,9 +1,10 @@
 import { Chip } from "@/components/ui/tag";
 import { DISCIPLINE_LABEL, EMPLOYMENT_TYPE_LABEL, INDUSTRY_LABEL, LEVEL_LABEL, REMOTE_LABEL } from "@/lib/format";
+import { EXPERIENCE_BUCKETS } from "@/lib/experience";
 import { INDIA_CITIES } from "@/lib/ingest/classify";
 import { toQueryString, type JobSearchParams } from "@/lib/validators";
 
-type Key = "city" | "discipline" | "employmentType" | "industry" | "level" | "remote" | "salary";
+type Key = "city" | "discipline" | "employmentType" | "exp" | "industry" | "level" | "remote" | "salary";
 
 /** Cities shown up front; the rest sit under "More cities". */
 const TOP_CITIES = ["Bengaluru", "Hyderabad", "Pune", "Gurugram", "Chennai", "Mumbai", "Noida", "Delhi"];
@@ -71,6 +72,14 @@ export function JobFilters({ params }: { params: JobSearchParams }) {
       <Group label="Job type">
         {Object.entries(EMPLOYMENT_TYPE_LABEL).map(([value, label]) => (
           <Chip key={value} href={filterHref(params, "employmentType", value)} active={params.employmentType === value}>
+            {label}
+          </Chip>
+        ))}
+      </Group>
+
+      <Group label="Experience">
+        {Object.entries(EXPERIENCE_BUCKETS).map(([value, { label }]) => (
+          <Chip key={value} href={filterHref(params, "exp", value)} active={params.exp === value}>
             {label}
           </Chip>
         ))}

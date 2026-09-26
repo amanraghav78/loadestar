@@ -41,6 +41,22 @@ export function siteJsonLd(site: SiteInfo) {
   };
 }
 
+/**
+ * JobPosting `experienceRequirements`, spread into the posting: the minimum in
+ * months when the posting states one, "no requirements" for a fresher role
+ * (Google's value for it), and nothing when the years aren't known.
+ */
+export function experienceRequirementsJsonLd(minYears: number | null) {
+  if (minYears === null) return {};
+  if (minYears === 0) return { experienceRequirements: "no requirements" };
+  return {
+    experienceRequirements: {
+      "@type": "OccupationalExperienceRequirements",
+      monthsOfExperience: minYears * 12,
+    },
+  };
+}
+
 /** JSON for a `<script type="application/ld+json">`; "<" is escaped so it cannot close the tag. */
 export function jsonLdScript(data: unknown) {
   return JSON.stringify(data).replace(/</g, "\\u003c");

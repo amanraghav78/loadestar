@@ -102,6 +102,9 @@ type SeedJob = {
   postedDaysAgo: number;
   featured?: boolean;
   employmentType?: EmploymentType;
+  /** Years of experience the role states; left out, the level stands in for it. */
+  experienceMin?: number;
+  experienceMax?: number | null;
 };
 
 // The six roles from the mockup.
@@ -109,6 +112,8 @@ const mockupJobs: SeedJob[] = [
   {
     company: "arclight",
     title: "Senior Backend Engineer, Ingest",
+    experienceMin: 6,
+    experienceMax: 10,
     discipline: "ENGINEERING",
     level: "SENIOR",
     tags: ["Go", "Kafka", "Distributed systems"],
@@ -199,6 +204,8 @@ const otherShapes: SeedJob[] = [
   {
     company: "halcyon",
     title: "Data Engineering Intern",
+    experienceMin: 0,
+    experienceMax: 1,
     discipline: "DATA",
     level: "INTERN",
     tags: ["Python", "SQL", "dbt"],
@@ -249,6 +256,8 @@ const templates: Array<
 > = [
   {
     title: "Backend Engineer",
+    experienceMin: 3,
+    experienceMax: 5,
     discipline: "ENGINEERING",
     level: "MID",
     tags: ["Go", "PostgreSQL", "APIs"],
@@ -256,6 +265,8 @@ const templates: Array<
   },
   {
     title: "Senior Backend Engineer",
+    experienceMin: 5,
+    experienceMax: null,
     discipline: "ENGINEERING",
     level: "SENIOR",
     tags: ["Rust", "Distributed systems", "gRPC"],
@@ -263,6 +274,8 @@ const templates: Array<
   },
   {
     title: "Staff Software Engineer",
+    experienceMin: 8,
+    experienceMax: null,
     discipline: "ENGINEERING",
     level: "STAFF",
     tags: ["Architecture", "Go", "Mentoring"],
@@ -277,6 +290,8 @@ const templates: Array<
   },
   {
     title: "Mobile Engineer",
+    experienceMin: 2,
+    experienceMax: 4,
     discipline: "ENGINEERING",
     level: "MID",
     tags: ["Swift", "Kotlin", "Offline-first"],
@@ -310,7 +325,15 @@ const templates: Array<
     tags: ["Roadmapping", "Fintech", "Strategy"],
     base: 100_000,
   },
-  { title: "Data Engineer", discipline: "DATA", level: "MID", tags: ["dbt", "Airflow", "SQL"], base: 78_000 },
+  {
+    title: "Data Engineer",
+    discipline: "DATA",
+    level: "MID",
+    tags: ["dbt", "Airflow", "SQL"],
+    base: 78_000,
+    experienceMin: 1,
+    experienceMax: 3,
+  },
   {
     title: "Senior Data Scientist",
     discipline: "DATA",
@@ -373,6 +396,8 @@ function generatedJobs(): SeedJob[] {
         discipline: t.discipline,
         level: t.level,
         tags: t.tags,
+        experienceMin: t.experienceMin,
+        experienceMax: t.experienceMax,
         location: place.location,
         remote: r.remote,
         remoteRegion: r.region,
@@ -447,6 +472,8 @@ async function main() {
         location: job.location,
         remote: job.remote,
         remoteRegion: job.remoteRegion ?? null,
+        experienceMin: job.experienceMin ?? null,
+        experienceMax: job.experienceMin == null ? null : (job.experienceMax ?? null),
         salaryMin: job.salaryMin,
         salaryMax: job.salaryMax,
         currency: job.currency,

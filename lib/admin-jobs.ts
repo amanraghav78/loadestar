@@ -25,6 +25,15 @@ export function salaryFields(input: Pick<JobInput, "salaryMin" | "salaryMax" | "
   };
 }
 
+/** Experience columns: a minimum and an optional maximum, or both null when the listing doesn't say. */
+export function experienceFields(input: Pick<JobInput, "experienceMin" | "experienceMax">) {
+  const known = input.experienceMin != null;
+  return {
+    experienceMin: known ? input.experienceMin! : null,
+    experienceMax: known ? (input.experienceMax ?? null) : null,
+  };
+}
+
 function jobData(input: JobInput, name: string) {
   return {
     title: input.title,
@@ -38,6 +47,7 @@ function jobData(input: JobInput, name: string) {
     remote: input.remote,
     remoteRegion: input.remoteRegion ?? null,
     ...salaryFields(input),
+    ...experienceFields(input),
     applyUrl: input.applyUrl,
     featured: input.featured,
     searchText: buildSearchText({ ...input, companyName: name }),
