@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import type { Prisma } from "@/lib/generated/prisma/client";
 import type { Currency, Discipline, Level } from "@/lib/generated/prisma/enums";
 import { afterCursor, DEFAULT_SORT, orderByFor, resolveSort, sortRowSelect, type JobSort } from "@/lib/job-sort";
+import { buildVocabulary } from "@/lib/suggest";
 import type { JobSearchParams } from "@/lib/validators";
 
 /**
@@ -321,4 +322,30 @@ export async function getSitemapData() {
     db.company.findMany({ select: { slug: true, updatedAt: true } }),
   ]);
   return { jobs, companies };
+}
+
+// ---------------------------------------------------------------- search suggestions
+
+/**
+ * Everything the search box can complete to: titles, companies and skills of
+ * active listings, and the cities they are in (lib/suggest.ts). One pass over
+ * the active jobs' short columns, cached for the hour and dropped with the
+ * jobs tag, so /api/suggest only ever matches in memory.
+ */
+export async function getSuggestVocabulary() {
+  "use cache";
+  cacheLife("hours");
+  cacheTag(TAGS.jobs, TAGS.companies);
+
+  const [jobs, companies] = await Promise.all([
+    db.job.findMany({ where: ACTIVE, select: { title: true, tags: true, location: true, remote: true } }),
+    db.company.findMany({
+      where: { jobs: { some: ACTIVE } },
+      select: { name: true, slug: true, _count: { select: { jobs: { where: ACTIVE } } } },
+    }),
+  ]);
+  return buildVocabulary(
+    jobs,
+    companies.map((c) => ({ name: c.name, slug: c.slug, openRoles: c._count.jobs })),
+  );
 }

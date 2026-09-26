@@ -79,6 +79,33 @@ test("search, filter and open a role", async ({ page }) => {
   await expect(page.getByRole("link", { name: /^Apply now/ })).toHaveAttribute("href", /^\/apply\//);
 });
 
+test("the search box suggests titles and places as you type", async ({ page }) => {
+  await page.goto("/");
+  const q = page.getByPlaceholder("Job title, skill or company");
+  await q.click();
+  await q.pressSequentially("back", { delay: 40 });
+  const titles = page.getByRole("listbox", { name: "Suggestions" }).getByRole("option");
+  await expect(titles.first()).toContainText(/back/i);
+  await expect(titles.first()).toContainText("Title");
+  const picked = (await titles.first().locator("span").first().textContent())!.trim();
+  await q.press("ArrowDown");
+  await expect(q).toHaveAttribute("aria-activedescendant", /.+/);
+  await q.press("Enter");
+  await expect(page).toHaveURL((url) => url.pathname === "/jobs" && url.searchParams.get("q") === picked);
+
+  await page.goto("/");
+  const location = page.getByPlaceholder("City or remote");
+  await location.click();
+  await location.pressSequentially("bangal", { delay: 40 });
+  const places = page.getByRole("listbox", { name: "Places" }).getByRole("option");
+  await expect(places.first()).toContainText("Bengaluru");
+  await location.press("ArrowDown");
+  await location.press("Enter");
+  await expect(location).toHaveValue("Bengaluru");
+  // A place fills its box; the search waits for the keyword.
+  await expect(page).toHaveURL((url) => url.pathname === "/");
+});
+
 test("the home page carries a share image and site structured data", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", /^https?:\/\/.+\/opengraph-image/);
