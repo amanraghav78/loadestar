@@ -487,10 +487,10 @@ body {
     display: block;
   }
 }
-@supports (animation-timeline: scroll()) {
+@supports (animation-timeline: scroll(root)) {
   .scroll-cue {
     animation: cue-fade linear both;
-    animation-timeline: scroll();
+    animation-timeline: scroll(root);
     animation-range: 0 12rem;
   }
 }
