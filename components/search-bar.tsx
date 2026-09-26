@@ -1,5 +1,6 @@
 import Form from "next/form";
 import { MapPin, Search } from "lucide-react";
+import { SearchSuggest } from "@/components/search-suggest";
 import { cn } from "@/lib/cn";
 
 /**
@@ -11,6 +12,9 @@ import { cn } from "@/lib/cn";
  * page has city filters for small screens.
  *
  * `glow` (the home page) runs a band of light around the edge.
+ *
+ * Suggestions (titles, companies, skills, cities) come from <SearchSuggest>,
+ * which loads the combobox only once someone reaches for the form.
  */
 export function SearchBar({
   q,
@@ -40,6 +44,7 @@ export function SearchBar({
       )}
     >
       {glow && <span className="beam-ring" aria-hidden />}
+      <SearchSuggest />
       <label className="flex min-w-0 flex-[1.4] items-center gap-3 px-4">
         <Search className="text-subtle size-4 shrink-0" aria-hidden />
         <span className="sr-only">Job title, skill or company</span>

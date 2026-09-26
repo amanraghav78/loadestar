@@ -21,6 +21,8 @@ function limiter(prefix: string, requests: number) {
 const limiters = {
   apply: limiter("apply", 20),
   api: limiter("api", 60),
+  // Search-box suggestions: one request per pause while typing, so a looser budget.
+  suggest: limiter("suggest", 120),
   // Sign-in attempts. Only the POST side: throttling the OAuth callback would
   // strand people midway through signing in.
   auth: limiter("auth", 10),

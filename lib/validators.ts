@@ -78,6 +78,22 @@ export function toQueryString(params: Partial<JobSearchParams>) {
   return s ? `?${s}` : "";
 }
 
+/**
+ * GET /api/suggest?field=q|location&term=…. The field has to be one of the
+ * two; the term is trimmed and cut to what the search inputs accept, so a
+ * long paste still suggests from its start instead of failing.
+ */
+export const suggestParamsSchema = z.object({
+  field: z.preprocess(first, z.enum(["q", "location"])),
+  term: z.preprocess(
+    first,
+    z
+      .string()
+      .optional()
+      .transform((s) => (s ?? "").trim().slice(0, 60)),
+  ),
+});
+
 const httpsUrl = z.url({ protocol: /^https?$/ }).max(2000);
 
 const optionalMoney = z.preprocess(
