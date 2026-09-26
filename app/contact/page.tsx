@@ -18,7 +18,7 @@ export default function ContactPage() {
         </a>
         . We reply within two working days.
       </p>
-      <h3>Reporting a listing</h3>
+      <h2>Reporting a listing</h2>
       <p>
         Include the listing URL and what&rsquo;s wrong with it: a missing or misleading band, a filled role, or a broken
         application link. We review every report.

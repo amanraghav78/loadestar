@@ -97,7 +97,7 @@ export function JobFilters({ params }: { params: JobSearchParams }) {
 function Group({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <section aria-label={label}>
-      <h3 className="text-subtle mb-2.5 text-[11px] font-medium tracking-[0.14em] uppercase">{label}</h3>
+      <h2 className="text-subtle mb-2.5 text-[11px] font-medium tracking-[0.14em] uppercase">{label}</h2>
       <div className="flex flex-wrap gap-1.5">{children}</div>
     </section>
   );

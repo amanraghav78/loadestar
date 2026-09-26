@@ -15,7 +15,7 @@ export default function VerificationPage() {
         <li>Filled roles come down, and every listing is removed once it is 30 days old.</li>
         <li>Publish an annual salary range in rupees and your job is ranked first.</li>
       </ul>
-      <h3>Corrections and removal</h3>
+      <h2>Corrections and removal</h2>
       <p>
         If something about your listing is wrong, or you&rsquo;d rather not appear on Lodestar, contact us and
         we&rsquo;ll fix or remove it within two working days.

@@ -20,14 +20,14 @@ export default function TermsPage() {
         were last updated on {UPDATED}.
       </p>
 
-      <h3>What Lodestar is</h3>
+      <h2>What Lodestar is</h2>
       <p>
         We list jobs at other companies. We are not an employer, a recruiter or an agent, and we are not part of any
         hiring decision. Applying takes you to the employer&rsquo;s own site, and everything after that is between you
         and them — including their terms, their privacy policy and their decision.
       </p>
 
-      <h3>Using the site as a candidate</h3>
+      <h2>Using the site as a candidate</h2>
       <ul>
         <li>An account is optional, and one account belongs to one person.</li>
         <li>
@@ -41,7 +41,7 @@ export default function TermsPage() {
         <li>You can delete your account, and everything in it, whenever you like.</li>
       </ul>
 
-      <h3>Posting a role</h3>
+      <h2>Posting a role</h2>
       <ul>
         <li>
           Post only roles you are actually hiring for, at the company you told us you work for. Every band must be a
@@ -58,7 +58,7 @@ export default function TermsPage() {
         <li>You are responsible for your listing being lawful, accurate and free of discriminatory requirements.</li>
       </ul>
 
-      <h3>Reviews</h3>
+      <h2>Reviews</h2>
       <p>
         Reviews must describe your own first-hand experience of working somewhere. They are checked by a person before
         they appear. We remove anything that names an individual, reveals confidential information, or reads as
@@ -66,7 +66,7 @@ export default function TermsPage() {
         author&rsquo;s opinion, not ours.
       </p>
 
-      <h3>What we can&rsquo;t promise</h3>
+      <h2>What we can&rsquo;t promise</h2>
       <p>
         Listings come from employers and their job feeds, and we verify what we reasonably can. Even so, we can&rsquo;t
         promise every listing is current, complete or accurate, that the site is always available, or that you will hear
@@ -74,7 +74,7 @@ export default function TermsPage() {
         whether that is a role that turned out to be filled, or an application nobody answered.
       </p>
 
-      <h3>Your content</h3>
+      <h2>Your content</h2>
       <p>
         What you write stays yours. By posting a listing or a review you give us permission to show it on the site and
         in search results, and to keep showing it if you later delete your account — a review still attributed to nobody
@@ -82,25 +82,25 @@ export default function TermsPage() {
         <Link href="/privacy">privacy policy</Link>.
       </p>
 
-      <h3>Suspension</h3>
+      <h2>Suspension</h2>
       <p>
         We can suspend an account or remove content that breaks these terms, with notice where it is practical to give
         it. Serious cases — fraudulent listings, harvesting candidate data, abuse of a reviewer — get no notice.
       </p>
 
-      <h3>Governing law</h3>
+      <h2>Governing law</h2>
       <p>
         These terms are governed by the laws of India, and the courts at Bengaluru have exclusive jurisdiction over any
         dispute arising from them.
       </p>
 
-      <h3>Changes</h3>
+      <h2>Changes</h2>
       <p>
         We will update this page when the terms change, and the date at the top with it. Continuing to use the site
         after a change means you accept the new version.
       </p>
 
-      <h3>Getting in touch</h3>
+      <h2>Getting in touch</h2>
       <p>
         Questions about these terms: <a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>.
       </p>
