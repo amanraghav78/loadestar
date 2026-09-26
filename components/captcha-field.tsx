@@ -1,7 +1,6 @@
 "use client";
 
 import Script from "next/script";
-import { env } from "@/lib/env";
 
 /**
  * The Turnstile checkbox, as a form field.
@@ -15,7 +14,11 @@ import { env } from "@/lib/env";
  * script is loaded once per page by next/script, after the form is interactive.
  */
 export function CaptchaField({ className }: { className?: string }) {
-  const siteKey = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  // Read directly, not through lib/env: that module brings zod and the whole
+  // env schema (~90KB) into the client bundle of every page with a form, and
+  // the home page prefetches those pages. Next inlines NEXT_PUBLIC_ values at
+  // build time; lib/env.ts still validates this one on the server.
+  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || undefined;
   if (!siteKey) return null;
 
   return (

@@ -1,10 +1,6 @@
-import * as Sentry from "@sentry/nextjs";
+import { captureRouterTransitionStart, loadSentryWhenIdle } from "./lib/sentry-client";
 
-Sentry.init({
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-  enabled: Boolean(process.env.NEXT_PUBLIC_SENTRY_DSN),
-  environment: process.env.NEXT_PUBLIC_VERCEL_ENV ?? process.env.NODE_ENV,
-  tracesSampleRate: 0.05,
-});
+// The SDK is kept off the critical path: see lib/sentry-client.ts.
+loadSentryWhenIdle();
 
-export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
+export const onRouterTransitionStart = captureRouterTransitionStart;

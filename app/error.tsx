@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect } from "react";
-import * as Sentry from "@sentry/nextjs";
+import { captureError } from "@/lib/sentry-client";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 
 export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
-    Sentry.captureException(error);
+    captureError(error);
   }, [error]);
 
   return (

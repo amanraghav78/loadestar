@@ -18,7 +18,7 @@ export function ResumeBuilderPromo() {
   if (!authEnabled) return null;
 
   return (
-    <Container wide className="pt-20" data-reveal-stagger>
+    <Container wide className="defer-render pt-20" data-reveal-stagger>
       <section
         aria-labelledby="resume-builder-promo"
         className="metal grid items-center gap-10 overflow-hidden rounded-3xl p-6 sm:p-10 md:grid-cols-[1.05fr_1fr]"

@@ -40,12 +40,31 @@
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
   --animate-fade-up: fade-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-focus-up: focus-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-glint: glint 7s ease-in-out infinite;
   --animate-ping-slow: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
 
   @keyframes fade-up {
     from {
       opacity: 0;
+      transform: translateY(16px);
+      filter: blur(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+      filter: none;
+    }
+  }
+
+  /*
+   * fade-up for the headline, the page's largest text: it starts as a faint
+   * blur rather than fully transparent, so it is painted (and counts as the
+   * largest contentful paint) on the first frame instead of after the fade.
+   */
+  @keyframes focus-up {
+    from {
+      opacity: 0.2;
       transform: translateY(16px);
       filter: blur(6px);
     }
@@ -546,6 +565,10 @@ body {
   filter: blur(5px);
   transition-duration: 0.55s, 0.3s, 0.35s;
 }
+/* Only the word on show shimmers; the hidden ones hold still rather than repaint unseen. */
+.rotating-word-item:not([data-state="in"]) {
+  animation-play-state: paused;
+}
 .foil-text {
   background-image: var(--foil);
   background-size: 250% 100%;
@@ -563,32 +586,45 @@ body {
   }
 }
 
-/* A band of light running around the home page search box. */
-@property --beam-angle {
-  syntax: "<angle>";
-  inherits: false;
-  initial-value: 0deg;
-}
-.beam::before {
-  content: "";
+/*
+ * A band of light running around the home page search box (`.beam` is the
+ * form, `.beam-ring` a span inside it). The ring is a 1.5px frame cut out by a
+ * mask; inside it a large square holding a fixed conic gradient turns about the
+ * box's centre. Turning it is a transform the compositor runs on its own, where
+ * animating the gradient's angle repainted the ring on the main thread every
+ * frame. Same picture: either way the light sits at one angle from the centre.
+ */
+.beam-ring {
   position: absolute;
   inset: -1px;
   padding: 1.5px;
+  overflow: hidden;
   pointer-events: none;
   border-radius: inherit;
-  background: conic-gradient(from var(--beam-angle), transparent 0deg 260deg, var(--beam) 320deg, transparent 350deg);
   mask:
     linear-gradient(#000 0 0) content-box exclude,
     linear-gradient(#000 0 0);
-  animation: beam-spin 6s linear infinite;
   transition: opacity 0.3s ease;
 }
-.beam:focus-within::before {
+.beam-ring::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  /* Wider than the box's diagonal, so the ring is always covered as it turns. */
+  width: max(115%, 12rem);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  background: conic-gradient(transparent 0deg 260deg, var(--beam) 320deg, transparent 350deg);
+  animation: beam-spin 6s linear infinite;
+  will-change: transform;
+}
+.beam:focus-within > .beam-ring {
   opacity: 0;
 }
 @keyframes beam-spin {
   to {
-    --beam-angle: 360deg;
+    transform: rotate(360deg);
   }
 }
 
@@ -631,6 +667,28 @@ body {
 }
 .spotlight .metal-card:hover::after {
   opacity: 1;
+}
+
+/*
+ * Below-the-fold home sections: the browser skips their layout and paint (and
+ * the animations inside) until they come near the viewport, so the first
+ * render only lays out the hero. `auto` remembers each section's real height
+ * once it has been drawn. Paint containment clips at the padding box, so the
+ * bottom padding gives hover shadows and focus rings room, and the matching
+ * negative margin keeps the spacing between sections unchanged.
+ */
+.defer-render {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 40rem;
+  padding-bottom: 3rem;
+  margin-bottom: -3rem;
+}
+
+/* The hero's loops stop while it is scrolled out of view (HomeEffects sets data-paused). */
+[data-paused] *,
+[data-paused] *::before,
+[data-paused] *::after {
+  animation-play-state: paused !important;
 }
 
 /* Sections rise into place once, the first time they scroll into view (see HomeEffects). */
@@ -919,7 +977,7 @@ body {
   .foil-text,
   .marquee-track,
   .scroll-cue > span::after,
-  .beam::before,
+  .beam-ring::before,
   .why-flow,
   .why-node-glow,
   .why-dial,
@@ -937,7 +995,7 @@ body {
   .spam-strike {
     transform: none;
   }
-  .beam::before {
+  .beam-ring {
     display: none;
   }
   .marquee {

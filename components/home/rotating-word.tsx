@@ -15,6 +15,7 @@ export function RotatingWord({ words, interval = 2600 }: { words: string[]; inte
   const [index, setIndex] = useState(0);
   const [widths, setWidths] = useState<number[] | null>(null);
   const items = useRef<(HTMLSpanElement | null)[]>([]);
+  const slot = useRef<HTMLSpanElement>(null);
 
   // Measured before paint, so switching to an explicit width changes nothing on screen.
   useLayoutEffect(() => {
@@ -28,14 +29,18 @@ export function RotatingWord({ words, interval = 2600 }: { words: string[]; inte
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const id = window.setInterval(() => setIndex((i) => (i + 1) % words.length), interval);
+    // Holds its word while the hero is scrolled away (HomeEffects sets data-paused) or the tab is hidden.
+    const id = window.setInterval(() => {
+      if (document.hidden || slot.current?.closest("[data-paused]")) return;
+      setIndex((i) => (i + 1) % words.length);
+    }, interval);
     return () => window.clearInterval(id);
   }, [words.length, interval]);
 
   const previous = (index - 1 + words.length) % words.length;
 
   return (
-    <span className="rotating-word" style={widths ? { width: widths[index] } : undefined}>
+    <span ref={slot} className="rotating-word" style={widths ? { width: widths[index] } : undefined}>
       {/* In flow and invisible: gives the slot its height and, before measuring, its width. */}
       <span className="rotating-word-strut">{words[0]}</span>
       {words.map((word, i) => (

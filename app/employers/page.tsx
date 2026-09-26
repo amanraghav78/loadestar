@@ -118,7 +118,7 @@ async function Dashboard({ notice }: { notice: "submitted" | "updated" | null })
           <p className="text-muted mt-2 mb-6 max-w-md text-sm">
             We verify this once. After that you can post, edit and close your own roles.
           </p>
-          <ClaimForm companies={companies} />
+          <ClaimForm companies={companies} contactEmail={site.contactEmail} />
         </div>
       </div>
     );

@@ -85,7 +85,7 @@ async function CachedHomePage({ jobs }: { jobs: React.ReactNode }) {
           <h1 className="sr-only">{site.tagline}</h1>
           <p
             aria-hidden
-            className="animate-fade-up mt-6 text-4xl leading-[1.04] font-semibold tracking-[-0.045em] [animation-delay:240ms] sm:text-6xl lg:text-7xl"
+            className="animate-focus-up mt-6 text-4xl leading-[1.04] font-semibold tracking-[-0.045em] [animation-delay:240ms] sm:text-6xl lg:text-7xl"
           >
             <span className="block whitespace-nowrap">
               <span className="chrome-text animate-glint">Your Next</span> <RotatingWord words={ROLES} />
@@ -118,16 +118,16 @@ async function CachedHomePage({ jobs }: { jobs: React.ReactNode }) {
           </a>
         </Container>
 
-        <div className="pt-6 pb-10" data-reveal>
+        <div className="pt-6 pb-10 [contain-intrinsic-size:auto_10rem] [content-visibility:auto]" data-reveal>
           <LogoMarquee companies={hiringCompanies} />
         </div>
       </section>
 
-      <Container wide className="pt-16" data-reveal-stagger>
+      <Container wide className="defer-render pt-16" data-reveal-stagger>
         {jobs}
       </Container>
 
-      <Container wide className="pt-20" data-reveal-stagger>
+      <Container wide className="defer-render pt-20" data-reveal-stagger>
         <SectionHeading title="Why Lodestar" />
         <WhyLodestar companies={hiringCompanies} />
       </Container>
@@ -135,7 +135,7 @@ async function CachedHomePage({ jobs }: { jobs: React.ReactNode }) {
       <ResumeBuilderPromo />
 
       {cities.length > 0 && (
-        <Container wide className="pt-20" data-reveal-stagger>
+        <Container wide className="defer-render pt-20" data-reveal-stagger>
           <SectionHeading title="Jobs by city" />
           <ul className="flex flex-wrap gap-2">
             {cities.map(({ city, count }) => (
@@ -158,13 +158,13 @@ async function CachedHomePage({ jobs }: { jobs: React.ReactNode }) {
         </Container>
       )}
 
-      <Container wide className="pt-20" data-reveal-stagger>
+      <Container wide className="defer-render pt-20" data-reveal-stagger>
         <SectionHeading title="Browse by category" />
         <DisciplineGrid counts={disciplineCounts} />
       </Container>
 
       {hiringCompanies.length > 0 && (
-        <Container wide className="pt-20" data-reveal-stagger>
+        <Container wide className="defer-render pt-20" data-reveal-stagger>
           <SectionHeading title="Top companies hiring" href="/companies" link="All companies" />
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {hiringCompanies.map((c) => (

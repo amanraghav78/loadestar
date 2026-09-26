@@ -9,6 +9,8 @@ import { useEffect } from "react";
  *   view, and stay put afterwards. `[data-reveal-stagger]` does the same to
  *   each item of its lists in turn. Anything already on screen when the page
  *   loads is left alone, so nothing visible ever blinks out and back in.
+ * - The hero's endless animations stop while it is scrolled out of view
+ *   (`data-paused`, read in globals.css and by RotatingWord).
  * - In the hero, a soft light follows the pointer (`--hx`/`--hy`/`--hero-lit`,
  *   read by `.hero-light`). Across cards, a glow does the same (`--mx`/`--my`,
  *   read by `.spotlight .metal-card::after`).
@@ -21,6 +23,16 @@ export function HomeEffects() {
     const root = document.querySelector<HTMLElement>("[data-home]");
     if (!root) return;
     const cleanups: (() => void)[] = [];
+
+    // The hero's loops (foil, glint, beam, marquee) pause while it is out of view.
+    const heroSection = root.querySelector<HTMLElement>("[data-hero]");
+    if (heroSection && "IntersectionObserver" in window) {
+      const observer = new IntersectionObserver(([entry]) =>
+        heroSection.toggleAttribute("data-paused", !entry.isIntersecting),
+      );
+      observer.observe(heroSection);
+      cleanups.push(() => observer.disconnect());
+    }
 
     if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches && "IntersectionObserver" in window) {
       const observer = new IntersectionObserver(

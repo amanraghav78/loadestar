@@ -39,6 +39,7 @@ export function SearchBar({
         lg ? "flex-col gap-1 rounded-3xl sm:flex-row sm:gap-0 sm:rounded-full" : "items-center rounded-full",
       )}
     >
+      {glow && <span className="beam-ring" aria-hidden />}
       <label className="flex min-w-0 flex-[1.4] items-center gap-3 px-4">
         <Search className="text-subtle size-4 shrink-0" aria-hidden />
         <span className="sr-only">Job title, skill or company</span>

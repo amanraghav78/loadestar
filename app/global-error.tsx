@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
-import * as Sentry from "@sentry/nextjs";
+import { captureError } from "@/lib/sentry-client";
 
 /** Last-resort boundary when the root layout itself fails; must render <html>. */
 export default function GlobalError({ error }: { error: Error & { digest?: string } }) {
   useEffect(() => {
-    Sentry.captureException(error);
+    captureError(error);
   }, [error]);
 
   return (

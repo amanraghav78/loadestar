@@ -4,15 +4,23 @@ import { useActionState } from "react";
 import { CaptchaField } from "@/components/captcha-field";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select, Textarea } from "@/components/ui/field";
-import { site } from "@/lib/site";
 import { submitClaim, type FormState } from "./actions";
 
 /**
  * Asks for posting access to a company. The work address is the evidence: a
  * person at the company can receive mail there, and an admin checks the domain
  * against the company's own website before approving it.
+ *
+ * `contactEmail` is passed in rather than read from lib/site, which reads
+ * lib/env and would bring zod into this client bundle.
  */
-export function ClaimForm({ companies }: { companies: { id: string; name: string }[] }) {
+export function ClaimForm({
+  companies,
+  contactEmail,
+}: {
+  companies: { id: string; name: string }[];
+  contactEmail: string;
+}) {
   const [state, action, pending] = useActionState<FormState, FormData>(submitClaim, {});
   const err = (field: string) => state.errors?.[field]?.[0];
 
@@ -20,8 +28,8 @@ export function ClaimForm({ companies }: { companies: { id: string; name: string
     return (
       <p role="status" className="metal text-muted rounded-2xl p-6 text-sm">
         {state.message} We&rsquo;ll email you at the address you gave us. If your company isn&rsquo;t listed, write to{" "}
-        <a href={`mailto:${site.contactEmail}`} className="text-fg underline underline-offset-4">
-          {site.contactEmail}
+        <a href={`mailto:${contactEmail}`} className="text-fg underline underline-offset-4">
+          {contactEmail}
         </a>{" "}
         and we&rsquo;ll add it.
       </p>
@@ -53,8 +61,8 @@ export function ClaimForm({ companies }: { companies: { id: string; name: string
         ) : (
           <p className="text-subtle mt-1 text-xs">
             Not listed? Write to{" "}
-            <a href={`mailto:${site.contactEmail}`} className="underline underline-offset-2">
-              {site.contactEmail}
+            <a href={`mailto:${contactEmail}`} className="underline underline-offset-2">
+              {contactEmail}
             </a>
             .
           </p>
