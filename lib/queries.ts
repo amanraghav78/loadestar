@@ -3,6 +3,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { db } from "@/lib/db";
 import type { Prisma } from "@/lib/generated/prisma/client";
 import type { Currency, Discipline, Level } from "@/lib/generated/prisma/enums";
+import { experienceWhere } from "@/lib/experience";
 import { afterCursor, DEFAULT_SORT, orderByFor, resolveSort, sortRowSelect, type JobSort } from "@/lib/job-sort";
 import type { JobSearchParams } from "@/lib/validators";
 
@@ -32,6 +33,8 @@ export const jobCardSelect = {
   salaryMax: true,
   currency: true,
   salaryDisclosed: true,
+  experienceMin: true,
+  experienceMax: true,
   postedAt: true,
   company: { select: { name: true, slug: true, logoUrl: true } },
 } satisfies Prisma.JobSelect;
@@ -113,6 +116,8 @@ function buildWhere(f: SearchFilters): Prisma.JobWhereInput {
   if (f.remote) and.push({ remote: f.remote });
   if (f.discipline) and.push({ discipline: f.discipline });
   if (f.level) and.push({ level: f.level });
+  // Overlap with the bucket, or the level's usual years when the posting names none.
+  if (f.exp) and.push(experienceWhere(f.exp));
   if (f.employmentType) and.push({ employmentType: f.employmentType });
   // Sector lives on the company, so this filters through the relation.
   if (f.industry) and.push({ company: { industry: f.industry } });

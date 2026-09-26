@@ -4,7 +4,15 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { isAdminAuthorization } from "@/lib/admin-auth";
-import { createCompany, createJob, jobSlug, salaryFields, updateCompany, updateJob } from "@/lib/admin-jobs";
+import {
+  createCompany,
+  createJob,
+  experienceFields,
+  jobSlug,
+  salaryFields,
+  updateCompany,
+  updateJob,
+} from "@/lib/admin-jobs";
 import { csvToRecords } from "@/lib/csv";
 import { db } from "@/lib/db";
 import { buildSearchText } from "@/lib/format";
@@ -151,6 +159,8 @@ export async function importJobs(_prev: FormState, formData: FormData): Promise<
       remoteRegion: r.remote_region,
       salaryMin: r.salary_min,
       salaryMax: r.salary_max,
+      experienceMin: r.experience_min,
+      experienceMax: r.experience_max,
       currency: r.currency ? r.currency.toUpperCase() : undefined,
       applyUrl: r.apply_url,
       featured: r.featured,
@@ -164,6 +174,7 @@ export async function importJobs(_prev: FormState, formData: FormData): Promise<
     rows.push({
       ...d,
       ...salaryFields(d),
+      ...experienceFields(d),
       remoteRegion: d.remoteRegion ?? null,
       slug: jobSlug(d.title, company.name),
       searchText: buildSearchText({ ...d, companyName: company.name }),

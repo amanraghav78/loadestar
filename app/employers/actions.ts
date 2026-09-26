@@ -6,7 +6,7 @@ import { z } from "zod";
 import { CAPTCHA_FAILED, verifyCaptcha } from "@/lib/captcha";
 import { db } from "@/lib/db";
 import { buildSearchText } from "@/lib/format";
-import { jobSlug, salaryFields } from "@/lib/admin-jobs";
+import { experienceFields, jobSlug, salaryFields } from "@/lib/admin-jobs";
 import { clientIp, rateLimit } from "@/lib/ratelimit";
 import { ForbiddenError, requireOwnJob, requireRecruiterCompany } from "@/lib/recruiter";
 import { revalidateCompanies, revalidateJobs } from "@/lib/revalidate";
@@ -123,6 +123,7 @@ export async function createRecruiterJob(_prev: FormState, formData: FormData): 
       remote: input.remote,
       remoteRegion: input.remoteRegion ?? null,
       ...salaryFields(input),
+      ...experienceFields(input),
       applyUrl: input.applyUrl,
       slug: jobSlug(input.title, company.name),
       searchText: buildSearchText({ ...input, companyName: company.name }),
@@ -167,6 +168,7 @@ export async function updateRecruiterJob(_prev: FormState, formData: FormData): 
       remote: input.remote,
       remoteRegion: input.remoteRegion ?? null,
       ...salaryFields(input),
+      ...experienceFields(input),
       applyUrl: input.applyUrl,
       searchText: buildSearchText({ ...input, companyName: company.name }),
       // Anything they change is reviewed again before it goes back up. A closed

@@ -69,6 +69,8 @@ export async function getRecruiterJob(jobId: string, userId: string) {
       salaryMin: true,
       salaryMax: true,
       currency: true,
+      experienceMin: true,
+      experienceMax: true,
       applyUrl: true,
       status: true,
       moderationNote: true,

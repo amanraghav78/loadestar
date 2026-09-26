@@ -17,7 +17,7 @@ export default function ImportPage() {
         <p className="text-subtle mt-2 text-xs">
           discipline: engineering, design, product, data, security, infrastructure · level: junior, mid, senior, staff,
           principal, manager, director · remote: onsite, hybrid, remote · tags separated by semicolons · optional
-          column: featured (true/false)
+          columns: featured (true/false), experience_min and experience_max (whole years)
         </p>
       </details>
       <div className="mt-6">

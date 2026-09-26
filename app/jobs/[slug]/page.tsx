@@ -12,6 +12,7 @@ import {
   Clock,
   FileText,
   Globe,
+  History,
   Laptop,
   MapPin,
   type LucideIcon,
@@ -33,11 +34,12 @@ import {
   REMOTE_LABEL,
 } from "@/lib/format";
 import { authEnabled } from "@/lib/auth";
+import { formatExperience } from "@/lib/experience";
 import { getJobBySlug, getSimilarJobs, TAGS } from "@/lib/queries";
 import { isListingPublic, listingExpiresAt } from "@/lib/listing-age";
 import { companyLogo } from "@/lib/logos";
 import { absoluteUrl } from "@/lib/site";
-import { jsonLdScript } from "@/lib/structured-data";
+import { experienceRequirementsJsonLd, jsonLdScript } from "@/lib/structured-data";
 
 export async function generateMetadata({ params }: PageProps<"/jobs/[slug]">): Promise<Metadata> {
   const { slug } = await params;
@@ -84,6 +86,7 @@ async function JobDetail({ slug }: { slug: string }) {
   const active = job.status === "ACTIVE";
   const similar = await getSimilarJobs(job.id, job.discipline);
   const band = formatSalaryBand(job.salaryMin, job.salaryMax, job.currency);
+  const years = formatExperience(job.experienceMin, job.experienceMax);
   const applyProps = { href: `/apply/${job.id}`, target: "_blank", rel: "noopener nofollow" } as const;
 
   return (
@@ -122,6 +125,12 @@ async function JobDetail({ slug }: { slug: string }) {
               <Fact icon={MapPin}>{job.location}</Fact>
               {job.remote !== "ONSITE" && <Fact icon={Laptop}>{REMOTE_LABEL[job.remote]}</Fact>}
               <Fact icon={BriefcaseBusiness}>{LEVEL_LABEL[job.level]}</Fact>
+              {years && (
+                <Fact icon={History}>
+                  <span className="sr-only">Experience:</span>
+                  {years}
+                </Fact>
+              )}
               {job.employmentType !== "FULL_TIME" && (
                 <Fact icon={Clock}>{EMPLOYMENT_TYPE_LABEL[job.employmentType]}</Fact>
               )}
@@ -304,6 +313,8 @@ function jobPostingJsonLd(job: JobForLd) {
             address: { "@type": "PostalAddress", addressLocality: job.location.split(" · ")[0], addressCountry: "IN" },
           },
         }),
+    // Only when the posting states the years; the level fallback is a guess.
+    ...experienceRequirementsJsonLd(job.experienceMin),
     // Only when the employer published pay; Google treats a guessed salary as spam.
     ...(job.salaryDisclosed && job.currency
       ? {

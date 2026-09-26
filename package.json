@@ -17,6 +17,7 @@
     "db:migrate:dev": "prisma migrate dev",
     "postinstall": "prisma generate",
     "db:sync": "tsx --conditions=react-server scripts/sync.ts",
+    "db:backfill-experience": "tsx --conditions=react-server scripts/backfill-experience.ts",
     "db:seed:test": "tsx prisma/test-fixtures.ts",
     "ingest:preview": "tsx scripts/ingest-preview.ts",
     "logos": "tsx scripts/fetch-logos.ts"

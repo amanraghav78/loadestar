@@ -18,6 +18,7 @@ import {
   numberFormat,
   REMOTE_LABEL,
 } from "@/lib/format";
+import { EXPERIENCE_BUCKETS } from "@/lib/experience";
 import { resolveSort } from "@/lib/job-sort";
 import { searchJobs } from "@/lib/queries";
 import { parseSearchParams, toQueryString, type JobSearchParams } from "@/lib/validators";
@@ -50,6 +51,7 @@ function activeFilters(params: JobSearchParams) {
   if (params.location) out.push({ label: params.location, href: without("location") });
   if (params.city) out.push({ label: params.city, href: without("city") });
   if (params.discipline) out.push({ label: DISCIPLINE_LABEL[params.discipline], href: without("discipline") });
+  if (params.exp) out.push({ label: EXPERIENCE_BUCKETS[params.exp].label, href: without("exp") });
   if (params.level) out.push({ label: LEVEL_LABEL[params.level], href: without("level") });
   if (params.remote) out.push({ label: REMOTE_LABEL[params.remote], href: without("remote") });
   if (params.employmentType)

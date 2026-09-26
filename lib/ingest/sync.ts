@@ -66,6 +66,8 @@ function rowData(job: NormalizedJob, companyName: string) {
     salaryMax: disclosed ? job.salaryMax : null,
     currency: disclosed ? ("INR" as const) : null,
     salaryDisclosed: disclosed,
+    experienceMin: job.experienceMin,
+    experienceMax: job.experienceMax,
     applyUrl: job.applyUrl,
     contentHash: job.contentHash,
     searchText: buildSearchText({ ...job, companyName }),
