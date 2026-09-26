@@ -209,6 +209,18 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* iOS Safari zooms the page into any focused field whose text is under 16px
+   and leaves it zoomed. Lift fields to 16px on touch screens only, so desktop
+   keeps the compact sizes, and pinch-zoom stays on (no maximum-scale).
+   Unlayered, so it outranks Tailwind's text-sm / text-[15px] utilities. */
+@media (hover: none) and (pointer: coarse) {
+  input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]),
+  select,
+  textarea {
+    font-size: max(16px, 1em);
+  }
+}
+
 ::selection {
   background: var(--selection-bg);
   color: var(--selection-fg);
