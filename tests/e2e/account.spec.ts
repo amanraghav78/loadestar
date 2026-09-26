@@ -389,12 +389,12 @@ test.describe("accounts", () => {
 
     // One click puts a missing keyword on the skills line, and autosave keeps it.
     await panel.getByRole("button", { name: /Kafka/ }).click();
-    await expect(page.getByLabel("Skills")).toHaveValue(/Kafka/);
+    await expect(page.getByRole("textbox", { name: "Skills" })).toHaveValue(/Kafka/);
     await expect(panel.getByText("Already covered")).toBeVisible();
     await expect(page.getByText(/All changes saved/)).toBeVisible();
 
     await page.reload();
-    await expect(page.getByLabel("Skills")).toHaveValue(/Kafka/);
+    await expect(page.getByRole("textbox", { name: "Skills" })).toHaveValue(/Kafka/);
   });
 
   test("the resume builder sends signed-out visitors to sign in", async ({ page }) => {
