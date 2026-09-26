@@ -15,7 +15,7 @@ export default function PricingPage() {
         </Link>
         .
       </p>
-      <h3>What&rsquo;s included</h3>
+      <h2>What&rsquo;s included</h2>
       <ul>
         <li>A listing with your published salary band, live until you mark it filled</li>
         <li>A company profile page with all your open roles</li>

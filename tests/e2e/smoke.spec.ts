@@ -78,3 +78,42 @@ test("search, filter and open a role", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(title);
   await expect(page.getByRole("link", { name: /^Apply now/ })).toHaveAttribute("href", /^\/apply\//);
 });
+
+test("the home page carries a share image and site structured data", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", /^https?:\/\/.+\/opengraph-image/);
+  await expect(page.locator('meta[property="og:image:alt"]')).toHaveAttribute("content", /Your Next Job Awaits/);
+
+  const blocks = await page.locator('script[type="application/ld+json"]').allTextContents();
+  const graph = blocks.flatMap((text) => (JSON.parse(text)["@graph"] ?? []) as { "@type": string }[]);
+  expect(graph.find((node) => node["@type"] === "WebSite")).toMatchObject({
+    potentialAction: {
+      "@type": "SearchAction",
+      target: { urlTemplate: expect.stringMatching(/\/jobs\?q=\{search_term_string\}$/) },
+    },
+  });
+  expect(graph.some((node) => node["@type"] === "Organization")).toBe(true);
+});
+
+test("a job's share image names the role and is served as a PNG", async ({ page, request }) => {
+  await page.goto("/jobs");
+  const first = page.getByRole("article").first();
+  const title = (await first.getByRole("heading").textContent())!.trim();
+  await first.getByRole("link").first().click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(title);
+
+  const image = page.locator('meta[property="og:image"]');
+  await expect(image).toHaveAttribute("content", /\/jobs\/[^/]+\/opengraph-image/);
+  const alt = await page.locator('meta[property="og:image:alt"]').getAttribute("content");
+  expect(alt).toContain(`${title} at `);
+
+  const res = await request.get((await image.getAttribute("content"))!);
+  expect(res.status()).toBe(200);
+  expect(res.headers()["content-type"]).toMatch(/^image\/png/);
+});
+
+test("an unknown job's share image falls back to the site image", async ({ request }) => {
+  const res = await request.get("/jobs/no-such-role-000000/opengraph-image/card");
+  expect(res.status()).toBe(200);
+  expect(res.headers()["content-type"]).toMatch(/^image\/png/);
+});

@@ -11,7 +11,7 @@ export default function PrivacyPage() {
       title="Privacy"
       intro="Short version: an account is optional, and everything in yours is yours to delete."
     >
-      <h3>Browsing without an account</h3>
+      <h2>Browsing without an account</h2>
       <ul>
         <li>
           <strong>Saved roles</strong> live in your browser&rsquo;s local storage. They never reach our servers except
@@ -28,7 +28,7 @@ export default function PrivacyPage() {
         </li>
       </ul>
 
-      <h3>If you create an account</h3>
+      <h2>If you create an account</h2>
       <p>
         Signing in with Google is the only way in. Google tells us your name, email address and profile picture. We
         never receive your Google password, and we never post anything anywhere.
@@ -56,7 +56,7 @@ export default function PrivacyPage() {
         </li>
       </ul>
 
-      <h3>Your resume</h3>
+      <h2>Your resume</h2>
       <p>
         Your resume is stored in private file storage, encrypted at rest. It is not public, it is not linked from any
         shareable address, and it can only be downloaded by you while you are signed in. Replacing it deletes the
@@ -70,14 +70,14 @@ export default function PrivacyPage() {
         and your resume is never sent to any outside service to be read, scored or ranked.
       </p>
 
-      <h3>What we don&rsquo;t do</h3>
+      <h2>What we don&rsquo;t do</h2>
       <ul>
         <li>We don&rsquo;t set advertising or tracking cookies.</li>
         <li>We don&rsquo;t sell or share your data with employers or third parties.</li>
         <li>We don&rsquo;t email you anything you didn&rsquo;t ask for.</li>
       </ul>
 
-      <h3>Deleting your data</h3>
+      <h2>Deleting your data</h2>
       <p>
         Delete your account yourself from your account page at any time. That removes your profile, your resume file,
         your saved roles and your applied roles. What remains is the anonymous apply-click count described above, which
@@ -89,7 +89,7 @@ export default function PrivacyPage() {
         <a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>.
       </p>
 
-      <h3>Applications</h3>
+      <h2>Applications</h2>
       <p>
         Applying takes you to the employer&rsquo;s own site or form. Whatever you submit there is covered by that
         employer&rsquo;s privacy policy, not ours.

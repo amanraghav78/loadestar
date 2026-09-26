@@ -15,6 +15,7 @@ import { RotatingWord } from "@/components/home/rotating-word";
 import { SectionHeading } from "@/components/home/section-heading";
 import { WhyLodestar } from "@/components/home/why-lodestar";
 import { SearchBar } from "@/components/search-bar";
+import { SiteJsonLd } from "@/components/site-json-ld";
 import { Container } from "@/components/ui/container";
 import { Chip } from "@/components/ui/tag";
 import { numberFormat } from "@/lib/format";
@@ -61,6 +62,7 @@ async function CachedHomePage({ jobs }: { jobs: React.ReactNode }) {
 
   return (
     <div data-home className="spotlight">
+      <SiteJsonLd />
       <HomeEffects />
 
       <section data-hero className="relative isolate overflow-hidden">

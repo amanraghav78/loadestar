@@ -34,24 +34,15 @@ import {
 } from "@/lib/format";
 import { authEnabled } from "@/lib/auth";
 import { getJobBySlug, getSimilarJobs, TAGS } from "@/lib/queries";
-import { listingExpiresAt } from "@/lib/listing-age";
+import { isListingPublic, listingExpiresAt } from "@/lib/listing-age";
 import { companyLogo } from "@/lib/logos";
-import type { JobStatus } from "@/lib/generated/prisma/enums";
 import { absoluteUrl } from "@/lib/site";
-
-/**
- * A listing waiting on review, or one we turned down, is not a page: it would
- * otherwise be readable by anyone holding the slug. Closed and expired roles
- * stay up, marked as no longer open, because people link to them.
- */
-function isPublic(status: JobStatus) {
-  return status === "ACTIVE" || status === "CLOSED" || status === "EXPIRED";
-}
+import { jsonLdScript } from "@/lib/structured-data";
 
 export async function generateMetadata({ params }: PageProps<"/jobs/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const job = await getJobBySlug(slug);
-  if (!job || !isPublic(job.status)) notFound();
+  if (!job || !isListingPublic(job.status)) notFound();
 
   const band = formatSalaryBand(job.salaryMin, job.salaryMax, job.currency);
   const lead = [band, formatJobLocation(job)].filter(Boolean).join(" · ");
@@ -88,7 +79,7 @@ async function JobDetail({ slug }: { slug: string }) {
   cacheTag(TAGS.jobs, TAGS.job(slug));
 
   const job = await getJobBySlug(slug);
-  if (!job || !isPublic(job.status)) notFound();
+  if (!job || !isListingPublic(job.status)) notFound();
 
   const active = job.status === "ACTIVE";
   const similar = await getSimilarJobs(job.id, job.discipline);
@@ -97,11 +88,7 @@ async function JobDetail({ slug }: { slug: string }) {
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        // "<" is escaped so the JSON cannot close the script tag.
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jobPostingJsonLd(job)).replace(/</g, "\\u003c") }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(jobPostingJsonLd(job)) }} />
 
       {!active && (
         <p role="status" className="metal text-muted mt-6 rounded-2xl px-5 py-4 text-sm">
